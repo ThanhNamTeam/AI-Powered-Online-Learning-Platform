@@ -33,4 +33,4 @@ build/
 .vscode/
 
 # Ignore Spring Boot configuration containing secrets
-SWD392/src/main/resources/application.yaml
+SWD392/src/main/resources/application-local.yaml

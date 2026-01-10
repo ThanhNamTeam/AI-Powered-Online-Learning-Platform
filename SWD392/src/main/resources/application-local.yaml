@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: SWD392
-  profiles:
-    active: local
   datasource:
     url: jdbc:mysql://mysql-b96f9c6-minkoi0408-f654.a.aivencloud.com:21012/defaultdb
     username: avnadmin
