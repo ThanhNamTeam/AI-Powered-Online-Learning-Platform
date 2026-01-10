@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: SWD392
+  datasource:
+    url: jdbc:mysql://mysql-b96f9c6-minkoi0408-f654.a.aivencloud.com:21012/defaultdb
+    username: avnadmin
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+
