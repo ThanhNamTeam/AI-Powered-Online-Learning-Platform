@@ -7,9 +7,9 @@ spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:mysql://mysql-b96f9c6-minkoi0408-f654.a.aivencloud.com:21012/defaultdb
+    url: jdbc:mysql://avnadmin:AVNS_KIMU-8BkaoiwkfLS0nI@mysql-b96f9c6-minkoi0408-f654.f.aivencloud.com:21012/defaultdb?ssl-mode=REQUIRED
     username: avnadmin
-    password: ${DB_PASSWORD}
+    password: AVNS_KIMU-8BkaoiwkfLS0nI
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: true
@@ -21,6 +21,15 @@ spring:
 
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    enabled: true
   swagger-ui:
-    path: /swagger-ui.html
+    enabled: true
+    # Ep Swagger UI su dung dung duong dan config
+    config-url: /v3/api-docs/swagger-config
+    url: /v3/api-docs
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 86400000 # 24 hours in milliseconds
+
+
