@@ -2,6 +2,9 @@ package com.minhkhoi.swd392.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -27,5 +30,6 @@ public class VectorStore {
     private String contextChunk;
 
     @Column(name = "vector_embedding", columnDefinition = "vector(384)")
+    @JdbcTypeCode(SqlTypes.VECTOR)
     private List<Double> embedding;
 }
