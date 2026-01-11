@@ -7,17 +7,21 @@ spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:mysql://avnadmin:AVNS_KIMU-8BkaoiwkfLS0nI@mysql-b96f9c6-minkoi0408-f654.f.aivencloud.com:21012/defaultdb?ssl-mode=REQUIRED
-    username: avnadmin
-    password: AVNS_KIMU-8BkaoiwkfLS0nI
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-    properties:
+    # URL của Postgres (cần tạo DB trước)
+    url: jdbc:postgresql://localhost:5432/swd392_db
+    username: postgres
+    password: admin123
+    driver-class-name: org.postgresql.Driver
+    jpa:
+      show-sql: true
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        ddl-auto: update
+      properties:
+        hibernate:
+          # Quan trọng: Dialect cho Postgres
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          # Format SQL cho dễ đọc
+          format_sql: true
 
 springdoc:
   api-docs:

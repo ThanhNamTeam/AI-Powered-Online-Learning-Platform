@@ -34,3 +34,5 @@ build/
 
 # Ignore Spring Boot configuration containing secrets
 SWD392/src/main/resources/application.yaml
+
+.idea/
