@@ -1,9 +1,12 @@
 package com.minhkhoi.swd392.controller;
 
 import com.minhkhoi.swd392.dto.request.CreateUserRequest;
+import com.minhkhoi.swd392.dto.request.LoginRequest;
+import com.minhkhoi.swd392.dto.request.RefreshTokenRequest;
 import com.minhkhoi.swd392.dto.request.SendOtpRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
+import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -83,5 +86,19 @@ public class AccountController {
     public ResponseEntity<ApiResponse<Boolean>> checkEmailExists(@PathVariable String email) {
         boolean exists = userService.existsByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("Email check completed", exists));
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "Login", description = "Authenticate user and return access token")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse loginResponse = userService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("Login successful", loginResponse));
+    }
+
+    @PostMapping("/refresh-token")
+    @Operation(summary = "Refresh Token", description = "Refresh access token using refresh token")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        LoginResponse loginResponse = userService.refreshToken(request);
+        return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", loginResponse));
     }
 }
