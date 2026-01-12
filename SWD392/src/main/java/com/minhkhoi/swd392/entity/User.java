@@ -35,14 +35,18 @@ public class User {
     private Role role;
 
     @CreationTimestamp
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    // TODO: Uncomment these when Course and Enrollment tables are created
+    /*
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Enrollment> enrollments;
 
     @OneToMany(mappedBy = "constructor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Course> createdCourses;
+    */
 
     public enum Role {
         ADMIN,
