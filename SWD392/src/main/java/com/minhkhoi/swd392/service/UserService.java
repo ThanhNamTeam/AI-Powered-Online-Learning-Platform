@@ -1,10 +1,16 @@
 package com.minhkhoi.swd392.service;
 
+import com.minhkhoi.swd392.config.JwtUtil;
 import com.minhkhoi.swd392.dto.request.CreateUserRequest;
+import com.minhkhoi.swd392.dto.request.LoginRequest;
+import com.minhkhoi.swd392.dto.request.RefreshTokenRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserRequest;
+import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.entity.OtpVerification;
+import com.minhkhoi.swd392.entity.RefreshToken;
 import com.minhkhoi.swd392.entity.User;
+import com.minhkhoi.swd392.repository.RefreshTokenRepository;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.repository.OtpVerificationRepository;
@@ -30,8 +36,10 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final OtpVerificationRepository otpRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
+    private final JwtUtil jwtUtil;
 
     /**
      * Send OTP to email for registration
@@ -96,7 +104,7 @@ public class UserService {
         // Save user
         User savedUser = userRepository.save(user);
 
-        // Send welcome email
+        // gửi mail cho nó thân thiện :))
         sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
 
         log.info("User created successfully with email: {}", savedUser.getEmail());
@@ -131,7 +139,7 @@ public class UserService {
                 If you did not request this code, please ignore this email.
                 
                 Best regards,
-                SWD392 Team
+                SWD392 Team-5
                 """, otpCode));
 
             mailSender.send(message);
@@ -159,14 +167,13 @@ public class UserService {
                 You can now log in and start your learning journey.
                 
                 Best regards,
-                SWD392 Team
+                SWD392 Team-5
                 """, fullName));
 
             mailSender.send(message);
             log.info("Welcome email sent successfully to: {}", toEmail);
         } catch (Exception e) {
             log.error("Failed to send welcome email to: {}", toEmail, e);
-            // Don't throw exception, just log error
         }
     }
 
@@ -198,7 +205,7 @@ public class UserService {
     }
 
     /**
-     * Update user
+     * Update nhưng mà mới làm cho admin
      */
     @Transactional
     public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
@@ -249,5 +256,75 @@ public class UserService {
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
-}
 
+    /**
+     * Authenticate user and generate JWT token
+     */
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, request.getEmail()));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        // Generate access token and refresh token
+        String accessToken = jwtUtil.generateToken(user);
+        String refreshTokenStr = jwtUtil.generateRefreshToken(user);
+
+        // Save refresh token to database
+        RefreshToken refreshToken = RefreshToken.builder()
+                .token(refreshTokenStr)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusDays(7)) // 7 days expiration
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+
+        log.info("User logged in successfully: {}", user.getEmail());
+
+        return new LoginResponse(accessToken, refreshTokenStr);
+    }
+
+    /**
+     * Refresh access token using refresh token
+     * Uses Rotating Refresh Token pattern for better security
+     */
+    @Transactional
+    public LoginResponse refreshToken(RefreshTokenRequest request) {
+        // Validate refresh token from database
+        RefreshToken oldRefreshToken = refreshTokenRepository
+                .findByTokenAndRevokedFalseAndExpiresAtAfter(request.getRefreshToken(), LocalDateTime.now())
+                .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_INVALID));
+
+        // Validate JWT token
+        if (!jwtUtil.isTokenValid(request.getRefreshToken())) {
+            throw new AppException(ErrorCode.REFRESH_TOKEN_INVALID);
+        }
+
+        // Get user from refresh token
+        User user = oldRefreshToken.getUser();
+
+        // Revoke old refresh token
+        oldRefreshToken.setRevoked(true);
+        refreshTokenRepository.save(oldRefreshToken);
+
+        // Generate new access token and new refresh token
+        String newAccessToken = jwtUtil.generateToken(user);
+        String newRefreshTokenStr = jwtUtil.generateRefreshToken(user);
+
+        // Save new refresh token to database
+        RefreshToken newRefreshToken = RefreshToken.builder()
+                .token(newRefreshTokenStr)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusDays(7)) // 7 days expiration
+                .build();
+
+        refreshTokenRepository.save(newRefreshToken);
+
+        log.info("Access token and refresh token refreshed for user: {}", user.getEmail());
+
+        return new LoginResponse(newAccessToken, newRefreshTokenStr);
+    }
+}

@@ -14,6 +14,7 @@ public enum ErrorCode {
     INVALID_CREDENTIALS("Invalid email or password", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("Unauthorized access", HttpStatus.UNAUTHORIZED),
     ACCESS_DENIED("Access denied", HttpStatus.FORBIDDEN),
+    REFRESH_TOKEN_INVALID("Invalid or expired refresh token", HttpStatus.UNAUTHORIZED),
 
     // OTP errors (3000-3999)
     OTP_EXPIRED("OTP has expired", HttpStatus.BAD_REQUEST),
