@@ -26,14 +26,24 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public endpoints - Authentication not required
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/api/accounts/**",
+                                "/api/auth/send-otp",
+                                "/api/auth/login",
+                                "/api/auth/refresh-token",
+                                "/api/auth/validate-token",
+                                "/api/accounts",
+                                "/api/accounts/exists/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        // Protected endpoints - Authentication required (use Authorize button in Swagger)
+                        .requestMatchers(
+                                "/api/accounts/me",
+                                "/api/accounts/{userId}",
+                                "/api/accounts/email/**"
+                        ).authenticated()
                         // All other requests need authentication
                         .anyRequest().authenticated()
                 )
