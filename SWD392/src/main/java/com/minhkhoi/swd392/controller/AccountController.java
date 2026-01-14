@@ -1,15 +1,12 @@
 package com.minhkhoi.swd392.controller;
 
 import com.minhkhoi.swd392.dto.request.CreateUserRequest;
-import com.minhkhoi.swd392.dto.request.LoginRequest;
-import com.minhkhoi.swd392.dto.request.RefreshTokenRequest;
-import com.minhkhoi.swd392.dto.request.SendOtpRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
-import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +25,29 @@ public class AccountController {
 
     private final UserService userService;
 
-    @PostMapping("/send-otp")
-    @Operation(summary = "Send OTP", description = "Send OTP code to email for registration")
-    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
-        userService.sendOtpForRegistration(request.getEmail());
-        return ResponseEntity.ok(ApiResponse.success(
-                "OTP has been sent to your email. Please check your inbox.", null));
+    @GetMapping("/me")
+    @Operation(
+            summary = "Get Current User Info",
+            description = "Get information of currently authenticated user (Requires JWT token - Use Authorize button)",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
+        // Spring Security sẽ tự động validate token qua JwtAuthenticationFilter
+        // Nếu đến đây nghĩa là token đã hợp lệ
+        // Lấy email từ SecurityContext (đã được set trong JwtAuthenticationFilter)
+        org.springframework.security.core.Authentication authentication =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("User is not authenticated"));
+        }
+
+        String email = authentication.getName(); // username chính là email
+
+        // Get user by email
+        UserResponse userResponse = userService.getUserByEmail(email);
+        return ResponseEntity.ok(ApiResponse.success("User info retrieved successfully", userResponse));
     }
 
     @PostMapping
@@ -45,14 +59,22 @@ public class AccountController {
     }
 
     @GetMapping("/{userId}")
-    @Operation(summary = "Get user by ID", description = "Retrieve user details by user ID")
+    @Operation(
+            summary = "Get user by ID",
+            description = "Retrieve user details by user ID (Requires JWT token - Use Authorize button)",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID userId) {
         UserResponse userResponse = userService.getUserById(userId);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", userResponse));
     }
 
     @GetMapping("/email/{email}")
-    @Operation(summary = "Get user by email", description = "Retrieve user details by email address")
+    @Operation(
+            summary = "Get user by email",
+            description = "Retrieve user details by email address (Requires JWT token - Use Authorize button)",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse<UserResponse>> getUserByEmail(@PathVariable String email) {
         UserResponse userResponse = userService.getUserByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", userResponse));
@@ -66,7 +88,11 @@ public class AccountController {
     }
 
     @PutMapping("/{userId}")
-    @Operation(summary = "Update user", description = "Update user details by user ID")
+    @Operation(
+            summary = "Update user",
+            description = "Update user details by user ID (Requires JWT token - Use Authorize button)",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable UUID userId,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -75,7 +101,11 @@ public class AccountController {
     }
 
     @DeleteMapping("/{userId}")
-    @Operation(summary = "Delete user", description = "Delete user by user ID")
+    @Operation(
+            summary = "Delete user",
+            description = "Delete user by user ID (Requires JWT token - Use Authorize button)",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID userId) {
         userService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
@@ -86,19 +116,5 @@ public class AccountController {
     public ResponseEntity<ApiResponse<Boolean>> checkEmailExists(@PathVariable String email) {
         boolean exists = userService.existsByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("Email check completed", exists));
-    }
-
-    @PostMapping("/login")
-    @Operation(summary = "Login", description = "Authenticate user and return access token")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        LoginResponse loginResponse = userService.login(request);
-        return ResponseEntity.ok(ApiResponse.success("Login successful", loginResponse));
-    }
-
-    @PostMapping("/refresh-token")
-    @Operation(summary = "Refresh Token", description = "Refresh access token using refresh token")
-    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        LoginResponse loginResponse = userService.refreshToken(request);
-        return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", loginResponse));
     }
 }

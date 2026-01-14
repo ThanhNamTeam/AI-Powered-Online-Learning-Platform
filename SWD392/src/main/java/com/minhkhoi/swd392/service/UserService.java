@@ -7,6 +7,7 @@ import com.minhkhoi.swd392.dto.request.RefreshTokenRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserRequest;
 import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
+import com.minhkhoi.swd392.dto.response.ValidateTokenResponse;
 import com.minhkhoi.swd392.entity.OtpVerification;
 import com.minhkhoi.swd392.entity.RefreshToken;
 import com.minhkhoi.swd392.entity.User;
@@ -326,5 +327,58 @@ public class UserService {
         log.info("Access token and refresh token refreshed for user: {}", user.getEmail());
 
         return new LoginResponse(newAccessToken, newRefreshTokenStr);
+    }
+
+    /**
+     * Validate access token
+     */
+    public ValidateTokenResponse validateToken(String token) {
+        try {
+            // Extract username (email) from token
+            String username = jwtUtil.extractUsername(token);
+
+            // Check if token is expired
+            if (jwtUtil.isTokenExpired(token)) {
+                return ValidateTokenResponse.builder()
+                        .valid(false)
+                        .username(null)
+                        .role(null)
+                        .userId(null)
+                        .message("Token has expired")
+                        .build();
+            }
+
+            // Find user by email
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, username));
+
+            // Validate token with user details
+            if (jwtUtil.isTokenValid(token, user)) {
+                return ValidateTokenResponse.builder()
+                        .valid(true)
+                        .username(username)
+                        .role(user.getRole().name())
+                        .userId(user.getUserId())
+                        .message("Token is valid")
+                        .build();
+            } else {
+                return ValidateTokenResponse.builder()
+                        .valid(false)
+                        .username(null)
+                        .role(null)
+                        .userId(null)
+                        .message("Token is invalid")
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("Error validating token", e);
+            return ValidateTokenResponse.builder()
+                    .valid(false)
+                    .username(null)
+                    .role(null)
+                    .userId(null)
+                    .message("Token validation failed: " + e.getMessage())
+                    .build();
+        }
     }
 }
