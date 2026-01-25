@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Upload & Transcription - SWD392</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #667eea;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .options {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .upload-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .result-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .video-preview {
+            margin-bottom: 20px;
+        }
+
+        .video-preview video {
+            width: 100%;
+            border-radius: 10px;
+            max-height: 400px;
+        }
+
+        .transcript-box {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .transcript-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .transcript-content {
+            color: #333;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metadata-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metadata-label {
+            color: #999;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .metadata-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Video Upload & AI Transcription</h1>
+        <p class="subtitle">Upload your video and get an AI-generated transcript instantly</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📹</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-hint">MP4, MOV, AVI (Max 100MB)</div>
+            <input type="file" id="fileInput" accept="video/*">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <div class="options">
+            <div class="checkbox-container">
+                <input type="checkbox" id="transcribeCheckbox" checked>
+                <label for="transcribeCheckbox">Generate AI transcript automatically</label>
+            </div>
+        </div>
+
+        <button class="upload-btn" id="uploadBtn" disabled>
+            Upload Video
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="progress-text" id="progressText">Uploading...</div>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <!-- Results will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const transcribeCheckbox = document.getElementById('transcribeCheckbox');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultContainer = document.getElementById('resultContainer');
+
+        let selectedFile = null;
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            handleFileSelection(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFileSelection(e.dataTransfer.files[0]);
+        });
+
+        function handleFileSelection(file) {
+            if (!file) return;
+
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a video file');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) {
+                alert('File size must be less than 100MB');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+            fileInfo.classList.add('show');
+            uploadBtn.disabled = false;
+        }
+
+        // Upload button
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            uploadBtn.disabled = true;
+            progressContainer.classList.add('show');
+            resultContainer.classList.remove('show');
+            resultContainer.innerHTML = '';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('transcribe', transcribeCheckbox.checked);
+
+            try {
+                // Simulate progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    updateProgress(progress, 'Uploading video...');
+                }, 500);
+
+                const response = await fetch('/api/videos/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                updateProgress(100, 'Complete!');
+
+                setTimeout(() => {
+                    displayResult(result);
+                    progressContainer.classList.remove('show');
+                }, 500);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                displayError(error.message);
+                progressContainer.classList.remove('show');
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+
+        function updateProgress(percent, text) {
+            progressFill.style.width = `${percent}%`;
+            progressFill.textContent = `${Math.round(percent)}%`;
+            progressText.textContent = text;
+        }
+
+        function displayResult(result) {
+            resultContainer.classList.add('show');
+
+            if (result.success) {
+                resultContainer.innerHTML = `
+                    <div class="result-success">
+                        ✅ Video uploaded successfully!
+                    </div>
+                    
+                    <div class="video-preview">
+                        <video controls src="${result.videoUrl}"></video>
+                    </div>
+
+                    <div class="metadata">
+                        <div class="metadata-item">
+                            <div class="metadata-label">Duration</div>
+                            <div class="metadata-value">${formatDuration(result.duration)}</div>
+                        </div>
+                        <div class="metadata-item">
+                            <div class="metadata-label">Format</div>
+                            <div class="metadata-value">${result.format || 'N/A'}</div>
+                        </div>
+                        <div class="metadata-item">
+                            <div class="metadata-label">File Size</div>
+                            <div class="metadata-value">${formatFileSize(result.fileSize)}</div>
+                        </div>
+                    </div>
+
+                    ${result.transcript ? `
+                        <div class="transcript-box">
+                            <div class="transcript-title">📝 AI-Generated Transcript</div>
+                            <div class="transcript-content">${result.transcript}</div>
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                displayError(result.message);
+            }
+        }
+
+        function displayError(message) {
+            resultContainer.classList.add('show');
+            resultContainer.innerHTML = `
+                <div class="result-error">
+                    ❌ Error: ${message}
+                </div>
+            `;
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return 'N/A';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return 'N/A';
+            return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+        }
+    </script>
+</body>
+</html>

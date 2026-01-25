@@ -36,4 +36,7 @@ public class Enrollment {
 
     @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Progress> progressList;
+
+    @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Payment> payments;
 }
