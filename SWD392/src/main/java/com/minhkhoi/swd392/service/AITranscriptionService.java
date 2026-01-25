@@ -1,5 +1,8 @@
 package com.minhkhoi.swd392.service;
 
+import com.minhkhoi.swd392.exception.AppException;
+import com.minhkhoi.swd392.exception.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -35,7 +38,7 @@ public class AITranscriptionService {
      * @param videoUrl URL of the video to transcribe
      * @return Transcript text
      */
-    public String transcribeVideo(String videoUrl) throws IOException {
+    public String transcribeVideo(String videoUrl) {
         log.info("Starting video transcription for URL: {}", videoUrl);
 
         try {
@@ -56,16 +59,18 @@ public class AITranscriptionService {
                 if (!response.isSuccessful()) {
                     String errorBody = response.body() != null ? response.body().string() : "No error details";
                     log.error("Gemini API error: {} - {}", response.code(), errorBody);
-                    throw new IOException("Gemini API request failed: " + response.code() + " - " + errorBody);
+                    throw new AppException(ErrorCode.TRANSCRIPTION_FAILED);
                 }
 
                 String responseBody = response.body().string();
                 return parseTranscriptResponse(responseBody);
             }
 
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to transcribe video: {}", e.getMessage(), e);
-            throw new IOException("Failed to transcribe video: " + e.getMessage(), e);
+            throw new AppException(ErrorCode.TRANSCRIPTION_FAILED);
         }
     }
 
@@ -120,17 +125,17 @@ public class AITranscriptionService {
     /**
      * Parse transcript from Gemini API response
      */
-    private String parseTranscriptResponse(String responseBody) throws IOException {
+    private String parseTranscriptResponse(String responseBody) {
         try {
             JSONObject response = new JSONObject(responseBody);
             
             if (!response.has("candidates")) {
-                throw new IOException("No candidates in response");
+                throw new AppException(ErrorCode.TRANSCRIPT_PARSE_FAILED);
             }
             
             JSONArray candidates = response.getJSONArray("candidates");
             if (candidates.length() == 0) {
-                throw new IOException("Empty candidates array");
+                throw new AppException(ErrorCode.TRANSCRIPT_PARSE_FAILED);
             }
             
             JSONObject firstCandidate = candidates.getJSONObject(0);
@@ -138,7 +143,7 @@ public class AITranscriptionService {
             JSONArray parts = content.getJSONArray("parts");
             
             if (parts.length() == 0) {
-                throw new IOException("No parts in response");
+                throw new AppException(ErrorCode.TRANSCRIPT_PARSE_FAILED);
             }
             
             String transcript = parts.getJSONObject(0).getString("text");
@@ -148,7 +153,7 @@ public class AITranscriptionService {
             
         } catch (Exception e) {
             log.error("Failed to parse Gemini response: {}", e.getMessage());
-            throw new IOException("Failed to parse transcript response: " + e.getMessage(), e);
+            throw new AppException(ErrorCode.TRANSCRIPT_PARSE_FAILED);
         }
     }
 

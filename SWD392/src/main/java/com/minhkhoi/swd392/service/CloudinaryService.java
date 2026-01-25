@@ -1,5 +1,8 @@
 package com.minhkhoi.swd392.service;
 
+import com.minhkhoi.swd392.exception.AppException;
+import com.minhkhoi.swd392.exception.ErrorCode;
+
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +29,7 @@ public class CloudinaryService {
      * @param file Video file to upload
      * @return Map containing upload result with URL, public_id, duration, etc.
      */
-    public Map<String, Object> uploadVideo(MultipartFile file) throws IOException {
+    public Map<String, Object> uploadVideo(MultipartFile file) {
         log.info("Starting video upload to Cloudinary: {}", file.getOriginalFilename());
         
         try {
@@ -51,8 +54,7 @@ public class CloudinaryService {
             return uploadResult;
             
         } catch (IOException e) {
-            log.error("Failed to upload video to Cloudinary: {}", e.getMessage(), e);
-            throw new IOException("Failed to upload video: " + e.getMessage(), e);
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
@@ -60,7 +62,7 @@ public class CloudinaryService {
      * Delete video from Cloudinary
      * @param publicId Public ID of the video to delete
      */
-    public void deleteVideo(String publicId) throws IOException {
+    public void deleteVideo(String publicId) {
         log.info("Deleting video from Cloudinary: {}", publicId);
         
         try {
@@ -71,29 +73,28 @@ public class CloudinaryService {
             
             log.info("Video deleted successfully: {}", result);
         } catch (IOException e) {
-            log.error("Failed to delete video from Cloudinary: {}", e.getMessage(), e);
-            throw new IOException("Failed to delete video: " + e.getMessage(), e);
+            throw new AppException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 
     /**
      * Validate video file
      */
-    private void validateVideoFile(MultipartFile file) throws IOException {
+    private void validateVideoFile(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new IOException("File is empty");
+            throw new AppException(ErrorCode.INVALID_FILE);
         }
 
         // Check file size (max 100MB)
         long maxSize = 100 * 1024 * 1024; // 100MB
         if (file.getSize() > maxSize) {
-            throw new IOException("File size exceeds maximum limit of 100MB");
+            throw new AppException(ErrorCode.INVALID_FILE);
         }
 
         // Check content type
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("video/")) {
-            throw new IOException("File must be a video. Received: " + contentType);
+            throw new AppException(ErrorCode.INVALID_FILE);
         }
 
         log.info("Video file validated: {} ({}MB)", 
