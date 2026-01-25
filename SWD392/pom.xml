@@ -107,8 +107,13 @@
 		<!-- Cloudinary SDK for video/image upload -->
 		<dependency>
 			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-core</artifactId>
+			<version>1.39.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.cloudinary</groupId>
 			<artifactId>cloudinary-http44</artifactId>
-			<version>1.31.0</version>
+			<version>1.39.0</version>
 		</dependency>
 
 		<!-- Google Generative AI SDK for video transcription -->
@@ -116,6 +121,20 @@
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-aiplatform</artifactId>
 			<version>3.54.0</version>
+		</dependency>
+
+		<!-- Google Cloud Speech-to-Text for real transcription -->
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-speech</artifactId>
+			<version>4.42.0</version>
+		</dependency>
+
+		<!-- Google Cloud Storage for video file handling -->
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-storage</artifactId>
+			<version>2.40.1</version>
 		</dependency>
 
 		<!-- Apache Tika for file type detection -->

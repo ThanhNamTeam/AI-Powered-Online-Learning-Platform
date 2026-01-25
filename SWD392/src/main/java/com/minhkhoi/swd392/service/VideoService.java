@@ -45,8 +45,8 @@ public class VideoService {
 
             // Step 3: Build and return response
             return videoMapper.toVideoUploadResponse(
-                    uploadResult, 
-                    transcript, 
+                    uploadResult,
+                    transcript,
                     "Video uploaded and transcribed successfully"
             );
 

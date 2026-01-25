@@ -38,7 +38,7 @@ public class VideoController {
                 transcribe);
 
         VideoUploadResponse response;
-        
+
         if (transcribe) {
             response = videoService.uploadVideoAndTranscribe(file);
         } else {
@@ -51,14 +51,37 @@ public class VideoController {
         ));
     }
 
+
+
+
+    @DeleteMapping
+    @Operation(summary = "Delete video by request body",
+               description = "Delete a video using public ID in request body (recommended)")
+    public ResponseEntity<?> deleteVideoByBody(@RequestBody DeleteRequest request) {
+        log.info("Received video deletion request for public ID: {}", request.publicId());
     @PostMapping("/transcript")
-    @Operation(summary = "Generate transcript for existing video", 
+    @Operation(summary = "Generate transcript for existing video",
                description = "Generate transcript for a video that's already uploaded (provide video URL)")
     public ResponseEntity<ApiResponse<TranscriptResponse>> generateTranscript(@RequestBody TranscriptRequest request) {
         log.info("Received transcript generation request for URL: {}", request.getVideoUrl());
 
+        try {
+            videoService.deleteVideo(request.publicId());
+            return ResponseEntity.ok(new DeleteResponse(
+                    true,
+                    "Video deleted successfully"
+            ));
+
+        } catch (IOException e) {
+            log.error("Error deleting video: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new DeleteResponse(
+                            false,
+                            "Failed to delete video: " + e.getMessage()
+                    ));
+        }
         String transcript = videoService.generateTranscript(request.getVideoUrl());
-        
+
         return ResponseEntity.ok(ApiResponse.success(
                 "Transcript generated successfully",
                 new TranscriptResponse(transcript)
@@ -66,7 +89,7 @@ public class VideoController {
     }
 
     @DeleteMapping("/{publicId}")
-    @Operation(summary = "Delete video", 
+    @Operation(summary = "Delete video",
                description = "Delete a video from Cloudinary using its public ID")
     public ResponseEntity<ApiResponse<Void>> deleteVideo(@PathVariable String publicId) {
         log.info("Received video deletion request for public ID: {}", publicId);
@@ -79,5 +102,7 @@ public class VideoController {
     }
 
     // Helper response classes
+    record DeleteResponse(boolean success, String message) {}
+    record DeleteRequest(String publicId) {}
     record TranscriptResponse(String transcript) {}
 }

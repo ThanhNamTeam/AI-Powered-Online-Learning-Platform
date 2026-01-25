@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Video Upload - SWD392</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .options {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-upload:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-upload:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .result-item {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .result-item strong {
+            display: inline-block;
+            width: 120px;
+        }
+
+        .video-link {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .video-link:hover {
+            text-decoration: underline;
+        }
+
+        .transcript-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .btn-new {
+            margin-top: 15px;
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-new:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Test Video Upload</h1>
+        <p class="subtitle">Upload video lên Cloudinary và tạo transcript tự động</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p><strong>Kéo thả video vào đây</strong></p>
+            <p style="color: #999; font-size: 14px; margin-top: 10px;">hoặc click để chọn file</p>
+            <p style="color: #999; font-size: 12px; margin-top: 5px;">Hỗ trợ: MP4, AVI, MOV (tối đa 100MB)</p>
+        </div>
+
+        <input type="file" id="fileInput" accept="video/*">
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <div class="options">
+            <div class="checkbox-container">
+                <input type="checkbox" id="transcribeCheckbox" checked>
+                <label for="transcribeCheckbox">Tạo transcript tự động (sử dụng Google AI)</label>
+            </div>
+        </div>
+
+        <button class="btn btn-upload" id="uploadBtn" disabled>
+            Upload Video
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="status" id="status">Đang chuẩn bị...</div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-title" id="resultTitle"></div>
+            <div id="resultContent"></div>
+            <button class="btn btn-new" onclick="resetForm()">Upload video khác</button>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const transcribeCheckbox = document.getElementById('transcribeCheckbox');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultContent = document.getElementById('resultContent');
+
+        let selectedFile = null;
+
+        // Click to select file
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File selected
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+
+            if (!file.type.startsWith('video/')) {
+                alert('Vui lòng chọn file video!');
+                return;
+            }
+
+            const maxSize = 100 * 1024 * 1024; // 100MB
+            if (file.size > maxSize) {
+                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 100MB.');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = `Kích thước: ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+            fileInfo.classList.add('show');
+            uploadBtn.disabled = false;
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            uploadBtn.disabled = true;
+            progressContainer.classList.add('show');
+            result.classList.remove('show');
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const transcribe = transcribeCheckbox.checked;
+            const apiUrl = `http://localhost:8080/api/videos/upload?transcribe=${transcribe}`;
+
+            try {
+                status.textContent = 'Đang upload video...';
+                progressFill.style.width = '30%';
+                progressFill.textContent = '30%';
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressFill.style.width = '70%';
+                progressFill.textContent = '70%';
+                status.textContent = transcribe ? 'Đang tạo transcript...' : 'Đang xử lý...';
+
+                const data = await response.json();
+
+                progressFill.style.width = '100%';
+                progressFill.textContent = '100%';
+                status.textContent = 'Hoàn thành!';
+
+                setTimeout(() => {
+                    showResult(data);
+                }, 500);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        function showResult(data) {
+            progressContainer.classList.remove('show');
+            result.classList.add('show');
+
+            if (data.success) {
+                result.classList.add('success');
+                result.classList.remove('error');
+                resultTitle.textContent = '✅ Upload thành công!';
+
+                let content = `
+                    <div class="result-item">
+                        <strong>Video URL:</strong><br>
+                        <a href="${data.videoUrl}" target="_blank" class="video-link">${data.videoUrl}</a>
+                    </div>
+                    <div class="result-item">
+                        <strong>Public ID:</strong> ${data.publicId}
+                    </div>
+                `;
+
+                if (data.duration) {
+                    content += `<div class="result-item"><strong>Độ dài:</strong> ${data.duration} giây</div>`;
+                }
+
+                if (data.format) {
+                    content += `<div class="result-item"><strong>Format:</strong> ${data.format}</div>`;
+                }
+
+                if (data.fileSize) {
+                    content += `<div class="result-item"><strong>Kích thước:</strong> ${(data.fileSize / (1024 * 1024)).toFixed(2)} MB</div>`;
+                }
+
+                if (data.transcript) {
+                    content += `
+                        <div class="result-item">
+                            <strong>Transcript:</strong>
+                            <div class="transcript-box">${data.transcript}</div>
+                        </div>
+                    `;
+                }
+
+                resultContent.innerHTML = content;
+            } else {
+                showError(data.message);
+            }
+        }
+
+        function showError(message) {
+            progressContainer.classList.remove('show');
+            result.classList.add('show');
+            result.classList.add('error');
+            result.classList.remove('success');
+            resultTitle.textContent = '❌ Upload thất bại!';
+            resultContent.innerHTML = `
+                <div class="result-item">${message}</div>
+                <div class="result-item" style="margin-top: 15px;">
+                    <strong>Gợi ý:</strong><br>
+                    • Kiểm tra Cloudinary credentials<br>
+                    • Đảm bảo server đang chạy<br>
+                    • Kiểm tra file video hợp lệ<br>
+                    • Xem console log để biết thêm chi tiết
+                </div>
+            `;
+            uploadBtn.disabled = false;
+        }
+
+        function resetForm() {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            uploadBtn.disabled = true;
+            progressContainer.classList.remove('show');
+            result.classList.remove('show');
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+        }
+    </script>
+</body>
+</html>

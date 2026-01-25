@@ -34,6 +34,7 @@ public class SecurityConfig {
                                 "/api/auth/validate-token",
                                 "/api/accounts",
                                 "/api/accounts/exists/**",
+                                "/api/videos/**",  // Video upload endpoints (for testing)
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
