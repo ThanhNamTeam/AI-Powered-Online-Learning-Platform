@@ -15,7 +15,7 @@ import java.util.Map;
 public class VideoService {
 
     private final CloudinaryService cloudinaryService;
-    private final AITranscriptionService aiTranscriptionService;
+    private final AssemblyAITranscriptionService assemblyAITranscriptionService;
 
     /**
      * Upload video and generate transcript
@@ -49,7 +49,7 @@ public class VideoService {
             log.info("Step 2: Generating transcript with AI...");
             String transcript;
             try {
-                transcript = aiTranscriptionService.transcribeVideo(videoUrl);
+                transcript = assemblyAITranscriptionService.transcribeVideo(videoUrl, "auto");
                 log.info("Transcript generated successfully. Length: {} characters", transcript.length());
             } catch (Exception e) {
                 log.error("Failed to generate transcript, but video was uploaded: {}", e.getMessage());
@@ -129,11 +129,4 @@ public class VideoService {
         cloudinaryService.deleteVideo(publicId);
     }
 
-    /**
-     * Generate transcript for existing video URL
-     */
-    public String generateTranscript(String videoUrl) throws IOException {
-        log.info("Generating transcript for existing video: {}", videoUrl);
-        return aiTranscriptionService.transcribeVideo(videoUrl);
-    }
 }

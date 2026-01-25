@@ -61,40 +61,17 @@ public class VideoController {
         }
     }
 
-    @PostMapping("/transcript")
-    @Operation(summary = "Generate transcript for existing video", 
-               description = "Generate transcript for a video that's already uploaded (provide video URL)")
-    public ResponseEntity<?> generateTranscript(@RequestBody TranscriptRequest request) {
-        log.info("Received transcript generation request for URL: {}", request.getVideoUrl());
+
+
+
+    @DeleteMapping
+    @Operation(summary = "Delete video by request body", 
+               description = "Delete a video using public ID in request body (recommended)")
+    public ResponseEntity<?> deleteVideoByBody(@RequestBody DeleteRequest request) {
+        log.info("Received video deletion request for public ID: {}", request.publicId());
 
         try {
-            String transcript = videoService.generateTranscript(request.getVideoUrl());
-            
-            return ResponseEntity.ok(new TranscriptResponse(
-                    true,
-                    transcript,
-                    "Transcript generated successfully"
-            ));
-
-        } catch (IOException e) {
-            log.error("Error generating transcript: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new TranscriptResponse(
-                            false,
-                            null,
-                            "Failed to generate transcript: " + e.getMessage()
-                    ));
-        }
-    }
-
-    @DeleteMapping("/{publicId}")
-    @Operation(summary = "Delete video", 
-               description = "Delete a video from Cloudinary using its public ID")
-    public ResponseEntity<?> deleteVideo(@PathVariable String publicId) {
-        log.info("Received video deletion request for public ID: {}", publicId);
-
-        try {
-            videoService.deleteVideo(publicId);
+            videoService.deleteVideo(request.publicId());
             return ResponseEntity.ok(new DeleteResponse(
                     true,
                     "Video deleted successfully"
@@ -111,6 +88,6 @@ public class VideoController {
     }
 
     // Helper response classes
-    record TranscriptResponse(boolean success, String transcript, String message) {}
     record DeleteResponse(boolean success, String message) {}
+    record DeleteRequest(String publicId) {}
 }

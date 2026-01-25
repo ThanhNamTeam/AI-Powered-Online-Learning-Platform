@@ -59,6 +59,7 @@ public class CloudinaryService {
     /**
      * Delete video from Cloudinary
      * @param publicId Public ID of the video to delete
+     * @throws IOException if deletion fails or video not found
      */
     public void deleteVideo(String publicId) throws IOException {
         log.info("Deleting video from Cloudinary: {}", publicId);
@@ -69,10 +70,21 @@ public class CloudinaryService {
                 ObjectUtils.asMap("resource_type", "video")
             );
             
-            log.info("Video deleted successfully: {}", result);
+            // Check result
+            String resultStatus = (String) result.get("result");
+            log.info("Cloudinary delete result: {}", result);
+            
+            if ("ok".equals(resultStatus)) {
+                log.info("Video deleted successfully: {}", publicId);
+            } else if ("not found".equals(resultStatus)) {
+                throw new IOException("Video not found with public ID: " + publicId);
+            } else {
+                throw new IOException("Failed to delete video. Result: " + resultStatus);
+            }
+            
         } catch (IOException e) {
             log.error("Failed to delete video from Cloudinary: {}", e.getMessage(), e);
-            throw new IOException("Failed to delete video: " + e.getMessage(), e);
+            throw e;
         }
     }
 
