@@ -15,7 +15,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
          # Quan trọng: Dialect cho Postgres
@@ -45,3 +45,16 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration: 86400000
+
+# Cloudinary Configuration
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:your-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:your-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:your-api-secret}
+  folder: swd392-videos
+
+# Google AI Configuration
+google-ai:
+  api-key: ${GOOGLE_AI_API_KEY:your-google-ai-api-key}
+  model: gemini-1.5-flash
+  max-tokens: 8000
