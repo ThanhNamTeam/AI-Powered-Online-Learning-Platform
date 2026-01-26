@@ -13,13 +13,14 @@ public interface UserMapper {
 
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "role", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "enrollments", ignore = true)
     @Mapping(target = "createdCourses", ignore = true)
     @Mapping(target = "payments", ignore = true)
     @Mapping(target = "reportsMade", ignore = true)
     @Mapping(target = "aiSubscriptions", ignore = true)
+    @Mapping(target = "resetPasswordToken", ignore = true)
+    @Mapping(target = "tokenExpirationTime", ignore = true)
     User toUser(CreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

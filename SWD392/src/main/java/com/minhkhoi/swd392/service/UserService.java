@@ -89,6 +89,12 @@ public class UserService {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS, request.getEmail());
         }
 
+        // Validate role - only allow STUDENT or INSTRUCTOR for registration
+        if (request.getRole() != User.Role.STUDENT && request.getRole() != User.Role.INSTRUCTOR) {
+            throw new AppException(ErrorCode.INVALID_INPUT, 
+                "Only STUDENT and INSTRUCTOR roles are allowed for registration");
+        }
+
         // Verify OTP
         OtpVerification otp = otpRepository
                 .findByEmailAndOtpCodeAndIsVerifiedFalseAndExpiresAtAfter(
@@ -100,19 +106,18 @@ public class UserService {
         otp.setVerifiedAt(LocalDateTime.now());
         otpRepository.save(otp);
 
-        // Create user entity with default STUDENT role
-        // Create user entity with default STUDENT role
+        // Create user entity with role from request (mapped automatically)
         User user = userMapper.toUser(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRole(User.Role.STUDENT);
 
         // Save user
         User savedUser = userRepository.save(user);
 
-        // gửi mail cho nó thân thiện :))
+        // Send welcome email
         sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
 
-        log.info("User created successfully with email: {}", savedUser.getEmail());
+        log.info("User created successfully with email: {} and role: {}", 
+            savedUser.getEmail(), savedUser.getRole());
 
         return userMapper.toUserResponse(savedUser);
     }

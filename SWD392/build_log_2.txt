@@ -1,0 +1,81 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.minhkhoi:SWD392 >-------------------------
+[INFO] Building SWD392 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ SWD392 ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ SWD392 ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 63 source files with javac [debug release 21] to target\classes
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/mapper/UserMapper.java:[36,10] Unmapped target properties: "resetPasswordToken, tokenExpirationTime".
+[INFO] 1 warning
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[43,39] cannot find symbol
+  symbol:   class List
+  location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[51,27] cannot find symbol
+  symbol:   class UUID
+  location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[40,6] cannot find symbol
+  symbol:   class GetMapping
+  location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[41,6] cannot find symbol
+  symbol:   class PreAuthorize
+  location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[51,14] cannot find symbol
+  symbol:   class PathVariable
+  location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[47,6] cannot find symbol
+  symbol:   class PutMapping
+  location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[48,6] cannot find symbol
+  symbol:   class PreAuthorize
+  location: class com.minhkhoi.swd392.controller.CourseController
+[INFO] 7 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.301 s
+[INFO] Finished at: 2026-01-26T22:54:17+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project SWD392: Compilation failure: Compilation failure: 
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[43,39] cannot find symbol
+[ERROR]   symbol:   class List
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[51,27] cannot find symbol
+[ERROR]   symbol:   class UUID
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[40,6] cannot find symbol
+[ERROR]   symbol:   class GetMapping
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[41,6] cannot find symbol
+[ERROR]   symbol:   class PreAuthorize
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[51,14] cannot find symbol
+[ERROR]   symbol:   class PathVariable
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[47,6] cannot find symbol
+[ERROR]   symbol:   class PutMapping
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] /D:/GitHub/AI-Powered-Online-Learning-Platform/SWD392/src/main/java/com/minhkhoi/swd392/controller/CourseController.java:[48,6] cannot find symbol
+[ERROR]   symbol:   class PreAuthorize
+[ERROR]   location: class com.minhkhoi.swd392.controller.CourseController
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
