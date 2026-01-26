@@ -30,6 +30,11 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    @Column(name = "token_expiration_time")
+    private LocalDateTime tokenExpirationTime;
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;

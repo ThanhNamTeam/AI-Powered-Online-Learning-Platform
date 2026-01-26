@@ -37,7 +37,9 @@ public class SecurityConfig {
                                 "/api/videos/**",  // Video upload endpoints (for testing)
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/api/accounts/forgot-password",
+                                "/api/accounts/reset-password"
                         ).permitAll()
                         // Protected endpoints - Authentication required (use Authorize button in Swagger)
                         .requestMatchers(

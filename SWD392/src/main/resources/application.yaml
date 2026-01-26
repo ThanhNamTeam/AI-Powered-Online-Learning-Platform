@@ -6,13 +6,11 @@ spring:
     name: SWD392
   profiles:
     active: local
-
   datasource:
-    url: jdbc:postgresql://localhost:5435/swd392_db
-    username: postgres
-    password: admin123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
-
   jpa:
     show-sql: true
     hibernate:
@@ -22,6 +20,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
+  # File upload configuration
   servlet:
     multipart:
       enabled: true
@@ -31,8 +30,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: huynhvuminhkhoi08042004@gmail.com
-    password: pgakceelvslhkumz
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -41,14 +40,6 @@ spring:
             enable: true
             required: true
 
-
-  cloudinary:
-    cloud-name: doobcjvfl
-    api-key: 928685222935223
-    api-secret: OwR-moG6EvjdMcNYXtyKsdC3AUo
-    folder: swd392-videos
-
-
 springdoc:
   api-docs:
     enabled: true
@@ -56,14 +47,19 @@ springdoc:
     enabled: true
 
 jwt:
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  secret: ${JWT_SECRET}
   expiration: 86400000
   refresh-expiration: 604800000
 
-google-ai:
-  api-key: AIzaSyCUnXr7YdzKcFW-5bwUdTbqim9GilDGW4E
-  model: gemini-1.5-flash
-  max-tokens: 8000
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+  folder: swd392-videos
 
-assemblyai:
-  api-key: 060063db00294a0a869fd2eab3c576f4
+# AssemblyAI Configuration for Real Transcription
+assembly:
+  api-key: ${ASSEMBLY_API_KEY}
+
+app:
+  frontend-url: ${FRONTEND_URL}
