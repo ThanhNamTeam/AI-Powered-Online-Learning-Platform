@@ -19,6 +19,7 @@ import com.minhkhoi.swd392.repository.UserRepository;
 import com.minhkhoi.swd392.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,9 +42,12 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
+    private final EmailService emailService;
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
 
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
     /**
      * Send OTP to email for registration
      */
@@ -375,5 +379,38 @@ public class UserService {
                     .message("Token validation failed: " + e.getMessage())
                     .build();
         }
+    }
+
+    public void processForgotPassword(String email) {
+        // Check if user exists
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+        String token = UUID.randomUUID().toString();
+
+        user.setResetPasswordToken(token);
+        user.setTokenExpirationTime(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(user);
+
+        // Send reset password email
+        String resetPasswordUrl = frontendUrl + "/reset-password?token=" + token;
+        emailService.sendResetPasswordEmail(email, resetPasswordUrl);
+
+    }
+
+    public void processResetPassword(String token, String newPassword) {
+        // Find user by reset password token
+        User user = userRepository.findByResetPasswordToken(token)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_INPUT, "Invalid reset password token"));
+
+        // Check if token is expired
+        if (user.getTokenExpirationTime() == null || user.getTokenExpirationTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.INVALID_INPUT, "Reset password token has expired");
+        }
+
+        // Update user's password
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setResetPasswordToken(null);
+        user.setTokenExpirationTime(null);
+        userRepository.save(user);
     }
 }

@@ -1,6 +1,7 @@
 package com.minhkhoi.swd392.controller;
 
 import com.minhkhoi.swd392.dto.request.CreateUserRequest;
+import com.minhkhoi.swd392.dto.request.ResetPasswordRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
@@ -117,4 +118,24 @@ public class AccountController {
         boolean exists = userService.existsByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("Email check completed", exists));
     }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Initiate password reset", description = "Send a password reset email to the user")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestParam String email) {
+        userService.processForgotPassword(email);
+        return ResponseEntity.ok(ApiResponse.success("Password reset email sent", null));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password", description = "Reset user password using the provided token")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            userService.processResetPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
 }
