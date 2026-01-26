@@ -49,6 +49,7 @@ public class VideoService {
             log.info("Step 2: Generating transcript with AI...");
             String transcript;
             try {
+                //tự động nhận diện ngôn ngữ
                 transcript = assemblyAITranscriptionService.transcribeVideo(videoUrl, "auto");
                 log.info("Transcript generated successfully. Length: {} characters", transcript.length());
             } catch (Exception e) {
