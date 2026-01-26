@@ -21,7 +21,7 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinary;
 
-    @Value("${spring.cloudinary.folder}")
+    @Value("${cloudinary.folder}")
     private String folder;
 
     /**
