@@ -7,9 +7,6 @@ spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:postgresql://localhost:5432/swd392_db
-    username: postgres
-    password: admin123
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
@@ -59,7 +56,7 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   folder: swd392-videos
-  
+
 # AssemblyAI Configuration for Real Transcription
 assembly:
   api-key: ${ASSEMBLY_API_KEY}
