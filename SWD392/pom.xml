@@ -116,13 +116,6 @@
 			<version>1.39.0</version>
 		</dependency>
 
-		<!-- Google Generative AI SDK for video transcription -->
-		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>google-cloud-aiplatform</artifactId>
-			<version>3.54.0</version>
-		</dependency>
-
 		<!-- Google Cloud Speech-to-Text for real transcription -->
 		<dependency>
 			<groupId>com.google.cloud</groupId>
@@ -163,12 +156,6 @@
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>${mapstruct.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>io.github.cdimascio</groupId>
-			<artifactId>dotenv-java</artifactId>
-			<version>3.0.0</version>
 		</dependency>
 	</dependencies>
 
