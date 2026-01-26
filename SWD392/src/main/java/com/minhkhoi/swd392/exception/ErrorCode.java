@@ -34,7 +34,16 @@ public enum ErrorCode {
     FILE_DELETE_FAILED("Failed to delete file from Cloudinary", HttpStatus.INTERNAL_SERVER_ERROR),
     TRANSCRIPTION_FAILED("Failed to transcribe video", HttpStatus.INTERNAL_SERVER_ERROR),
     TRANSCRIPT_PARSE_FAILED("Failed to parse transcript response", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_FILE("Invalid file format or size", HttpStatus.BAD_REQUEST);
+
+    INVALID_FILE("Invalid file format or size", HttpStatus.BAD_REQUEST),
+
+    // Course errors (4000-4999)
+    COURSE_NOT_FOUND("Course not found", HttpStatus.NOT_FOUND),
+    COURSE_CREATION_FAILED("Failed to create course", HttpStatus.INTERNAL_SERVER_ERROR),
+    MISSING_COURSE_TITLE("Course title is required", HttpStatus.BAD_REQUEST),
+    INVALID_PRICE("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
+    MISSING_REJECTION_REASON("Rejection reason is required when rejecting a course", HttpStatus.BAD_REQUEST),
+    INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus httpStatus;
