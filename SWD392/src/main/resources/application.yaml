@@ -7,7 +7,7 @@ spring:
   profiles:
     active: local
   datasource:
-    url: jdbc:postgresql://localhost:5435/swd392_db
+    url: jdbc:postgresql://localhost:5432/swd392_db
     username: postgres
     password: admin123
     driver-class-name: org.postgresql.Driver
@@ -52,9 +52,9 @@ jwt:
   refresh-expiration: 604800000
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:doobcjvfl}
-  api-key: ${CLOUDINARY_API_KEY:928685222935223}
-  api-secret: ${CLOUDINARY_API_SECRET:OwR-moG6EvjdMcNYXtyKsdC3AUo}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dppiswkux}
+  api-key: ${CLOUDINARY_API_KEY:481329329335381}
+  api-secret: ${CLOUDINARY_API_SECRET:zb4Ud70ce9mznFc1G2IFYgu2gDI}
   folder: swd392-videos
 
 google-ai:
