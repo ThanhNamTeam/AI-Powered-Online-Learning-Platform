@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AssemblyAITranscriptionService {
 
-    @Value("${assemblyai.api-key:}")
+    @Value("${assembly.api-key}")
     private String apiKey;
 
     private static final String API_URL = "https://api.assemblyai.com/v2";
