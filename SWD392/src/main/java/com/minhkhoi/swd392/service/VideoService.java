@@ -1,12 +1,14 @@
 package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.dto.VideoUploadResponse;
+import com.minhkhoi.swd392.exception.AppException;
+import com.minhkhoi.swd392.exception.ErrorCode;
+import com.minhkhoi.swd392.mapper.VideoMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Map;
 
 @Service
@@ -16,117 +18,60 @@ public class VideoService {
 
     private final CloudinaryService cloudinaryService;
     private final AssemblyAITranscriptionService assemblyAITranscriptionService;
+    private final VideoMapper videoMapper; // Inject Mapper
 
-    /**
-     * Upload video and generate transcript
-     * This is the main orchestration method that:
-     * 1. Uploads video to Cloudinary
-     * 2. Gets the video URL
-     * 3. Sends URL to AI for transcription
-     * 4. Returns complete response
-     */
     public VideoUploadResponse uploadVideoAndTranscribe(MultipartFile file) {
         log.info("Processing video upload and transcription: {}", file.getOriginalFilename());
 
+        // 1. Upload Video
+        Map<String, Object> uploadResult;
         try {
-            // Step 1: Upload video to Cloudinary
-            log.info("Step 1: Uploading video to Cloudinary...");
-            Map<String, Object> uploadResult = cloudinaryService.uploadVideo(file);
-            
-            String videoUrl = (String) uploadResult.get("secure_url");
-            String publicId = (String) uploadResult.get("public_id");
-            Integer duration = uploadResult.get("duration") != null 
-                ? ((Number) uploadResult.get("duration")).intValue() 
-                : null;
-            String format = (String) uploadResult.get("format");
-            Long fileSize = uploadResult.get("bytes") != null 
-                ? ((Number) uploadResult.get("bytes")).longValue() 
-                : null;
-
-            log.info("Video uploaded successfully. URL: {}", videoUrl);
-
-            // Step 2: Generate transcript using AI
-            log.info("Step 2: Generating transcript with AI...");
-            String transcript;
-            try {
-                transcript = assemblyAITranscriptionService.transcribeVideo(videoUrl, "auto");
-                log.info("Transcript generated successfully. Length: {} characters", transcript.length());
-            } catch (Exception e) {
-                log.error("Failed to generate transcript, but video was uploaded: {}", e.getMessage());
-                transcript = "Transcript generation failed: " + e.getMessage();
-            }
-
-            // Step 3: Build and return response
-            return VideoUploadResponse.builder()
-                    .success(true)
-                    .videoUrl(videoUrl)
-                    .publicId(publicId)
-                    .transcript(transcript)
-                    .duration(duration)
-                    .format(format)
-                    .fileSize(fileSize)
-                    .message("Video uploaded and transcribed successfully")
-                    .build();
-
-        } catch (IOException e) {
-            log.error("Failed to upload video: {}", e.getMessage(), e);
-            return VideoUploadResponse.builder()
-                    .success(false)
-                    .message("Failed to upload video: " + e.getMessage())
-                    .build();
+            uploadResult = cloudinaryService.uploadVideo(file);
         } catch (Exception e) {
-            log.error("Unexpected error during video processing: {}", e.getMessage(), e);
-            return VideoUploadResponse.builder()
-                    .success(false)
-                    .message("Unexpected error: " + e.getMessage())
-                    .build();
+            log.error("Cloudinary upload failed: {}", e.getMessage());
+            // Ném ra Exception chuẩn hóa, GlobalExceptionHandler sẽ bắt lỗi này
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
+
+        String videoUrl = (String) uploadResult.get("secure_url");
+        log.info("Video uploaded successfully. URL: {}", videoUrl);
+
+        // 2. Transcribe Video
+        String transcript = null;
+        try {
+            log.info("Generating transcript with AI...");
+            transcript = assemblyAITranscriptionService.transcribeVideo(videoUrl, "auto");
+            log.info("Transcript generated successfully.");
+        } catch (Exception e) {
+            log.error("Transcription failed: {}", e.getMessage());
+            transcript = "Transcript generation failed: " + e.getMessage();
+        }
+
+        // 3. Sử dụng Mapper để trả về kết quả
+        return videoMapper.toResponse(uploadResult, transcript, "Video uploaded and transcribed successfully");
     }
 
-    /**
-     * Upload video only (without transcription)
-     */
     public VideoUploadResponse uploadVideoOnly(MultipartFile file) {
         log.info("Uploading video without transcription: {}", file.getOriginalFilename());
 
         try {
             Map<String, Object> uploadResult = cloudinaryService.uploadVideo(file);
-            
-            String videoUrl = (String) uploadResult.get("secure_url");
-            String publicId = (String) uploadResult.get("public_id");
-            Integer duration = uploadResult.get("duration") != null 
-                ? ((Number) uploadResult.get("duration")).intValue() 
-                : null;
-            String format = (String) uploadResult.get("format");
-            Long fileSize = uploadResult.get("bytes") != null 
-                ? ((Number) uploadResult.get("bytes")).longValue() 
-                : null;
+            // Dùng Mapper
+            return videoMapper.toResponse(uploadResult, "Video uploaded successfully");
 
-            return VideoUploadResponse.builder()
-                    .success(true)
-                    .videoUrl(videoUrl)
-                    .publicId(publicId)
-                    .duration(duration)
-                    .format(format)
-                    .fileSize(fileSize)
-                    .message("Video uploaded successfully")
-                    .build();
-
-        } catch (IOException e) {
-            log.error("Failed to upload video: {}", e.getMessage(), e);
-            return VideoUploadResponse.builder()
-                    .success(false)
-                    .message("Failed to upload video: " + e.getMessage())
-                    .build();
+        } catch (Exception e) {
+            log.error("Upload failed: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
-    /**
-     * Delete video from Cloudinary
-     */
-    public void deleteVideo(String publicId) throws IOException {
+    public void deleteVideo(String publicId) {
         log.info("Deleting video: {}", publicId);
-        cloudinaryService.deleteVideo(publicId);
+        try {
+            cloudinaryService.deleteVideo(publicId);
+        } catch (Exception e) {
+            log.error("Delete video failed: {}", e.getMessage(), e);
+            throw new AppException(ErrorCode.FILE_DELETE_FAILED);
+        }
     }
-
 }

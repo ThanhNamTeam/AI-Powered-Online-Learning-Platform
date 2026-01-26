@@ -27,7 +27,14 @@ public enum ErrorCode {
 
     // Server errors (9000-9999)
     INTERNAL_SERVER_ERROR("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
-    UNCATEGORIZED_ERROR("Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
+    UNCATEGORIZED_ERROR("Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // Service errors (8000-8999)
+    FILE_UPLOAD_FAILED("Failed to upload file to Cloudinary", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_DELETE_FAILED("Failed to delete file from Cloudinary", HttpStatus.INTERNAL_SERVER_ERROR),
+    TRANSCRIPTION_FAILED("Failed to transcribe video", HttpStatus.INTERNAL_SERVER_ERROR),
+    TRANSCRIPT_PARSE_FAILED("Failed to parse transcript response", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_FILE("Invalid file format or size", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus httpStatus;
