@@ -11,7 +11,7 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED("Email has not been verified", HttpStatus.BAD_REQUEST),
 
     // Authentication errors (2000-2999)
-    INVALID_CREDENTIALS("Invalid email or password", HttpStatus.UNAUTHORIZED),
+    INVALID_CREDENTIALS("Mật khẩu hoặc email không chính xác", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("Unauthorized access", HttpStatus.UNAUTHORIZED),
     ACCESS_DENIED("Access denied", HttpStatus.FORBIDDEN),
     REFRESH_TOKEN_INVALID("Invalid or expired refresh token", HttpStatus.UNAUTHORIZED),
