@@ -14,7 +14,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,105 +32,123 @@ public class LessonAsyncService {
     private final ObjectMapper objectMapper;
 
     /**
-     * Asynchronously process the video for a lesson.
-     * Steps:
-     * 1. Transcribe video.
-     * 2. Check instructor subscription.
-     * 3. Generate Quiz (if eligible).
-     *
-     * @param lessonId The ID of the lesson to process
+     * Xử lý video bất đồng bộ: Transcribe -> Check Subscription -> Generate Quiz.
+     * @param lessonId ID của bài học cần xử lý.
      */
     @Async
     @Transactional
-    public void processVideoForLesson(UUID lessonId) { 
-        log.info("Starting background processing for Lesson ID: {}", lessonId);
+    public void processVideoForLesson(UUID lessonId) {
+        log.info(">>>> Bắt đầu xử lý AI chạy ngầm cho Lesson ID: {}", lessonId);
 
         try {
-            // Step 1 - Transcription
+            // 1. Lấy thông tin bài học
             Lesson lesson = lessonRepository.findById(lessonId)
-                    .orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + lessonId));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy bài học ID: " + lessonId));
 
-            String videoUrl = lesson.getVideoUrl();
-            if (videoUrl == null || videoUrl.isEmpty()) {
-                log.warn("Lesson {} has no video URL. Stopping process.", lessonId);
-                return;
+            String transcript = lesson.getTranscript();
+
+            if (transcript == null || transcript.trim().isEmpty()) {
+                String videoUrl = lesson.getVideoUrl();
+                if (videoUrl == null || videoUrl.isEmpty()) {
+                    log.warn("Bài học {} không có link video. Dừng tiến trình.", lessonId);
+                    return;
+                }
+
+                log.info("Đang gọi AssemblyAI để lấy nội dung video...");
+                // Ngôn ngữ để null để AssemblyAI tự động nhận diện (Tiếng Nhật/Anh/Việt)
+                transcript = assemblyAITranscriptionService.transcribeVideo(videoUrl, null);
+
+                if (transcript != null && !transcript.isEmpty()) {
+                    lesson.setTranscript(transcript);
+                    lessonRepository.save(lesson);
+                    log.info("Đã lưu transcript cho Lesson {}", lessonId);
+                } else {
+                    log.error("Không thể lấy được transcript cho Lesson {}", lessonId);
+                    return;
+                }
+            } else {
+                log.info("Lesson {} đã có sẵn transcript. Bỏ qua bước Transcribe.", lessonId);
             }
 
-            // Call AssemblyAI to transcribe
-            // Note: passing null for language code to let it auto-detect or use default
-            String transcript = assemblyAITranscriptionService.transcribeVideo(videoUrl, null);
-            
-            // Validate transcript result
-            if (transcript == null || transcript.isEmpty()) {
-                log.error("Transcription failed or returned empty for Lesson {}", lessonId);
-                return;
-            }
-
-            // Update transcript and save
-            lesson.setTranscript(transcript);
-            lessonRepository.save(lesson);
-            log.info("Transcript saved for Lesson {}", lessonId);
-
-            // Step 2 - Check Subscription (Business Logic)
-            // Retrieve the instructor (User) via Course
+            // ----------------------------------------------------------------
+            // BƯỚC 2: KIỂM TRA QUYỀN PREMIUM (Business Logic)
+            // ----------------------------------------------------------------
+            // Truy ngược từ Lesson -> Module -> Course -> Constructor (User)
             User instructor = lesson.getModule().getCourse().getConstructor();
-            
-            // Check for valid PREMIUM subscription
-            // The requirement is: PREMIUM plan, ACTIVE status, endDate > Current Time
+
+            log.info("Đang kiểm tra gói hội viên cho Instructor: {}", instructor.getFullName());
+
+            // Query kiểm tra gói ACTIVE, đúng User và chưa hết hạn
             List<AISubscription> validSubscriptions = aiSubscriptionRepository.findValidSubscriptions(instructor);
-            
-            boolean isPremiumUser = validSubscriptions.stream()
+
+            boolean hasPremium = validSubscriptions.stream()
                     .anyMatch(sub -> sub.getPlan() == AISubscription.SubscriptionPlan.PREMIUM);
 
-            if (!isPremiumUser) {
-                log.info("User {} is not Premium or subscription is invalid. Skipping Quiz generation.", instructor.getUserId());
-                return; // STOP the process
+            if (!hasPremium) {
+                log.info("Instructor {} không có gói PREMIUM. Kết thúc luồng sau khi lưu Transcript.", instructor.getUserId());
+                return; // Chỉ lưu transcript, không tạo Quiz
             }
 
-            log.info("User {} is eligible. Proceeding to Quiz generation.", instructor.getUserId());
+            // ----------------------------------------------------------------
+            // BƯỚC 3: TẠO QUIZ BẰNG GEMINI AI
+            // ----------------------------------------------------------------
+            log.info("Đang gọi Gemini AI để tạo bộ câu hỏi trắc nghiệm...");
+            String rawJsonResponse = geminiService.generateQuizQuestions(transcript);
 
-            // Step 3 - Generate Quiz (Only for Premium)
-            String quizJson = geminiService.generateQuizQuestions(transcript);
-            
-            // Parse JSON
-            List<QuestionDTO> questionDTOs = objectMapper.readValue(quizJson, new TypeReference<List<QuestionDTO>>() {});
-            
+            // Làm sạch chuỗi (loại bỏ markdown ```json ... ```)
+            String cleanJson = cleanAiJsonResponse(rawJsonResponse);
+
+            // Chuyển đổi JSON string thành List các DTO
+            List<QuestionDTO> questionDTOs = objectMapper.readValue(cleanJson, new TypeReference<List<QuestionDTO>>() {});
+
             if (questionDTOs == null || questionDTOs.isEmpty()) {
-                log.warn("Gemini returned no questions for Lesson {}", lessonId);
+                log.warn("Gemini không trả về câu hỏi nào cho bài học này.");
                 return;
             }
 
-            // Create and Save Quiz
+            // ----------------------------------------------------------------
+            // BƯỚC 4: LƯU TRỮ QUIZ VÀ CÂU HỎI
+            // ----------------------------------------------------------------
+            // Tạo tiêu đề Quiz dựa trên tên bài học
             Quiz quiz = Quiz.builder()
                     .lesson(lesson)
-                    .title("AI Generated Quiz for " + lesson.getTitle())
+                    .title("AI Quiz: " + lesson.getTitle())
                     .build();
             quiz = quizRepository.save(quiz);
 
-            // Save Questions
             for (QuestionDTO dto : questionDTOs) {
                 Question question = Question.builder()
                         .quiz(quiz)
                         .content(dto.getContent())
-                        .options(dto.getOptions())
+                        .options(dto.getOptions()) // Map này sẽ được Hibernate lưu thành JSON trong DB
                         .correctAnswer(dto.getCorrectAnswer())
                         .explanation(dto.getExplanation())
                         .build();
                 questionRepository.save(question);
             }
 
-            log.info("Successfully generated Quiz with {} questions for Lesson {}", questionDTOs.size(), lessonId);
+            log.info(">>>> HOÀN TẤT! Đã tạo thành công Quiz với {} câu hỏi cho Lesson {}", questionDTOs.size(), lessonId);
 
         } catch (Exception e) {
-            log.error("Error processing video for Lesson ID: {}", lessonId, e);
-            // Optional: Update lesson status to ERROR if such a field existed
-            // Since Lesson doesn't have an explicit status field in the entity provided, just logging the error.
+            log.error("LỖI trong quá trình xử lý Async cho Lesson {}: {}", lessonId, e.getMessage(), e);
         }
     }
 
-    // DTO for parsing Gemini response
+    /**
+     * Loại bỏ các ký tự Markdown JSON thường gặp khi AI trả về kết quả
+     */
+    private String cleanAiJsonResponse(String raw) {
+        if (raw == null) return "[]";
+        return raw.replace("```json", "")
+                .replace("```", "")
+                .trim();
+    }
+
+    /**
+     * DTO nội bộ để ánh xạ dữ liệu từ Gemini JSON
+     */
     @Data
-    static class QuestionDTO {
+    public static class QuestionDTO {
         private String content;
         private Map<String, Object> options;
         private String correctAnswer;
