@@ -78,6 +78,11 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
+        // Get current staff user from Security Context
+        String staffEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User staffUser = userRepository.findByEmail(staffEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, staffEmail));
+
         // Validate status
         if (request.getStatus() == CourseStatus.PUBLISHED) {
             course.setStatus(CourseStatus.PUBLISHED);
@@ -93,8 +98,12 @@ public class CourseService {
             throw new AppException(ErrorCode.INVALID_VERIFY_STATUS);
         }
 
+        // Set staff who handled this course
+        course.setHandledByStaff(staffUser);
+
         Course savedCourse = courseRepository.save(course);
-        log.info("Course {} verified with status: {}", savedCourse.getCourseId(), savedCourse.getStatus());
+        log.info("Course {} verified with status: {} by Staff: {}", 
+                savedCourse.getCourseId(), savedCourse.getStatus(), staffUser.getEmail());
         
         return courseMapper.toCourseResponse(savedCourse);
     }

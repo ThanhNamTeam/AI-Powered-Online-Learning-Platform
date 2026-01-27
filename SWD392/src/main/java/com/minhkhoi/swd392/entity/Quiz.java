@@ -26,6 +26,10 @@ public class Quiz {
     @Column(name = "quiz_title", length = 200)
     private String title;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Question> questions;
 }

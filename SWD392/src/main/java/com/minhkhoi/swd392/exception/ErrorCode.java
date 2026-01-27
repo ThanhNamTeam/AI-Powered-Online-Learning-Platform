@@ -43,7 +43,10 @@ public enum ErrorCode {
     MISSING_COURSE_TITLE("Course title is required", HttpStatus.BAD_REQUEST),
     INVALID_PRICE("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     MISSING_REJECTION_REASON("Rejection reason is required when rejecting a course", HttpStatus.BAD_REQUEST),
-    INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST);
+    INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST),
+    
+    // Quiz errors
+    QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND);
 
     private final String message;
     private final HttpStatus httpStatus;

@@ -63,7 +63,6 @@ public class Payment {
     }
 
     public enum PaymentMethod {
-        CREDIT_CARD,
         VNPAY
     }
 }

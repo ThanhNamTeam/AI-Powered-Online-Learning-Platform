@@ -25,6 +25,10 @@ public class Course {
     @JoinColumn(name = "course_constructor_id", nullable = false)
     private User constructor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_handled_by_staff_id")
+    private User handledByStaff;
+
     @Column(name = "course_title", length = 200, nullable = false)
     private String title;
 
