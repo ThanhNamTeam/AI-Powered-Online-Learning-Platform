@@ -459,4 +459,34 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void changePassword(ChangePasswordRequest request) {
+
+        // lấy userid từ token
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+
+        // tìm user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        // kiểm tra mật khẩu cũ có đúng không
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new AppException(ErrorCode.WRONG_OLD_PASSWORD);
+        }
+
+        if(request.getOldPassword().equals(request.getNewPassword())){
+            throw new AppException(ErrorCode.EQUAL_PASSWORD);
+        }
+
+        if(!request.getNewPassword().equals(request.getConfirmPassword())){
+            throw new AppException(ErrorCode.CONFIRM_PASSWORD_MISMATCH);
+        }
+
+        // cập nhật mật khẩu mới
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+
+        // lưu lại
+        userRepository.save(user);
+    }
+
 }

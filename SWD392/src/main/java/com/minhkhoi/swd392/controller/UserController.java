@@ -1,5 +1,6 @@
 package com.minhkhoi.swd392.controller;
 
+import com.minhkhoi.swd392.dto.request.ChangePasswordRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserInfoRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.service.CloudinaryService;
@@ -38,5 +39,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> updateProfile(@RequestBody UpdateUserInfoRequest request){
         userService.updateUserInfo(request);
         return ResponseEntity.ok(ApiResponse.success("Update profile successfully", null));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest){
+        userService.changePassword(changePasswordRequest);
+        return ResponseEntity.ok(ApiResponse.success("Change password successfully", null));
     }
 }
