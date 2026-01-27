@@ -37,8 +37,10 @@ public enum ErrorCode {
 
     INVALID_FILE("Invalid file format or size", HttpStatus.BAD_REQUEST),
 
-    // Course errors (4000-4999)
+    // Course/Module errors (4000-4999)
     COURSE_NOT_FOUND("Course not found", HttpStatus.NOT_FOUND),
+    MODULE_NOT_FOUND("Module not found", HttpStatus.NOT_FOUND),
+    LESSON_NOT_FOUND("Lesson not found", HttpStatus.NOT_FOUND),
     COURSE_CREATION_FAILED("Failed to create course", HttpStatus.INTERNAL_SERVER_ERROR),
     MISSING_COURSE_TITLE("Course title is required", HttpStatus.BAD_REQUEST),
     INVALID_PRICE("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
@@ -46,7 +48,8 @@ public enum ErrorCode {
     INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST),
     
     // Quiz errors
-    QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND);
+    QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND),
+    PREMIUM_REQUIRED("Instructor must have a PREMIUM subscription to generate AI quizzes", HttpStatus.PAYMENT_REQUIRED);
 
     private final String message;
     private final HttpStatus httpStatus;

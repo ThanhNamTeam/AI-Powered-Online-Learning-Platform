@@ -68,7 +68,7 @@ public class VideoService {
     public void deleteVideo(String publicId) {
         log.info("Deleting video: {}", publicId);
         try {
-            cloudinaryService.deleteVideo(publicId);
+            cloudinaryService.deleteFile(publicId, "video");
         } catch (Exception e) {
             log.error("Delete video failed: {}", e.getMessage(), e);
             throw new AppException(ErrorCode.FILE_DELETE_FAILED);

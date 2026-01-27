@@ -34,6 +34,12 @@ public class Lesson {
     @Column(name = "lessons_transcript", columnDefinition = "TEXT")
     private String transcript;
 
+    @Column(name = "lessons_document_url")
+    private String documentUrl;
+
+    @Column(name = "lessons_document_content", columnDefinition = "TEXT")
+    private String documentContent;
+
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<VectorStore> vectorStores;
 

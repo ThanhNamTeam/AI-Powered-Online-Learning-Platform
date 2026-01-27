@@ -6,15 +6,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class GeminiService {
-
     /**
-     * Mock method to generate quiz questions from transcript via Gemini.
+     * Mock method to generate quiz questions from content (transcript/documents) via Gemini.
      * In a real implementation, this would call the Google Gemini API.
-     * @param transcript The lesson transcript
+     * @param content The lesson content (transcript + materials)
      * @return JSON string containing the generated questions
      */
-    public String generateQuizQuestions(String transcript) {
-        log.info("Mocking Gemini generation for transcript size: {}", transcript.length());
+    public String generateQuizQuestions(String content) {
+        log.info("Mocking Gemini generation for content size: {}", content.length());
         
         // Mock processing delay
         try {
