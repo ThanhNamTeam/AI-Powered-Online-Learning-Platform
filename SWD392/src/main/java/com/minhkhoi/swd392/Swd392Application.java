@@ -14,3 +14,4 @@ public class Swd392Application {
 		SpringApplication.run(Swd392Application.class, args);
 	}
 }
+

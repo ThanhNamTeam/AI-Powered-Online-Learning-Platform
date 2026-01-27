@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
     // User errors (1000-1999)
-    USER_NOT_FOUND("User not found with id: %s", HttpStatus.NOT_FOUND),
+    USER_NOT_FOUND("User not found with email: %s", HttpStatus.NOT_FOUND),
     EMAIL_ALREADY_EXISTS("Email already exists: %s", HttpStatus.CONFLICT),
     EMAIL_NOT_VERIFIED("Email has not been verified", HttpStatus.BAD_REQUEST),
 
