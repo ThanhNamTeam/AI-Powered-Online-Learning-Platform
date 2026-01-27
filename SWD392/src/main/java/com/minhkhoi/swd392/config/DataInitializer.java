@@ -45,6 +45,7 @@ public class DataInitializer implements CommandLineRunner {
                         .passwordHash(passwordEncoder.encode("Admin@123"))
                         .role(User.Role.ADMIN)
                         .createdAt(LocalDateTime.now())
+                        .enabled(true)
                         .build();
                 
                 userRepository.save(admin);
@@ -56,6 +57,7 @@ public class DataInitializer implements CommandLineRunner {
                         .passwordHash(passwordEncoder.encode("Staff@123"))
                         .role(User.Role.STAFF)
                         .createdAt(LocalDateTime.now())
+                        .enabled(true)
                         .build();
                         
                 userRepository.save(staff);
