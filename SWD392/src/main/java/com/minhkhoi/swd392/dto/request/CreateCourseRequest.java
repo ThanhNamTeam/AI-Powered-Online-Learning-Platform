@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 
@@ -29,7 +30,8 @@ public class CreateCourseRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Price must be greater than or equal to 0")
     private BigDecimal price;
 
-    private String thumbnailUrl;
+    @NotNull(message = "Thumbnail file is required")
+    private MultipartFile thumbnailFile;
     
     private CourseStatus status;
 }
