@@ -17,9 +17,12 @@ public interface CourseMapper {
     @Mapping(target = "enrollments", ignore = true)
     @Mapping(target = "reports", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
+    @Mapping(target = "handledByStaff", ignore = true)
     Course toCourse(CreateCourseRequest request, User constructor);
 
     @Mapping(target = "constructorId", source = "constructor.userId")
     @Mapping(target = "constructorName", source = "constructor.fullName")
+    @Mapping(target = "handledByStaffId", source = "handledByStaff.userId")
+    @Mapping(target = "handledByStaffName", source = "handledByStaff.fullName")
     CourseResponse toCourseResponse(Course course);
 }

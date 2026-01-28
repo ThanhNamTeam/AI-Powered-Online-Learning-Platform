@@ -25,102 +25,79 @@ public class CloudinaryService {
     private String folder;
 
     /**
-     * Upload video to Cloudinary
-     * @param file Video file to upload
-     * @return Map containing upload result with URL, public_id, duration, etc.
+     * Upload any file to Cloudinary
+     * @param file File to upload
+     * @param resourceType "image", "video", or "raw"
+     * @return Map containing upload result
      */
-    public Map<String, Object> uploadVideo(MultipartFile file) {
-        log.info("Starting video upload to Cloudinary: {}", file.getOriginalFilename());
-        
+    public Map<String, Object> uploadFile(MultipartFile file, String resourceType) {
+        log.info("Starting {} upload to Cloudinary: {}", resourceType, file.getOriginalFilename());
         try {
-            // Validate file
-            validateVideoFile(file);
-            
-            // Upload with video-specific options
             Map<String, Object> uploadResult = cloudinary.uploader().upload(
                 file.getBytes(),
                 ObjectUtils.asMap(
-                    "resource_type", "video",
+                    "resource_type", resourceType,
                     "folder", folder,
                     "use_filename", true,
-                    "unique_filename", true,
-                    "overwrite", false,
-                    "quality", "auto",
-                    "format", "mp4"
+                    "unique_filename", true
                 )
             );
-            
-            log.info("Video uploaded successfully. Public ID: {}", uploadResult.get("public_id"));
+            log.info("{} uploaded successfully. Public ID: {}", resourceType, uploadResult.get("public_id"));
             return uploadResult;
-            
         } catch (IOException e) {
+            log.error("Cloudinary upload failed", e);
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
     /**
-     * Delete video from Cloudinary
-     * @param publicId Public ID of the video to delete
-     * @throws IOException if deletion fails or video not found
+     * Upload video specifically (with validation)
      */
-    public void deleteVideo(String publicId) {
-        log.info("Deleting video from Cloudinary: {}", publicId);
-        
+    public Map<String, Object> uploadVideo(MultipartFile file) {
+        validateVideoFile(file);
+        return uploadFile(file, "video");
+    }
+
+    /**
+     * Delete file from Cloudinary
+     * @param publicId Public ID of the file to delete
+     * @param resourceType "image", "video", or "raw"
+     */
+    public void deleteFile(String publicId, String resourceType) {
+        log.info("Deleting {} from Cloudinary: {}", resourceType, publicId);
         try {
             Map<String, Object> result = cloudinary.uploader().destroy(
                 publicId,
-                ObjectUtils.asMap("resource_type", "video")
+                ObjectUtils.asMap("resource_type", resourceType)
             );
             
-            // Check result
             String resultStatus = (String) result.get("result");
-            log.info("Cloudinary delete result: {}", result);
-
-            if ("ok".equals(resultStatus)) {
-                log.info("Video deleted successfully: {}", publicId);
-            } else if ("not found".equals(resultStatus)) {
-                throw new IOException("Video not found with public ID: " + publicId);
-            } else {
-                throw new IOException("Failed to delete video. Result: " + resultStatus);
+            if (!"ok".equals(resultStatus) && !"not found".equals(resultStatus)) {
+                throw new IOException("Failed to delete file. Result: " + resultStatus);
             }
-
         } catch (IOException e) {
+            log.error("Cloudinary delete failed", e);
             throw new AppException(ErrorCode.FILE_DELETE_FAILED);
         }
     }
 
-    /**
-     * Validate video file
-     */
     private void validateVideoFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_FILE);
         }
-
-        // Check file size (max 100MB)
         long maxSize = 100 * 1024 * 1024; // 100MB
         if (file.getSize() > maxSize) {
             throw new AppException(ErrorCode.INVALID_FILE);
         }
-
-        // Check content type
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("video/")) {
             throw new AppException(ErrorCode.INVALID_FILE);
         }
-
-        log.info("Video file validated: {} ({}MB)", 
-            file.getOriginalFilename(), 
-            file.getSize() / (1024.0 * 1024.0));
     }
 
-    /**
-     * Get video URL from public ID
-     */
-    public String getVideoUrl(String publicId) {
+    public String getUrl(String publicId, String resourceType) {
         return cloudinary.url()
-            .resourceType("video")
-            .format("mp4")
+            .resourceType(resourceType)
             .generate(publicId);
     }
 

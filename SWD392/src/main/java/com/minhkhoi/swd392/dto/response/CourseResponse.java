@@ -23,4 +23,6 @@ public class CourseResponse {
     private String rejectionReason;
     private UUID constructorId;
     private String constructorName;
+    private UUID handledByStaffId;
+    private String handledByStaffName;
 }

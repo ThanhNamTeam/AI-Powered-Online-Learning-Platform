@@ -42,14 +42,23 @@ public enum ErrorCode {
     TRANSCRIPT_PARSE_FAILED("Failed to parse transcript response", HttpStatus.INTERNAL_SERVER_ERROR),
 
     INVALID_FILE("Invalid file format or size", HttpStatus.BAD_REQUEST),
+    VIDEO_REQUIRED("Video file is required for lesson creation", HttpStatus.BAD_REQUEST),
 
-    // Course errors (4000-4999)
+    // Course/Module errors (4000-4999)
     COURSE_NOT_FOUND("Course not found", HttpStatus.NOT_FOUND),
+    MODULE_NOT_FOUND("Module not found", HttpStatus.NOT_FOUND),
+    LESSON_NOT_FOUND("Lesson not found", HttpStatus.NOT_FOUND),
     COURSE_CREATION_FAILED("Failed to create course", HttpStatus.INTERNAL_SERVER_ERROR),
     MISSING_COURSE_TITLE("Course title is required", HttpStatus.BAD_REQUEST),
     INVALID_PRICE("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     MISSING_REJECTION_REASON("Rejection reason is required when rejecting a course", HttpStatus.BAD_REQUEST),
-    INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST);
+    INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST),
+    
+    // Quiz errors
+    QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND),
+    PREMIUM_REQUIRED("Bạn cần mua gói PREMIUM để sử dụng tính năng tạo câu hỏi bằng AI. Vui lòng nâng cấp tài khoản!", HttpStatus.PAYMENT_REQUIRED),
+    QUIZ_ALREADY_EXISTS("The quiz already exists", HttpStatus.BAD_REQUEST),
+    QUIZ_GENERATION_IN_PROGRESS("The system is processing, please wait", HttpStatus.ACCEPTED);
 
     private final String message;
     private final HttpStatus httpStatus;
@@ -59,4 +68,3 @@ public enum ErrorCode {
         this.httpStatus = httpStatus;
     }
 }
-

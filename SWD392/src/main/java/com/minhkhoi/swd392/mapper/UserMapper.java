@@ -33,5 +33,7 @@ public interface UserMapper {
     @Mapping(target = "payments", ignore = true)
     @Mapping(target = "reportsMade", ignore = true)
     @Mapping(target = "aiSubscriptions", ignore = true)
+    @Mapping(target = "resetPasswordToken", ignore = true)
+    @Mapping(target = "tokenExpirationTime", ignore = true)
     void updateUserFromRequest(UpdateUserRequest request, @MappingTarget User user);
 }
