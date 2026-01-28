@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,10 +30,7 @@ public class CourseService {
     private final UserRepository userRepository;
     private final CourseMapper courseMapper;
     private final CloudinaryService cloudinaryService;
-
-    public String uploadThumbnail(MultipartFile file) {
-        return cloudinaryService.uploadImage(file);
-    }
+    private final com.minhkhoi.swd392.repository.ModuleRepository moduleRepository;
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -48,16 +44,25 @@ public class CourseService {
             throw new AppException(ErrorCode.ACCESS_DENIED);
         }
 
+        // Upload thumbnail to Cloudinary
+        String thumbnailUrl;
+        if (request.getThumbnailFile() != null && !request.getThumbnailFile().isEmpty()) {
+            java.util.Map<String, Object> uploadResult = cloudinaryService.uploadFile(request.getThumbnailFile(), "image");
+            thumbnailUrl = (String) uploadResult.get("secure_url"); 
+        } else {
+             throw new AppException(ErrorCode.INVALID_FILE);
+        }
+
         // Map request to entity
         Course course = courseMapper.toCourse(request, user);
+        course.setThumbnailUrl(thumbnailUrl);
         
         // Set status based on request
-        if (request.getStatus() == CourseStatus.PENDING) {
-            course.setStatus(CourseStatus.PENDING);
-        } else {
-            // Default is DRAFT (also applies if user sends DRAFT or null or illegal status)
-            course.setStatus(CourseStatus.DRAFT);
+        // Always set DRAFT initially
+        if (request.getStatus() != null && request.getStatus() != CourseStatus.DRAFT) {
+            throw new AppException(ErrorCode.INVALID_CREATE_STATUS);
         }
+        course.setStatus(CourseStatus.DRAFT);
         
         // Save to database
         Course savedCourse = courseRepository.save(course);
@@ -89,10 +94,15 @@ public class CourseService {
         User staffUser = userRepository.findByEmail(staffEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, staffEmail));
 
-        // Validate status
-        if (request.getStatus() == CourseStatus.PUBLISHED) {
-            course.setStatus(CourseStatus.PUBLISHED);
-            course.setRejectionReason(null); // Clear rejection reason if published
+        // Validate current status logic for Staff
+        if (course.getStatus() != CourseStatus.PENDING_APPROVAL) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS_FOR_APPROVAL);
+        }
+
+        // Validate status request
+        if (request.getStatus() == CourseStatus.APPROVED) {
+            course.setStatus(CourseStatus.APPROVED);
+            course.setRejectionReason(null); // Clear rejection reason if approved
         } else if (request.getStatus() == CourseStatus.REJECTED) {
             // Require reason when rejecting
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
@@ -111,6 +121,42 @@ public class CourseService {
         log.info("Course {} verified with status: {} by Staff: {}", 
                 savedCourse.getCourseId(), savedCourse.getStatus(), staffUser.getEmail());
         
+        return courseMapper.toCourseResponse(savedCourse);
+    }
+
+    /**
+     * Request approval for course (Instructor)
+     */
+    @Transactional
+    public CourseResponse requestApproval(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+        // Check if user is the instructor of this course
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!course.getConstructor().getEmail().equals(email)) {
+            throw new AppException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // Check current status
+        if (course.getStatus() != CourseStatus.DRAFT) {
+            // Can only request approval if Draft (or Rejected? requirement says MUST be DRAFT)
+            // If rejected, user should probably edit and set back to draft or allow re-request logic.
+            // Requirement: "Check trạng thái hiện tại: Phải là DRAFT mới được gửi."
+            throw new AppException(ErrorCode.INVALID_VERIFY_STATUS); // Or generic "Invalid status for request"
+        }
+
+        // Check module count
+        long moduleCount = moduleRepository.countByCourse_CourseId(courseId);
+        if (moduleCount < 3) {
+            throw new AppException(ErrorCode.MIN_MODULES_REQUIRED);
+        }
+
+        course.setStatus(CourseStatus.PENDING_APPROVAL);
+        course.setRejectionReason(null); // Clear old rejection reason if any
+        Course savedCourse = courseRepository.save(course);
+        
+        log.info("Course {} requested approval by Instructor: {}", course.getCourseId(), email);
         return courseMapper.toCourseResponse(savedCourse);
     }
 }

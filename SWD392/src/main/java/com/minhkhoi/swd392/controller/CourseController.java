@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.UUID;
@@ -31,25 +30,30 @@ public class CourseController {
 
     private final CourseService courseService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Create a new course",
             description = "Create a new course (Only for INSTRUCTOR role). Status can be DRAFT or PENDING.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    public ResponseEntity<ApiResponse<CourseResponse>> createCourse(@Valid @RequestBody CreateCourseRequest request) {
+    public ResponseEntity<ApiResponse<CourseResponse>> createCourse(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("price") java.math.BigDecimal price,
+            @RequestParam("thumbnailFile") org.springframework.web.multipart.MultipartFile thumbnailFile,
+            @RequestParam(value = "status", required = false) com.minhkhoi.swd392.constant.CourseStatus status) {
+            
+        CreateCourseRequest request = CreateCourseRequest.builder()
+                .title(title)
+                .description(description)
+                .price(price)
+                .thumbnailFile(thumbnailFile)
+                .status(status)
+                .build();
+
         CourseResponse response = courseService.createCourse(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Course created successfully", response));
-    }
-
-    @PostMapping(value = "/upload-thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @Operation(summary = "Upload course thumbnail", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<String>> uploadThumbnail(@RequestParam("file") MultipartFile file) {
-        String url = courseService.uploadThumbnail(file);
-        return ResponseEntity.ok(ApiResponse.success("Upload thumbnail successfully", url));
     }
 
     @GetMapping("/all")
@@ -66,5 +70,11 @@ public class CourseController {
             @PathVariable UUID courseId,
             @Valid @RequestBody VerifyCourseRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Course verification processed", courseService.verifyCourse(courseId, request)));
+    }
+    @PostMapping("/{courseId}/submit-approval")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Submit Course for Approval (Instructor)", description = "Request approval for a DRAFT course. Must have at least 3 modules.", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<CourseResponse>> requestApproval(@PathVariable UUID courseId) {
+        return ResponseEntity.ok(ApiResponse.success("Approval requested successfully", courseService.requestApproval(courseId)));
     }
 }

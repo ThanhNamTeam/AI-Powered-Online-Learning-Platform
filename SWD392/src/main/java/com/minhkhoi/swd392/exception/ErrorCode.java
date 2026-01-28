@@ -58,7 +58,11 @@ public enum ErrorCode {
     QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND),
     PREMIUM_REQUIRED("Bạn cần mua gói PREMIUM để sử dụng tính năng tạo câu hỏi bằng AI. Vui lòng nâng cấp tài khoản!", HttpStatus.PAYMENT_REQUIRED),
     QUIZ_ALREADY_EXISTS("The quiz already exists", HttpStatus.BAD_REQUEST),
-    QUIZ_GENERATION_IN_PROGRESS("The system is processing, please wait", HttpStatus.ACCEPTED);
+    QUIZ_GENERATION_IN_PROGRESS("The system is processing, please wait", HttpStatus.ACCEPTED),
+    MIN_MODULES_REQUIRED("Course must have at least 3 modules to request approval", HttpStatus.BAD_REQUEST),
+    COURSE_NOT_APPROVED("Course must be APPROVED to generate quiz", HttpStatus.BAD_REQUEST),
+    INVALID_CREATE_STATUS("Only DRAFT status is allowed for creation", HttpStatus.BAD_REQUEST),
+    INVALID_COURSE_STATUS_FOR_APPROVAL("Course must be in PENDING_APPROVAL status to be verified", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus httpStatus;

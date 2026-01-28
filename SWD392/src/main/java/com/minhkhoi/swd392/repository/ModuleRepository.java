@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ModuleRepository extends JpaRepository<Module, UUID> {
     List<Module> findByCourse_CourseIdOrderByOrderIndexAsc(UUID courseId);
+    
+    long countByCourse_CourseId(UUID courseId);
 }
