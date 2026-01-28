@@ -2,7 +2,7 @@ package com.minhkhoi.swd392.constant;
 
 public enum CourseStatus {
     DRAFT,
-    PENDING,
-    PUBLISHED,
+    PENDING_APPROVAL,
+    APPROVED,
     REJECTED
 }

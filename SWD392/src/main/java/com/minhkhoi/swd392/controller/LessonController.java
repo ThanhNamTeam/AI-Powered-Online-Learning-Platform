@@ -75,6 +75,10 @@ public class LessonController {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
+        if (lesson.getModule().getCourse().getStatus() != com.minhkhoi.swd392.constant.CourseStatus.APPROVED) {
+            throw new AppException(ErrorCode.COURSE_NOT_APPROVED);
+        }
+
         if (lesson.getQuizStatus() == QuizStatus.COMPLETED) {
             throw new AppException(ErrorCode.QUIZ_ALREADY_EXISTS);
         }
