@@ -1,7 +1,9 @@
 package com.minhkhoi.swd392.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minhkhoi.swd392.dto.JwtInfo;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
+import com.minhkhoi.swd392.repository.RedisTokenRepository;
 import com.minhkhoi.swd392.service.JwtService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -11,6 +13,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final RedisTokenRepository redisTokenRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -48,6 +53,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             jwt = authHeader.substring(7);
+            JwtInfo info = jwtService.parseJwtInfo(jwt);
+            String jti = info.getJwtId();
+
+            // Check if the token is revoked
+            boolean revoked = redisTokenRepository.existsById(jti);
+            if (revoked) {
+                handleException(response, "Token has been revoked", HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
             username = jwtService.extractUsername(jwt);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
