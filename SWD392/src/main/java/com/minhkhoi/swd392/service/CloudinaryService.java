@@ -101,15 +101,17 @@ public class CloudinaryService {
             .generate(publicId);
     }
 
-    public String uploadImage(MultipartFile file) throws IOException {
-        if(file.isEmpty()){
+    public String uploadImage(MultipartFile file) {
+        if (file.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_FILE);
         }
-
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                ObjectUtils.asMap("folder", "products"));
-
-        // Trả về đường dẫn ảnh (URL) sau khi upload thành công
-        return uploadResult.get("url").toString();
+        try {
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                    ObjectUtils.asMap("folder", folder));
+            return uploadResult.get("secure_url").toString();
+        } catch (IOException e) {
+            log.error("Image upload failed", e);
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
     }
 }

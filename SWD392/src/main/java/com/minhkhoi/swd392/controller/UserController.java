@@ -24,14 +24,9 @@ public class UserController {
 
     @PostMapping("/upload-avatar")
     public ResponseEntity<ApiResponse<String>> uploadAvatar(@RequestParam("file") MultipartFile file){
-         try {
-             String url = cloudinaryService.uploadImage(file);
-             userService.updateAvatarUrl(url);
-            return ResponseEntity.ok(ApiResponse.success("Upload avatar successfully", url));
-         } catch (IOException e) {
-             return ResponseEntity.internalServerError()
-                     .body(ApiResponse.error("Failed to upload avatar: " + e.getMessage()));
-         }
+         String url = cloudinaryService.uploadImage(file);
+         userService.updateAvatarUrl(url);
+         return ResponseEntity.ok(ApiResponse.success("Upload avatar successfully", url));
     }
 
     @PutMapping("/update-profile")
