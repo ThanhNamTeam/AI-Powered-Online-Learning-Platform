@@ -1,19 +1,26 @@
 package com.minhkhoi.swd392.service;
 
+import com.fasterxml.jackson.databind.DatabindException;
 import com.minhkhoi.swd392.config.JwtUtil;
+import com.minhkhoi.swd392.dto.AuthTokenPair;
+import com.minhkhoi.swd392.dto.JwtInfo;
+import com.minhkhoi.swd392.dto.TokenPayload;
 import com.minhkhoi.swd392.dto.request.*;
 import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.dto.response.ValidateTokenResponse;
 import com.minhkhoi.swd392.entity.OtpVerification;
+import com.minhkhoi.swd392.entity.RedisToken;
 import com.minhkhoi.swd392.entity.RefreshToken;
 import com.minhkhoi.swd392.entity.User;
+import com.minhkhoi.swd392.repository.RedisTokenRepository;
 import com.minhkhoi.swd392.repository.RefreshTokenRepository;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.repository.OtpVerificationRepository;
 import com.minhkhoi.swd392.repository.UserRepository;
 import com.minhkhoi.swd392.mapper.UserMapper;
+import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,10 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.PublicKey;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +49,8 @@ public class UserService {
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
+    private final RedisTokenRepository redisTokenRepository;
+    private final JwtService jwtService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -267,7 +273,7 @@ public class UserService {
      * Authenticate user and generate JWT token
      */
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public AuthTokenPair login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, request.getEmail()));
 
@@ -277,20 +283,22 @@ public class UserService {
 
         // Generate access token and refresh token
         String accessToken = jwtUtil.generateToken(user);
-        String refreshTokenStr = jwtUtil.generateRefreshToken(user);
+        TokenPayload refreshPayload = jwtUtil.generateRefreshToken(user);
 
         // Save refresh token to database
         RefreshToken refreshToken = RefreshToken.builder()
-                .token(refreshTokenStr)
+                .token(refreshPayload.getToken())
                 .user(user)
                 .expiresAt(LocalDateTime.now().plusDays(7)) // 7 days expiration
                 .build();
-
         refreshTokenRepository.save(refreshToken);
 
         log.info("User logged in successfully: {}", user.getEmail());
 
-        return new LoginResponse(accessToken, refreshTokenStr);
+        return AuthTokenPair.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshPayload.getToken())
+                .build();
     }
 
     /**
@@ -298,41 +306,48 @@ public class UserService {
      * Uses Rotating Refresh Token pattern for better security
      */
     @Transactional
-    public LoginResponse refreshToken(RefreshTokenRequest request) {
-        // Validate refresh token from database
-        RefreshToken oldRefreshToken = refreshTokenRepository
-                .findByTokenAndRevokedFalseAndExpiresAtAfter(request.getRefreshToken(), LocalDateTime.now())
-                .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_INVALID));
+    public AuthTokenPair refreshToken(String refreshToken) {
 
-        // Validate JWT token
-        if (!jwtUtil.isTokenValid(request.getRefreshToken())) {
+        //  Validate JWT trước
+        if (!jwtUtil.isTokenValid(refreshToken)) {
             throw new AppException(ErrorCode.REFRESH_TOKEN_INVALID);
         }
 
-        // Get user from refresh token
+
+        // Lookup DB bằng jti
+        RefreshToken oldRefreshToken = refreshTokenRepository
+                .findByTokenAndRevokedFalseAndExpiresAtAfter(
+                        refreshToken,
+                        LocalDateTime.now()
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_INVALID));
+
         User user = oldRefreshToken.getUser();
 
-        // Revoke old refresh token
+        // Revoke refresh token cũ
         oldRefreshToken.setRevoked(true);
         refreshTokenRepository.save(oldRefreshToken);
 
-        // Generate new access token and new refresh token
+        //  Generate token mới
         String newAccessToken = jwtUtil.generateToken(user);
-        String newRefreshTokenStr = jwtUtil.generateRefreshToken(user);
+        TokenPayload newRefreshPayload = jwtUtil.generateRefreshToken(user);
 
-        // Save new refresh token to database
+        // Save refresh token mới
         RefreshToken newRefreshToken = RefreshToken.builder()
-                .token(newRefreshTokenStr)
+                .token(newRefreshPayload.getToken())
                 .user(user)
-                .expiresAt(LocalDateTime.now().plusDays(7)) // 7 days expiration
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .revoked(false)
                 .build();
 
         refreshTokenRepository.save(newRefreshToken);
 
-        log.info("Access token and refresh token refreshed for user: {}", user.getEmail());
-
-        return new LoginResponse(newAccessToken, newRefreshTokenStr);
+        return AuthTokenPair.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshPayload.getToken())
+                .build();
     }
+
 
     /**
      * Validate access token
@@ -385,6 +400,22 @@ public class UserService {
                     .message("Token validation failed: " + e.getMessage())
                     .build();
         }
+    }
+
+    public void logout(String token){
+        JwtInfo jwtInfo = jwtService.parseJwtInfo(token);
+        String jwtId = jwtInfo.getJwtId();
+        Date expiration = jwtInfo.getExpiredTime();
+        if(expiration.before(new Date())){
+            return;
+        }
+        RedisToken redisToken = RedisToken.builder()
+                .jwtId(jwtId)
+                .expiration(expiration.getTime() - System.currentTimeMillis())
+                .build();
+
+        log.info("SAVE REDIS JTI = {}", jwtInfo.getJwtId());
+        redisTokenRepository.save(redisToken);
     }
 
     public void processForgotPassword(String email) {

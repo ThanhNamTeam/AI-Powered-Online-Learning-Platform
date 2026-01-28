@@ -116,6 +116,12 @@
 			<version>1.39.0</version>
 		</dependency>
 
+		<!-- Redis -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 		<!-- Google Cloud Speech-to-Text for real transcription -->
 		<dependency>
 			<groupId>com.google.cloud</groupId>
