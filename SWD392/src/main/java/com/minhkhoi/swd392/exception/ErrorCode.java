@@ -36,6 +36,7 @@ public enum ErrorCode {
     TRANSCRIPT_PARSE_FAILED("Failed to parse transcript response", HttpStatus.INTERNAL_SERVER_ERROR),
 
     INVALID_FILE("Invalid file format or size", HttpStatus.BAD_REQUEST),
+    VIDEO_REQUIRED("Video file is required for lesson creation", HttpStatus.BAD_REQUEST),
 
     // Course/Module errors (4000-4999)
     COURSE_NOT_FOUND("Course not found", HttpStatus.NOT_FOUND),
@@ -49,7 +50,9 @@ public enum ErrorCode {
     
     // Quiz errors
     QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND),
-    PREMIUM_REQUIRED("Instructor must have a PREMIUM subscription to generate AI quizzes", HttpStatus.PAYMENT_REQUIRED);
+    PREMIUM_REQUIRED("Bạn cần mua gói PREMIUM để sử dụng tính năng tạo câu hỏi bằng AI. Vui lòng nâng cấp tài khoản!", HttpStatus.PAYMENT_REQUIRED),
+    QUIZ_ALREADY_EXISTS("The quiz already exists", HttpStatus.BAD_REQUEST),
+    QUIZ_GENERATION_IN_PROGRESS("The system is processing, please wait", HttpStatus.ACCEPTED);
 
     private final String message;
     private final HttpStatus httpStatus;
@@ -59,4 +62,3 @@ public enum ErrorCode {
         this.httpStatus = httpStatus;
     }
 }
-

@@ -70,14 +70,7 @@ public class LessonAsyncService {
      * Tạo Quiz cho bài học (được gọi từ Controller khi Instructor nhấn nút).
      * Kiểm tra bản quyền Premium của Instructor.
      */
-    @Transactional
-    public void generateQuizByInstructor(UUID lessonId) {
-        log.info(">>>> Instructor yêu cầu tạo Quiz cho Lesson ID: {}", lessonId);
-
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
-
-        // 1. Kiểm tra PREMIUM của Instructor
+    public void validatePremiumInstructor(Lesson lesson) {
         User instructor = lesson.getModule().getCourse().getConstructor();
         List<AISubscription> validSubscriptions = aiSubscriptionRepository.findValidSubscriptions(instructor);
 
@@ -85,24 +78,38 @@ public class LessonAsyncService {
                 .anyMatch(sub -> sub.getPlan() == AISubscription.SubscriptionPlan.PREMIUM);
 
         if (!hasPremium) {
-            log.warn("Instructor {} không có gói PREMIUM. Không thể tạo Quiz.", instructor.getUserId());
+            log.warn("Instructor {} không có gói PREMIUM. Không thể tạo Quiz.", instructor.getFullName());
             throw new AppException(ErrorCode.PREMIUM_REQUIRED);
         }
+    }
 
-        // 2. Kiểm tra tài liệu đã sẵn sàng chưa (transcript)
-        String transcript = lesson.getTranscript();
-        String documentContent = lesson.getDocumentContent();
+    @Async
+    @Transactional
+    public void generateQuizByInstructor(UUID lessonId) {
+        log.info(">>>> Instructor yêu cầu tạo Quiz cho Lesson ID: {}", lessonId);
 
-        if ((transcript == null || transcript.isEmpty()) && (documentContent == null || documentContent.isEmpty())) {
-            throw new RuntimeException("Chưa có nội dung (video transcript hoặc tài liệu) để tạo Quiz.");
-        }
-
-        // 3. Mix nội dung và gọi Gemini
-        StringBuilder combinedContent = new StringBuilder();
-        if (transcript != null) combinedContent.append("Video Transcript:\n").append(transcript).append("\n\n");
-        if (documentContent != null) combinedContent.append("Document Content:\n").append(documentContent);
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         try {
+            // 1. Chuyển trạng thái sang PROCESSING ngay lập tức để lock nút
+            lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.PROCESSING);
+            lesson.setLastQuizError(null);
+            lessonRepository.saveAndFlush(lesson);
+
+            // 2. Kiểm tra tài liệu đã sẵn sàng chưa (transcript)
+            String transcript = lesson.getTranscript();
+            String documentContent = lesson.getDocumentContent();
+
+            if ((transcript == null || transcript.isEmpty()) && (documentContent == null || documentContent.isEmpty())) {
+                throw new RuntimeException("Chưa có nội dung (video transcript hoặc tài liệu) để tạo Quiz.");
+            }
+
+            // 4. Mix nội dung và gọi Gemini
+            StringBuilder combinedContent = new StringBuilder();
+            if (transcript != null) combinedContent.append("Video Transcript:\n").append(transcript).append("\n\n");
+            if (documentContent != null) combinedContent.append("Document Content:\n").append(documentContent);
+
             log.info("Đang gọi Gemini AI để tạo Quiz từ nội dung tổng hợp...");
             String rawJsonResponse = geminiService.generateQuizQuestions(combinedContent.toString());
             String cleanJson = cleanAiJsonResponse(rawJsonResponse);
@@ -126,11 +133,18 @@ public class LessonAsyncService {
                             .build();
                     questionRepository.save(question);
                 }
+                
+                // 5. Hoàn tất -> Chuyển sang COMPLETED
+                lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.COMPLETED);
+                lessonRepository.save(lesson);
                 log.info("Hoàn tất tạo Quiz cho Lesson {}", lessonId);
             }
         } catch (Exception e) {
             log.error("Lỗi tạo Quiz cho Lesson {}: {}", lessonId, e.getMessage());
-            throw new RuntimeException("Lỗi hệ thống khi tạo Quiz.");
+            // 6. Lỗi -> Chuyển sang FAILED và lưu message
+            lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.FAILED);
+            lesson.setLastQuizError(e.getMessage());
+            lessonRepository.save(lesson);
         }
     }
 

@@ -40,6 +40,14 @@ public class Lesson {
     @Column(name = "lessons_document_content", columnDefinition = "TEXT")
     private String documentContent;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quiz_status")
+    @Builder.Default
+    private com.minhkhoi.swd392.constant.QuizStatus quizStatus = com.minhkhoi.swd392.constant.QuizStatus.NOT_STARTED;
+
+    @Column(name = "last_quiz_error", columnDefinition = "TEXT")
+    private String lastQuizError;
+
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<VectorStore> vectorStores;
 

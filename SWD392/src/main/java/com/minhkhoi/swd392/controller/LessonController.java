@@ -1,13 +1,16 @@
 package com.minhkhoi.swd392.controller;
 
+import com.minhkhoi.swd392.constant.QuizStatus;
 import com.minhkhoi.swd392.dto.request.CreateLessonRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.dto.response.LessonResponse;
 import com.minhkhoi.swd392.dto.response.QuestionResponse;
 import com.minhkhoi.swd392.dto.response.QuizResponse;
+import com.minhkhoi.swd392.entity.Lesson;
 import com.minhkhoi.swd392.entity.Quiz;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
+import com.minhkhoi.swd392.repository.LessonRepository;
 import com.minhkhoi.swd392.repository.QuizRepository;
 import com.minhkhoi.swd392.service.LessonAsyncService;
 import com.minhkhoi.swd392.service.LessonService;
@@ -36,6 +39,7 @@ public class LessonController {
     private final LessonService lessonService;
     private final LessonAsyncService lessonAsyncService;
     private final QuizRepository quizRepository;
+    private final LessonRepository lessonRepository;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -44,7 +48,7 @@ public class LessonController {
     public ResponseEntity<ApiResponse<LessonResponse>> uploadLesson(
             @RequestParam("title") String title,
             @RequestParam("moduleId") UUID moduleId,
-            @RequestParam(value = "videoFile", required = false) MultipartFile videoFile,
+            @RequestParam(value = "videoFile") MultipartFile videoFile,
             @RequestParam(value = "documentFile", required = false) MultipartFile documentFile) {
         
         log.info("Instructor uploading lesson: {}", title);
@@ -67,6 +71,21 @@ public class LessonController {
             description = "Instructor clicks to generate a quiz based on video transcript and documents. Checks for Instructor's PREMIUM plan.")
     public ResponseEntity<ApiResponse<Void>> generateQuiz(@PathVariable UUID lessonId) {
         log.info("Instructor requested quiz generation for lesson: {}", lessonId);
+        
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (lesson.getQuizStatus() == QuizStatus.COMPLETED) {
+            throw new AppException(ErrorCode.QUIZ_ALREADY_EXISTS);
+        }
+
+        if (lesson.getQuizStatus() == QuizStatus.PROCESSING) {
+            throw new AppException(ErrorCode.QUIZ_GENERATION_IN_PROGRESS);
+        }
+
+        // Kiểm tra Premium ĐỒNG BỘ trước khi chạy Async
+        lessonAsyncService.validatePremiumInstructor(lesson);
+
         lessonAsyncService.generateQuizByInstructor(lessonId);
         return ResponseEntity.ok(ApiResponse.success("Quiz generation in progress", null));
     }
@@ -94,5 +113,25 @@ public class LessonController {
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success("Quiz retrieved successfully", response));
+    }
+
+    @DeleteMapping("/{lessonId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Delete Lesson (Instructor)",
+            description = "Delete a lesson, its video/document from Cloudinary, and its transcript from database")
+    public ResponseEntity<ApiResponse<Void>> deleteLesson(@PathVariable UUID lessonId) {
+        log.info("Instructor requested lesson deletion: {}", lessonId);
+        lessonService.deleteLesson(lessonId);
+        return ResponseEntity.ok(ApiResponse.success("Lesson deleted successfully", null));
+    }
+
+    @DeleteMapping("/{lessonId}/video")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Delete Video from Lesson (Instructor)",
+            description = "Remove video from a lesson, delete from Cloudinary, and clear transcript in database")
+    public ResponseEntity<ApiResponse<Void>> deleteLessonVideo(@PathVariable UUID lessonId) {
+        log.info("Instructor requested video removal from lesson: {}", lessonId);
+        lessonService.deleteVideoFromLesson(lessonId);
+        return ResponseEntity.ok(ApiResponse.success("Video and transcript removed successfully", null));
     }
 }

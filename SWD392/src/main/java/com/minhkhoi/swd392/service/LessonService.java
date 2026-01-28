@@ -30,7 +30,6 @@ public class LessonService {
 
     private final LessonRepository lessonRepository;
     private final ModuleRepository moduleRepository;
-    private final VideoService videoService;
     private final CloudinaryService cloudinaryService;
     private final LessonAsyncService lessonAsyncService;
 
@@ -46,12 +45,14 @@ public class LessonService {
                 .module(module)
                 .build();
 
-        // 1. Upload Video via VideoService to ensure consistent attributes
-        if (request.getVideoFile() != null && !request.getVideoFile().isEmpty()) {
-            com.minhkhoi.swd392.dto.VideoUploadResponse videoResponse = videoService.uploadVideoOnly(request.getVideoFile());
-            lesson.setVideoUrl(videoResponse.getVideoUrl());
-            lesson.setDuration(videoResponse.getDuration());
+        // 1. Upload Video to Cloudinary (Mandatory)
+        if (request.getVideoFile() == null || request.getVideoFile().isEmpty()) {
+            throw new AppException(ErrorCode.VIDEO_REQUIRED);
         }
+        
+        Map<String, Object> uploadResult = cloudinaryService.uploadVideo(request.getVideoFile());
+        lesson.setVideoUrl((String) uploadResult.get("secure_url"));
+        lesson.setDuration(mapDuration(uploadResult));
 
         // 2. Upload Document (Optional)
         if (request.getDocumentFile() != null && !request.getDocumentFile().isEmpty()) {
@@ -91,16 +92,84 @@ public class LessonService {
                 .build();
     }
 
+    @Transactional
+    public void deleteLesson(UUID lessonId) {
+        log.info("Deleting lesson: {}", lessonId);
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        // Delete from Cloudinary
+        deleteCloudinaryResources(lesson);
+
+        // Delete from DB (this automatically deletes transcript as it's a field in Lesson)
+        lessonRepository.delete(lesson);
+    }
+
+    @Transactional
+    public void deleteVideoFromLesson(UUID lessonId) {
+        log.info("Deleting video from lesson: {}", lessonId);
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (lesson.getVideoUrl() != null) {
+            String publicId = extractPublicIdFromUrl(lesson.getVideoUrl());
+            if (publicId != null) {
+                cloudinaryService.deleteFile(publicId, "video");
+            }
+            
+            // Clear video info and TRANSCRIPT in DB
+            lesson.setVideoUrl(null);
+            lesson.setDuration(null);
+            lesson.setTranscript(null); // Xóa transcript trong database như yêu cầu
+            
+            lessonRepository.save(lesson);
+        }
+    }
+
+    private void deleteCloudinaryResources(Lesson lesson) {
+        if (lesson.getVideoUrl() != null) {
+            String publicId = extractPublicIdFromUrl(lesson.getVideoUrl());
+            if (publicId != null) {
+                cloudinaryService.deleteFile(publicId, "video");
+            }
+        }
+        if (lesson.getDocumentUrl() != null) {
+            String publicId = extractPublicIdFromUrl(lesson.getDocumentUrl());
+            if (publicId != null) {
+                cloudinaryService.deleteFile(publicId, "raw");
+            }
+        }
+    }
+
+    private String extractPublicIdFromUrl(String url) {
+        if (url == null || !url.contains("/upload/")) return null;
+        try {
+            // URL format: .../upload/v12345/folder/public_id.ext
+            String postUpload = url.split("/upload/")[1];
+            // parts[0] is version (v12345), we skin it and take everything else except extension
+            int firstSlash = postUpload.indexOf("/");
+            String pathWithExtension = postUpload.substring(firstSlash + 1);
+            int lastDot = pathWithExtension.lastIndexOf(".");
+            return pathWithExtension.substring(0, lastDot);
+        } catch (Exception e) {
+            log.warn("Failed to extract publicId from URL: {}", url);
+            return null;
+        }
+    }
+
+    private Integer mapDuration(Map<String, Object> map) {
+        if (map == null) return null;
+        Object duration = map.get("duration");
+        return duration instanceof Number ? ((Number) duration).intValue() : null;
+    }
+
     private String extractTextContent(MultipartFile file) {
         try {
             String contentType = file.getContentType();
-            // Simple extraction for text files
             if (contentType != null && (contentType.equals("text/plain") || contentType.equals("application/json"))) {
                 return new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
                         .lines().collect(Collectors.joining("\n"));
             }
-            // For others (PDF/DOCX), in a real app we'd use Tika/PDFBox
-            // Here we just return a placeholder or empty
             return "Content from " + file.getOriginalFilename() + " (Extraction not fully implemented for this type)";
         } catch (Exception e) {
             log.error("Failed to extract text content", e);
