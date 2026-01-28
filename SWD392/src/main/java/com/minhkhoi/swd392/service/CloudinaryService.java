@@ -100,4 +100,16 @@ public class CloudinaryService {
             .resourceType(resourceType)
             .generate(publicId);
     }
+
+    public String uploadImage(MultipartFile file) throws IOException {
+        if(file.isEmpty()){
+            throw new AppException(ErrorCode.INVALID_FILE);
+        }
+
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap("folder", "products"));
+
+        // Trả về đường dẫn ảnh (URL) sau khi upload thành công
+        return uploadResult.get("url").toString();
+    }
 }

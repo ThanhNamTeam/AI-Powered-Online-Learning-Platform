@@ -1,10 +1,7 @@
 package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.config.JwtUtil;
-import com.minhkhoi.swd392.dto.request.CreateUserRequest;
-import com.minhkhoi.swd392.dto.request.LoginRequest;
-import com.minhkhoi.swd392.dto.request.RefreshTokenRequest;
-import com.minhkhoi.swd392.dto.request.UpdateUserRequest;
+import com.minhkhoi.swd392.dto.request.*;
 import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.dto.response.ValidateTokenResponse;
@@ -22,12 +19,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -109,6 +109,7 @@ public class UserService {
         // Create user entity with role from request (mapped automatically)
         User user = userMapper.toUser(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setEnabled(true);
 
         // Save user
         User savedUser = userRepository.save(user);
@@ -362,7 +363,7 @@ public class UserService {
                         .valid(true)
                         .username(username)
                         .role(user.getRole().name())
-                        .userId(user.getUserId())
+                        .userId(UUID.fromString(user.getUserId()))
                         .message("Token is valid")
                         .build();
             } else {
@@ -418,4 +419,74 @@ public class UserService {
         user.setTokenExpirationTime(null);
         userRepository.save(user);
     }
+
+    public void updateAvatarUrl(String url) {
+
+        // lấy userid từ token
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+
+        // tìm user
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        // cập nhật avatar
+        user.setImageUrl(url);
+
+        // lưu lại
+        userRepository.save(user);
+    }
+
+    // NGƯỜI DÙNG TỰ UPDATE CHÍNH MÌNH
+    public void updateUserInfo(UpdateUserInfoRequest request) {
+
+        // lấy userid từ token
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+
+        // tìm user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        // cập nhật thông tin vào ENTITY
+        user.setFullName(request.getFullName());
+        user.setBirthOfDate(request.getBirthOfDate()); // LocalDate
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setAddress(request.getAddress());
+        user.setNotes(request.getNotes());
+        user.setGender(request.getGender());
+
+        // lưu lại
+        userRepository.save(user);
+    }
+
+    public void changePassword(ChangePasswordRequest request) {
+
+        // lấy userid từ token
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+
+        // tìm user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        // kiểm tra mật khẩu cũ có đúng không
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new AppException(ErrorCode.WRONG_OLD_PASSWORD);
+        }
+
+        if(request.getOldPassword().equals(request.getNewPassword())){
+            throw new AppException(ErrorCode.EQUAL_PASSWORD);
+        }
+
+        if(!request.getNewPassword().equals(request.getConfirmPassword())){
+            throw new AppException(ErrorCode.CONFIRM_PASSWORD_MISMATCH);
+        }
+
+        // cập nhật mật khẩu mới
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+
+        // lưu lại
+        userRepository.save(user);
+    }
+
 }

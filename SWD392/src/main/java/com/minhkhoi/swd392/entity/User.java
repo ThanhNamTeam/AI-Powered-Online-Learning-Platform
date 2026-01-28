@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +20,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id", updatable = false, nullable = false)
-    private UUID userId;
+    private String userId;
 
     @Column(name = "full_name", length = 100, nullable = false)
     private String fullName;
@@ -32,6 +33,27 @@ public class User {
 
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "notes", length = 500)
+    private String notes;
+
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled;
+
+    @Column(name = "phone_number", length = 15)
+    private String phoneNumber;
+
+    @Column(name = "address", length = 255)
+    private String address;
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "birth_of_date")
+    private LocalDate birthOfDate;
 
     @Column(name = "token_expiration_time")
     private LocalDateTime tokenExpirationTime;

@@ -6,12 +6,18 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
     // User errors (1000-1999)
-    USER_NOT_FOUND("User not found with id: %s", HttpStatus.NOT_FOUND),
+    USER_NOT_FOUND("User not found with email: %s", HttpStatus.NOT_FOUND),
     EMAIL_ALREADY_EXISTS("Email already exists: %s", HttpStatus.CONFLICT),
     EMAIL_NOT_VERIFIED("Email has not been verified", HttpStatus.BAD_REQUEST),
 
     // Authentication errors (2000-2999)
     INVALID_CREDENTIALS("Mật khẩu hoặc email không chính xác", HttpStatus.UNAUTHORIZED),
+    WRONG_OLD_PASSWORD("Mật khẩu hiện tại không đúng vui lòng nhập lại  ", HttpStatus.BAD_REQUEST),
+
+    EQUAL_PASSWORD("Mật khẩu mới không được trùng với mật khẩu hiện tại", HttpStatus.BAD_REQUEST),
+
+    CONFIRM_PASSWORD_MISMATCH("Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST),
+
     UNAUTHORIZED("Unauthorized access", HttpStatus.UNAUTHORIZED),
     ACCESS_DENIED("Access denied", HttpStatus.FORBIDDEN),
     REFRESH_TOKEN_INVALID("Invalid or expired refresh token", HttpStatus.UNAUTHORIZED),
