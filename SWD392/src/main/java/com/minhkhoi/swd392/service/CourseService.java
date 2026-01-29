@@ -73,10 +73,17 @@ public class CourseService {
     }
 
     /**
-     * Get all courses (For STAFF)
+     * Get all courses (Optionally filtered by instructorId)
      */
-    public List<CourseResponse> getAllCourses() {
-        return courseRepository.findAll().stream()
+    public List<CourseResponse> getAllCourses(String constructorId) {
+        List<Course> courses;
+        if (constructorId != null && !constructorId.isEmpty()) {
+            courses = courseRepository.findByConstructor_UserId(constructorId);
+        } else {
+            courses = courseRepository.findAll();
+        }
+        
+        return courses.stream()
                 .map(courseMapper::toCourseResponse)
                 .collect(Collectors.toList());
     }

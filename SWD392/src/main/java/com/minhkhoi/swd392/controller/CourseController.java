@@ -57,10 +57,11 @@ public class CourseController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('STAFF')")
-    @Operation(summary = "Get all courses (For STAFF only)", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ApiResponse<List<CourseResponse>>> getAllCourses() {
-        return ResponseEntity.ok(ApiResponse.success("List all courses", courseService.getAllCourses()));
+    @PreAuthorize("hasAnyRole('STAFF', 'INSTRUCTOR')")
+    @Operation(summary = "Get all courses (Filtered by instructor ID if provided)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<List<CourseResponse>>> getAllCourses(
+            @RequestParam(required = false) String constructorId) {
+        return ResponseEntity.ok(ApiResponse.success("List courses", courseService.getAllCourses(constructorId)));
     }
 
     @PutMapping("/{courseId}/verify")

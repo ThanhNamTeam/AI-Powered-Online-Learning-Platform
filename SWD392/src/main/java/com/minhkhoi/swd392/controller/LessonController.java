@@ -40,6 +40,7 @@ public class LessonController {
     private final LessonAsyncService lessonAsyncService;
     private final QuizRepository quizRepository;
     private final LessonRepository lessonRepository;
+    private final com.minhkhoi.swd392.mapper.QuizMapper quizMapper;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -63,6 +64,13 @@ public class LessonController {
         LessonResponse response = lessonService.createLesson(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Lesson created and processing started", response));
+    }
+
+    @GetMapping("/module/{moduleId}")
+    @Operation(summary = "Get Lessons by Module", description = "Retrieve all lessons associated with a specific module")
+    public ResponseEntity<ApiResponse<List<LessonResponse>>> getLessonsByModule(@PathVariable UUID moduleId) {
+        return ResponseEntity.ok(ApiResponse.success("Lessons retrieved successfully", 
+                lessonService.getLessonsByModule(moduleId)));
     }
 
     @PostMapping("/{lessonId}/generate-quiz")
@@ -100,21 +108,7 @@ public class LessonController {
         Quiz quiz = quizRepository.findFirstByLesson_LessonIdOrderByCreatedAtDesc(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
 
-        List<QuestionResponse> questions = quiz.getQuestions().stream()
-                .map(q -> QuestionResponse.builder()
-                        .questionId(q.getQuestionId())
-                        .content(q.getContent())
-                        .options(q.getOptions())
-                        .correctAnswer(q.getCorrectAnswer())
-                        .explanation(q.getExplanation())
-                        .build())
-                .collect(Collectors.toList());
-
-        QuizResponse response = QuizResponse.builder()
-                .quizId(quiz.getQuizId())
-                .title(quiz.getTitle())
-                .questions(questions)
-                .build();
+        QuizResponse response = quizMapper.toQuizResponse(quiz);
 
         return ResponseEntity.ok(ApiResponse.success("Quiz retrieved successfully", response));
     }

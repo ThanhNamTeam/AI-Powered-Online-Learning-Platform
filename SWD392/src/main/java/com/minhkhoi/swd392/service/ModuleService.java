@@ -2,6 +2,7 @@ package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.dto.request.CreateModuleRequest;
 import com.minhkhoi.swd392.dto.response.ModuleResponse;
+import com.minhkhoi.swd392.mapper.ModuleMapper;
 import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.entity.Module;
 import com.minhkhoi.swd392.exception.AppException;
@@ -24,6 +25,7 @@ public class ModuleService {
 
     private final ModuleRepository moduleRepository;
     private final CourseRepository courseRepository;
+    private final ModuleMapper moduleMapper;
 
     @Transactional
     public ModuleResponse createModule(CreateModuleRequest request) {
@@ -32,28 +34,16 @@ public class ModuleService {
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-        Module module = Module.builder()
-                .title(request.getTitle())
-                .course(course)
-                .orderIndex(request.getOrderIndex())
-                .build();
+        Module module = moduleMapper.toModule(request, course);
 
         module = moduleRepository.save(module);
 
-        return ModuleResponse.builder()
-                .moduleId(module.getModuleId())
-                .title(module.getTitle())
-                .orderIndex(module.getOrderIndex())
-                .build();
+        return moduleMapper.toModuleResponse(module);
     }
 
     public List<ModuleResponse> getModulesByCourse(UUID courseId) {
         return moduleRepository.findByCourse_CourseIdOrderByOrderIndexAsc(courseId).stream()
-                .map(m -> ModuleResponse.builder()
-                        .moduleId(m.getModuleId())
-                        .title(m.getTitle())
-                        .orderIndex(m.getOrderIndex())
-                        .build())
+                .map(moduleMapper::toModuleResponse)
                 .collect(Collectors.toList());
     }
 }

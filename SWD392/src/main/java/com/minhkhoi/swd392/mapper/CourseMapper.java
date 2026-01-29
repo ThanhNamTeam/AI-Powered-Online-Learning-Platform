@@ -18,6 +18,7 @@ public interface CourseMapper {
     @Mapping(target = "reports", ignore = true)
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "handledByStaff", ignore = true)
+    @Mapping(target = "thumbnailUrl", ignore = true)
     Course toCourse(CreateCourseRequest request, User constructor);
 
     @Mapping(target = "constructorId", source = "constructor.userId")
