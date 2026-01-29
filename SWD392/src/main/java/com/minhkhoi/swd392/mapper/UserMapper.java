@@ -21,6 +21,13 @@ public interface UserMapper {
     @Mapping(target = "aiSubscriptions", ignore = true)
     @Mapping(target = "resetPasswordToken", ignore = true)
     @Mapping(target = "tokenExpirationTime", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
+    @Mapping(target = "notes", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "phoneNumber", ignore = true)
+    @Mapping(target = "address", ignore = true)
+    @Mapping(target = "gender", ignore = true)
+    @Mapping(target = "birthOfDate", ignore = true)
     User toUser(CreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -35,5 +42,12 @@ public interface UserMapper {
     @Mapping(target = "aiSubscriptions", ignore = true)
     @Mapping(target = "resetPasswordToken", ignore = true)
     @Mapping(target = "tokenExpirationTime", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
+    @Mapping(target = "notes", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "phoneNumber", ignore = true)
+    @Mapping(target = "address", ignore = true)
+    @Mapping(target = "gender", ignore = true)
+    @Mapping(target = "birthOfDate", ignore = true)
     void updateUserFromRequest(UpdateUserRequest request, @MappingTarget User user);
 }

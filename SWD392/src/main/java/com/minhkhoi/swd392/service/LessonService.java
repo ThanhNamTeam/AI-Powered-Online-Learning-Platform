@@ -2,6 +2,7 @@ package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.dto.request.CreateLessonRequest;
 import com.minhkhoi.swd392.dto.response.LessonResponse;
+import com.minhkhoi.swd392.mapper.LessonMapper;
 import com.minhkhoi.swd392.entity.Lesson;
 import com.minhkhoi.swd392.entity.Module;
 import com.minhkhoi.swd392.exception.AppException;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ public class LessonService {
     private final ModuleRepository moduleRepository;
     private final CloudinaryService cloudinaryService;
     private final LessonAsyncService lessonAsyncService;
+    private final LessonMapper lessonMapper;
 
     @Transactional
     public LessonResponse createLesson(CreateLessonRequest request) {
@@ -40,10 +43,7 @@ public class LessonService {
         Module module = moduleRepository.findById(request.getModuleId())
                 .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
 
-        Lesson lesson = Lesson.builder()
-                .title(request.getTitle())
-                .module(module)
-                .build();
+        Lesson lesson = lessonMapper.toLesson(request, module);
 
         // 1. Upload Video to Cloudinary (Mandatory)
         if (request.getVideoFile() == null || request.getVideoFile().isEmpty()) {
@@ -83,13 +83,14 @@ public class LessonService {
             }
         }
 
-        return LessonResponse.builder()
-                .lessonId(lesson.getLessonId())
-                .title(lesson.getTitle())
-                .videoUrl(lesson.getVideoUrl())
-                .documentUrl(lesson.getDocumentUrl())
-                .duration(lesson.getDuration())
-                .build();
+        return lessonMapper.toLessonResponse(lesson);
+    }
+
+    public List<LessonResponse> getLessonsByModule(UUID moduleId) {
+        log.info("Getting lessons for module: {}", moduleId);
+        return lessonRepository.findByModule_ModuleId(moduleId).stream()
+                .map(lessonMapper::toLessonResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional

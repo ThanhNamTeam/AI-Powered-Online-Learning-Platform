@@ -32,6 +32,7 @@ public class LessonAsyncService {
     private final AssemblyAITranscriptionService assemblyAITranscriptionService;
     private final GeminiService geminiService;
     private final ObjectMapper objectMapper;
+    private final com.minhkhoi.swd392.mapper.QuizMapper quizMapper;
 
     /**
      * Chỉ xử lý Transcribe video bất đồng bộ sau khi upload.
@@ -124,13 +125,8 @@ public class LessonAsyncService {
                 quiz = quizRepository.save(quiz);
 
                 for (QuestionDTO dto : questionDTOs) {
-                    Question question = Question.builder()
-                            .quiz(quiz)
-                            .content(dto.getContent())
-                            .options(dto.getOptions())
-                            .correctAnswer(dto.getCorrectAnswer())
-                            .explanation(dto.getExplanation())
-                            .build();
+                    Question question = quizMapper.toQuestion(dto);
+                    question.setQuiz(quiz);
                     questionRepository.save(question);
                 }
                 
