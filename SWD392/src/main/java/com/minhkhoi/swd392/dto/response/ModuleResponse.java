@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -15,4 +16,6 @@ public class ModuleResponse {
     private UUID moduleId;
     private String title;
     private Integer orderIndex;
+
+    private List<LessonResponse> lessons;
 }

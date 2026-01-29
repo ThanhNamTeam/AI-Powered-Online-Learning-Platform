@@ -4,6 +4,7 @@ import com.minhkhoi.swd392.constant.CourseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +42,9 @@ public class Course {
     @Enumerated(EnumType.STRING)
     @Column(name = "course_status")
     private CourseStatus status;
+
+    @Column(name = "course_created_at", nullable = false)
+    private LocalDateTime createdAt;
 
     @Column(name = "course_rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;

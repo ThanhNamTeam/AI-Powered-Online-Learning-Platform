@@ -1,5 +1,6 @@
 package com.minhkhoi.swd392.controller;
 
+import com.minhkhoi.swd392.dto.PageResponse;
 import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
@@ -60,8 +61,31 @@ public class CourseController {
     @PreAuthorize("hasAnyRole('STAFF', 'INSTRUCTOR')")
     @Operation(summary = "Get all courses (Filtered by instructor ID if provided)", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ApiResponse<List<CourseResponse>>> getAllCourses(
-            @RequestParam(required = false) String constructorId) {
-        return ResponseEntity.ok(ApiResponse.success("List courses", courseService.getAllCourses(constructorId)));
+            ) {
+        return ResponseEntity.ok(ApiResponse.success("List courses", courseService.getAllCourses()));
+    }
+
+
+    @GetMapping("/all-course/students")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getAllCoursesForStudent(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("List courses for student", courseService.getAllCoursesForStudent(page, size)));
+    }
+
+    @GetMapping("/all-course/public")
+    public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getAllCoursesPublic(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("List courses for student", courseService.getAllCoursesPublic(page, size)));
+    }
+
+    @GetMapping("/{courseId}")
+    public ResponseEntity<ApiResponse<CourseResponse>> getCourseById(@PathVariable UUID courseId) {
+        return ResponseEntity.ok(ApiResponse.success("List of instructor's courses", courseService.getCourseById(courseId)));
     }
 
     @PutMapping("/{courseId}/verify")

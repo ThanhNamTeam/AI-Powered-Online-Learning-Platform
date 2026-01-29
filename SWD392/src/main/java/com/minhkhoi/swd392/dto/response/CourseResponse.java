@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -25,4 +27,7 @@ public class CourseResponse {
     private String constructorName;
     private UUID handledByStaffId;
     private String handledByStaffName;
+    private LocalDateTime createdAt;
+
+    private List<ModuleResponse> modules;
 }

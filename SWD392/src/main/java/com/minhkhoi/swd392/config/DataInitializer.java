@@ -34,10 +34,10 @@ public class DataInitializer implements CommandLineRunner {
         try {
             // Check if any users exist in the database
             long userCount = userRepository.count();
-            
+
             if (userCount == 0) {
                 log.info("No users found in database. Creating default admin account...");
-                
+
                 // Create default admin user
                 User admin = User.builder()
                         .fullName("Administrator")
@@ -47,7 +47,7 @@ public class DataInitializer implements CommandLineRunner {
                         .createdAt(LocalDateTime.now())
                         .enabled(true)
                         .build();
-                
+
                 userRepository.save(admin);
 
                 // Create default staff user
@@ -59,9 +59,20 @@ public class DataInitializer implements CommandLineRunner {
                         .createdAt(LocalDateTime.now())
                         .enabled(true)
                         .build();
-                        
+
                 userRepository.save(staff);
-                
+
+                User instructor = User.builder()
+                        .fullName("Instructor User")
+                        .email("instructor@gmail.com")
+                        .passwordHash(passwordEncoder.encode("Instructor@123"))
+                        .role(User.Role.INSTRUCTOR)
+                        .createdAt(LocalDateTime.now())
+                        .enabled(true)
+                        .build();
+
+                userRepository.save(instructor);
+
                 log.info("✅ Default admin and staff accounts created successfully!");
             } else {
                 log.info("Users already exist in database. Skipping initialization.");

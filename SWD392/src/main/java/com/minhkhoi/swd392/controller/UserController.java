@@ -4,6 +4,7 @@ import com.minhkhoi.swd392.dto.request.ChangePasswordRequest;
 import com.minhkhoi.swd392.dto.request.UpdateUserInfoRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.service.CloudinaryService;
+import com.minhkhoi.swd392.service.CourseService;
 import com.minhkhoi.swd392.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.io.IOException;
 public class UserController {
     private final CloudinaryService cloudinaryService;
     private final UserService userService;
+    private final CourseService courseService;
 
     @PostMapping("/upload-avatar")
     public ResponseEntity<ApiResponse<String>> uploadAvatar(@RequestParam("file") MultipartFile file){
@@ -41,4 +43,5 @@ public class UserController {
         userService.changePassword(changePasswordRequest);
         return ResponseEntity.ok(ApiResponse.success("Change password successfully", null));
     }
+
 }

@@ -52,8 +52,7 @@ public class LessonController {
             @RequestParam(value = "videoFile") MultipartFile videoFile,
             @RequestParam(value = "documentFile", required = false) MultipartFile documentFile) {
         
-        log.info("Instructor uploading lesson: {}", title);
-        
+
         CreateLessonRequest request = CreateLessonRequest.builder()
                 .title(title)
                 .moduleId(moduleId)
