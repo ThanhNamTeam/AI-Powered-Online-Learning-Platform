@@ -25,5 +25,6 @@ public interface LessonMapper {
     @Mapping(target = "progressList", ignore = true)
     Lesson toLesson(CreateLessonRequest request, Module module);
 
+
     LessonResponse toLessonResponse(Lesson lesson);
 }

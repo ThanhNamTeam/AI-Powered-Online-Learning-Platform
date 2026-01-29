@@ -17,5 +17,6 @@ public interface ModuleMapper {
     @Mapping(target = "orderIndex", source = "request.orderIndex")
     Module toModule(CreateModuleRequest request, Course course);
 
+    @Mapping(target = "lessons", source = "lessons")
     ModuleResponse toModuleResponse(Module module);
 }

@@ -1,6 +1,7 @@
 package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.dto.PageResponse;
 import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
@@ -10,14 +11,21 @@ import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.mapper.CourseMapper;
 import com.minhkhoi.swd392.repository.CourseRepository;
+import com.minhkhoi.swd392.repository.ModuleRepository;
 import com.minhkhoi.swd392.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,7 +38,7 @@ public class CourseService {
     private final UserRepository userRepository;
     private final CourseMapper courseMapper;
     private final CloudinaryService cloudinaryService;
-    private final com.minhkhoi.swd392.repository.ModuleRepository moduleRepository;
+    private final ModuleRepository moduleRepository;
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -47,7 +55,7 @@ public class CourseService {
         // Upload thumbnail to Cloudinary
         String thumbnailUrl;
         if (request.getThumbnailFile() != null && !request.getThumbnailFile().isEmpty()) {
-            java.util.Map<String, Object> uploadResult = cloudinaryService.uploadFile(request.getThumbnailFile(), "image");
+            Map<String, Object> uploadResult = cloudinaryService.uploadFile(request.getThumbnailFile(), "image");
             thumbnailUrl = (String) uploadResult.get("secure_url"); 
         } else {
              throw new AppException(ErrorCode.INVALID_FILE);
@@ -56,6 +64,7 @@ public class CourseService {
         // Map request to entity
         Course course = courseMapper.toCourse(request, user);
         course.setThumbnailUrl(thumbnailUrl);
+        course.setCreatedAt(LocalDateTime.now());
         
         // Set status based on request
         // Always set DRAFT initially
@@ -75,18 +84,57 @@ public class CourseService {
     /**
      * Get all courses (Optionally filtered by instructorId)
      */
-    public List<CourseResponse> getAllCourses(String constructorId) {
-        List<Course> courses;
-        if (constructorId != null && !constructorId.isEmpty()) {
-            courses = courseRepository.findByConstructor_UserId(constructorId);
-        } else {
-            courses = courseRepository.findAll();
-        }
-        
+    public List<CourseResponse> getAllCourses() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Course> courses = courseRepository.findByConstructor_Email((email));
         return courses.stream()
                 .map(courseMapper::toCourseResponse)
                 .collect(Collectors.toList());
     }
+
+
+
+    public PageResponse<CourseResponse> getAllCoursesForStudent(int page, int size) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+
+        Page<Course> courses = courseRepository.findByEnrollments_User_Email(email, pageable);
+
+        return PageResponse.<CourseResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(courses.getTotalPages())
+                .totalElements(courses.getTotalElements())
+                .data(courses.stream().map(courseMapper::toCourseResponse).collect(Collectors.toList()))
+                .build();
+    }
+
+    public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
+
+//        Page<Course> courses = courseRepository.findByStatus(CourseStatus.APPROVED,pageable);
+        Page<Course> courses = courseRepository.findAll( pageable);
+
+        return PageResponse.<CourseResponse>builder()
+                .currentPage(page)
+                .pageSize(size)
+                .totalPages(courses.getTotalPages())
+                .totalElements(courses.getTotalElements())
+                .data(courses.stream().map(courseMapper::toCourseResponse).collect(Collectors.toList()))
+                .build();
+    }
+
+    public CourseResponse getCourseById(UUID courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+        return courseMapper.toCourseResponse(course);
+    }
+
 
     /**
      * Verify course (Approve/Reject) (For STAFF)
