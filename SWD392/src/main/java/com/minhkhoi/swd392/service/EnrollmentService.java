@@ -33,7 +33,7 @@ public class EnrollmentService {
 
         boolean alreadyEnrolled = enrollmentRepository.existsByUserAndCourse(user, course);
         if (alreadyEnrolled) {
-            throw new RuntimeException("User already enrolled in course.");
+            throw new RuntimeException("Bạn đã đăng ký khóa học này rồi.");
         }
         var enrollment = com.minhkhoi.swd392.entity.Enrollment.builder()
                 .user(user)
