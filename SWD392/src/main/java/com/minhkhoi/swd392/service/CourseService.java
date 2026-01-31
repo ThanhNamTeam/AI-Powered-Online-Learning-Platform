@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -113,21 +114,40 @@ public class CourseService {
     }
 
     public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size) {
-        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
 
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-//        Page<Course> courses = courseRepository.findByStatus(CourseStatus.APPROVED,pageable);
-        Page<Course> courses = courseRepository.findAll( pageable);
+        Page<Course> courses;
+
+        if (user.getRole() == User.Role.STUDENT) {
+            // Student chỉ xem khóa học đã duyệt
+            courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
+
+        } else if (user.getRole() == User.Role.STAFF) {
+            // Staff xem tất cả trừ DRAFT
+            courses = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
+
+        } else {
+            // ADMIN hoặc role khác -> xem tất cả
+            courses = courseRepository.findAll(pageable);
+        }
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)
                 .pageSize(size)
                 .totalPages(courses.getTotalPages())
                 .totalElements(courses.getTotalElements())
-                .data(courses.stream().map(courseMapper::toCourseResponse).collect(Collectors.toList()))
+                .data(courses.getContent()
+                        .stream()
+                        .map(courseMapper::toCourseResponse)
+                        .collect(Collectors.toList()))
                 .build();
     }
+
 
     public CourseResponse getCourseById(UUID courseId) {
         Course course = courseRepository.findById(courseId)
@@ -194,7 +214,7 @@ public class CourseService {
         }
 
         // Check current status
-        if (course.getStatus() != CourseStatus.DRAFT) {
+        if (course.getStatus() != CourseStatus.DRAFT && course.getStatus() != CourseStatus.REJECTED) {
             // Can only request approval if Draft (or Rejected? requirement says MUST be DRAFT)
             // If rejected, user should probably edit and set back to draft or allow re-request logic.
             // Requirement: "Check trạng thái hiện tại: Phải là DRAFT mới được gửi."
@@ -203,14 +223,14 @@ public class CourseService {
 
         // Check module count
         long moduleCount = moduleRepository.countByCourse_CourseId(courseId);
-        if (moduleCount < 3) {
+        if (moduleCount < 1) {
             throw new AppException(ErrorCode.MIN_MODULES_REQUIRED);
         }
 
         course.setStatus(CourseStatus.PENDING_APPROVAL);
         course.setRejectionReason(null); // Clear old rejection reason if any
         Course savedCourse = courseRepository.save(course);
-        
+
         log.info("Course {} requested approval by Instructor: {}", course.getCourseId(), email);
         return courseMapper.toCourseResponse(savedCourse);
     }

@@ -19,5 +19,8 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     Page<Course> findByStatus(CourseStatus status,
                               Pageable pageable);
 
+    Page<Course> findByStatusNot(CourseStatus status,
+                              Pageable pageable);
+
     List<Course> findByConstructor_Email(String constructorEmail);
 }
