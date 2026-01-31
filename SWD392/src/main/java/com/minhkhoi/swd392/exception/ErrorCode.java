@@ -62,6 +62,16 @@ public enum ErrorCode {
     MIN_MODULES_REQUIRED("Course must have at least 3 modules to request approval", HttpStatus.BAD_REQUEST),
     COURSE_NOT_APPROVED("Course must be APPROVED to generate quiz", HttpStatus.BAD_REQUEST),
     INVALID_CREATE_STATUS("Only DRAFT status is allowed for creation", HttpStatus.BAD_REQUEST),
+
+    // Payment errors (6000-6999)
+    PAYMENT_NOT_FOUND("Payment not found", HttpStatus.NOT_FOUND),
+    INVALID_SUBSCRIPTION_PLAN("Invalid subscription plan. Must be BASIC, PREMIUM, or ENTERPRISE", HttpStatus.BAD_REQUEST),
+    ONLY_STUDENT_OR_INSTRUCTOR_CAN_PURCHASE("Only INSTRUCTOR or STUDENT can purchase premium subscriptions", HttpStatus.FORBIDDEN),
+    PAYMENT_CREATION_FAILED("Failed to create payment: %s", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_MOMO_SIGNATURE("Invalid MOMO signature", HttpStatus.BAD_REQUEST),
+    MOMO_CALLBACK_ERROR("Error handling MOMO callback", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_VNPAY_SIGNATURE("Invalid VNPAY signature", HttpStatus.BAD_REQUEST),
+    VNPAY_CALLBACK_ERROR("Error handling VNPAY callback", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_COURSE_STATUS_FOR_APPROVAL("Course must be in PENDING_APPROVAL status to be verified", HttpStatus.BAD_REQUEST);
 
     private final String message;

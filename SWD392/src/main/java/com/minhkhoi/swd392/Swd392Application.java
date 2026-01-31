@@ -7,8 +7,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.util.TimeZone;
 
+import com.minhkhoi.swd392.config.MomoConfig;
+import com.minhkhoi.swd392.config.VnPayConfig;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
 @SpringBootApplication
 @EnableAsync
+@EnableConfigurationProperties({MomoConfig.class, VnPayConfig.class})
 public class Swd392Application {
 
 

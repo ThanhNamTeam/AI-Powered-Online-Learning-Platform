@@ -43,7 +43,7 @@ public class Course {
     @Column(name = "course_status")
     private CourseStatus status;
 
-    @Column(name = "course_created_at", nullable = false)
+    @Column(name = "course_created_at", nullable = true)
     private LocalDateTime createdAt;
 
     @Column(name = "course_rejection_reason", columnDefinition = "TEXT")

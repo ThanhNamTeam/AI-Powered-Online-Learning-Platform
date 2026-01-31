@@ -59,5 +59,12 @@ Dữ liệu tổng hợp này được gửi đến **Gemini AI** để tạo ra
 - **Xóa Video**: Khi một video bị xóa, bản Transcript liên quan cũng sẽ bị xóa khỏi database để đảm bảo tính toàn vẹn thông tin.
 - **Xóa Lesson/Module**: Hệ thống tự động dọn dẹp các tệp vật lý trên Cloudinary và các câu hỏi Quiz liên quan.
 
+
+---
+
+## 6. Tính năng Thanh toán (Payment)
+Hệ thống tích hợp cổng thanh toán **MOMO** cho việc nâng cấp gói tài khoản (AISubscription).
+👉 **Xem hướng dẫn chi tiết tại:** [HUONG_DAN_THANH_TOAN.md](HUONG_DAN_THANH_TOAN.md)
+
 ---
 *Tài liệu này cung cấp cái nhìn tổng quan cho đội ngũ phát triển và người dùng vận hành hệ thống.*
