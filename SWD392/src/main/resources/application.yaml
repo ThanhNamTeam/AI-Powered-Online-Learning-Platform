@@ -67,3 +67,18 @@ assembly:
 
 app:
   frontend-url: ${FRONTEND_URL}
+
+# MOMO Payment Configuration
+momo:
+  partnerCode: MOMOLRJZ20181206
+  accessKey: mTCKt9W3eU1m39TW
+  secretKey: SetA5RDnLHvt51AULf51DyauxUo3kDU6
+  endpoint: https://test-payment.momo.vn/v2/gateway/api/create
+  redirectUrl: http://localhost:8080/payment-result.html
+  ipnUrl: http://localhost:8080/identity/payment/momo/callback
+
+vnpay:
+  tmn-code: J7B3SOOI
+  hash-secret: W9R2G31QO7SCEJIHUQ4W6831FZD7JQS7
+  payment-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/identity/payment/vnpay/callback

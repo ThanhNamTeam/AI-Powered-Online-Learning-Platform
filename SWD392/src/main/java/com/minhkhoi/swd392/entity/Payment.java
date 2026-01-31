@@ -26,7 +26,7 @@ public class Payment {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "enrollment_id", nullable = false)
+    @JoinColumn(name = "enrollment_id", nullable = true)
     private Enrollment enrollment;
 
     @Column(name = "payment_amount", precision = 10, scale = 2, nullable = false)
@@ -63,6 +63,7 @@ public class Payment {
     }
 
     public enum PaymentMethod {
-        VNPAY
+        VNPAY,
+        MOMO
     }
 }
