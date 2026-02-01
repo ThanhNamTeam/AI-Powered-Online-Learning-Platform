@@ -129,7 +129,7 @@ public class MomoPaymentService {
                     .status(Payment.PaymentStatus.PENDING)
                     .method(Payment.PaymentMethod.MOMO)
                     .transactionId(orderId)
-                    .notes("Subscription Plan: " + plan.name() + " | Order Info: " + orderInfo)
+                    .notes("Subscription Plan: " + plan.name())
                     .build();
             
             payment = paymentRepository.save(payment);

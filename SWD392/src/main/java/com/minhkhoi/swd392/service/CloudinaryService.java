@@ -33,15 +33,19 @@ public class CloudinaryService {
     public Map<String, Object> uploadFile(MultipartFile file, String resourceType) {
         log.info("Starting {} upload to Cloudinary: {}", resourceType, file.getOriginalFilename());
         try {
+            String originalFilename = file.getOriginalFilename(); // vd: tailieu.pdf
+
             Map<String, Object> uploadResult = cloudinary.uploader().upload(
-                file.getBytes(),
-                ObjectUtils.asMap(
-                    "resource_type", resourceType,
-                    "folder", folder,
-                    "use_filename", true,
-                    "unique_filename", true
-                )
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "resource_type", resourceType,     // raw
+                            "folder", folder,                  // swd392-videos/
+                            "use_filename", true,              // giữ tên file gốc
+                            "unique_filename", false,          // ✅ TẮT random tên
+                            "public_id", folder + "/" + originalFilename // ✅ giữ luôn .pdf
+                    )
             );
+
             log.info("{} uploaded successfully. Public ID: {}", resourceType, uploadResult.get("public_id"));
             return uploadResult;
         } catch (IOException e) {
@@ -49,6 +53,7 @@ public class CloudinaryService {
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
+
 
     /**
      * Upload video specifically (with validation)

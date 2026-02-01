@@ -47,8 +47,8 @@ public class SecurityConfig {
                                 "/api/accounts/reset-password",
                                 "/momo-test.html",               // Payment Test Page
                                 "/payment-result.html",          // Payment Result Page
-                                "/identity/payment/momo/callback", // MOMO Callback
-                                "/identity/payment/vnpay/callback" // VNPAY Callback
+                                "/api/identity/payment/momo/callback", // MOMO Callback
+                                "/api/identity/payment/vnpay/callback" // VNPAY Callback
                         ).permitAll()
                         // Protected endpoints - Authentication required (use Authorize button in Swagger)
                         .requestMatchers(

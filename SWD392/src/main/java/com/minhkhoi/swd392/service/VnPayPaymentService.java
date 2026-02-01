@@ -103,7 +103,7 @@ public class VnPayPaymentService {
                 .status(Payment.PaymentStatus.PENDING)
                 .method(Payment.PaymentMethod.VNPAY)
                 .transactionId(orderId)
-                .notes("VNPAY Subscription: " + plan.name())
+                .notes("Subscription Plan: " + plan.name())
                 .build();
         payment = paymentRepository.save(payment);
 
@@ -234,11 +234,30 @@ public class VnPayPaymentService {
          if ("00".equals(responseCode)) {
              payment.setStatus(Payment.PaymentStatus.COMPLETED);
              payment.setCompletedAt(LocalDateTime.now());
+
+
+
              paymentRepository.save(payment);
          } else {
              payment.setStatus(Payment.PaymentStatus.FAILED);
              paymentRepository.save(payment);
          }
+    }
+
+    private AISubscription.SubscriptionPlan extractPlanFromPayment(Payment payment) {
+        String notes = payment.getNotes();
+        // "Subscription Plan: BASIC | Order Info: Thanh toan goi BASIC"
+
+        try {
+            String planStr = notes
+                    .split(":")[1]   // " BASIC | Order Info: ..."
+                    .split("\\|")[0]                  // " BASIC "
+                    .trim();                          // "BASIC"
+
+            return AISubscription.SubscriptionPlan.valueOf(planStr);
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN, "Cannot parse plan from payment notes");
+        }
     }
 
     private String getIpAddress(HttpServletRequest request) {
