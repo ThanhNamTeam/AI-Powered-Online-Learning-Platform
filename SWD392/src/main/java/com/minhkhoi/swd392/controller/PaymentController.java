@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/identity/payment")
+@RequestMapping("/api/identity/payment")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Payment", description = "Payment management APIs for MOMO integration")
@@ -33,6 +34,9 @@ public class PaymentController {
 
     private final MomoPaymentService momoPaymentService;
     private final VnPayPaymentService vnPayPaymentService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     /**
      * Create a new payment for premium subscription
@@ -86,10 +90,10 @@ public class PaymentController {
         log.info("Received VNPAY callback: {}", params);
         try {
             vnPayPaymentService.handleVnPayCallback(params);
-            response.sendRedirect("/payment-result.html?status=success&orderId=" + params.get("vnp_TxnRef"));
+            response.sendRedirect(frontendUrl + "/payment-result?status=success&orderId=" + params.get("vnp_TxnRef"));
         } catch (Exception e) {
             log.error("VNPAY Callback Error", e);
-            response.sendRedirect("/payment-result.html?status=failed&error=" + URLEncoder.encode(e.getMessage() != null ? e.getMessage() : "Unknown Error", StandardCharsets.UTF_8));
+            response.sendRedirect(frontendUrl + "/payment-result?status=success&orderId=" + URLEncoder.encode(e.getMessage() != null ? e.getMessage() : "Unknown Error", StandardCharsets.UTF_8));
         }
     }
 
