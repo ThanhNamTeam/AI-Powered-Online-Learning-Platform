@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/momo-test.html",               // Payment Test Page
                                 "/payment-result.html",          // Payment Result Page
                                 "/api/identity/payment/momo/callback", // MOMO Callback
-                                "/api/identity/payment/vnpay/callback" // VNPAY Callback
+                                "/api/identity/payment/vnpay/callback", // VNPAY Callback
+                                "/api/courses/all-course/public" // Public Course List
                         ).permitAll()
                         // Protected endpoints - Authentication required (use Authorize button in Swagger)
                         .requestMatchers(

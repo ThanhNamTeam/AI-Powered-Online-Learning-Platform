@@ -65,6 +65,9 @@ cloudinary:
 assembly:
   api-key: ${ASSEMBLY_API_KEY}
 
+gemini:
+  api-key: ${GEMINI_API_KEY}
+
 app:
   frontend-url: ${FRONTEND_URL}
 

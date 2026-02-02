@@ -18,12 +18,7 @@ public class CorsConfig {
 
         config.setAllowCredentials(true);
         // Chỉ định rõ Frontend của bạn (React)
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173", 
-            "http://localhost:3000",
-            "http://localhost:5500", // VS Code Live Server
-            "http://127.0.0.1:5500"
-        ));
+        config.setAllowedOriginPatterns(List.of("*")); // Cho phép mọi nguồn (thay vì cứng nhắc)
         config.addAllowedHeader("*");
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
