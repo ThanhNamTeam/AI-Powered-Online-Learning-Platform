@@ -39,6 +39,7 @@ public class VnPayPaymentService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
     private final PaymentMapper paymentMapper;
+    private final AISubscriptionRepository aiSubscriptionRepository;
 
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request, HttpServletRequest httpServletRequest) {
@@ -235,13 +236,57 @@ public class VnPayPaymentService {
              payment.setStatus(Payment.PaymentStatus.COMPLETED);
              payment.setCompletedAt(LocalDateTime.now());
 
-
+             createOrUpdateSubscription(payment);
 
              paymentRepository.save(payment);
          } else {
              payment.setStatus(Payment.PaymentStatus.FAILED);
              paymentRepository.save(payment);
          }
+    }
+
+    private String extractSubscriptionPlan(String notes) {
+        if (notes.contains("BASIC")) return "BASIC";
+        if (notes.contains("PREMIUM")) return "PREMIUM";
+        if (notes.contains("ENTERPRISE")) return "ENTERPRISE";
+        return "BASIC"; // Default
+    }
+
+    private void createOrUpdateSubscription(Payment payment) {
+        User user = payment.getUser();
+
+        // Extract subscription plan from payment notes
+        String notes = payment.getNotes();
+        String planName = extractSubscriptionPlan(notes);
+        AISubscription.SubscriptionPlan plan = AISubscription.SubscriptionPlan.valueOf(planName);
+
+        // Calculate subscription period (1 month)
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = startDate.plusMonths(1);
+
+        // Set AI credits based on plan
+        Integer aiCredits = switch (plan) {
+            case BASIC -> 100;
+            case PREMIUM -> 500;
+            case ENTERPRISE -> null; // Unlimited
+        };
+
+        // Create new subscription
+        AISubscription subscription = AISubscription.builder()
+                .instructor(user)
+                .plan(plan)
+                .status(AISubscription.SubscriptionStatus.ACTIVE)
+                .price(payment.getAmount())
+                .startDate(startDate)
+                .endDate(endDate)
+                .autoRenew(false)
+                .aiCredits(aiCredits)
+                .aiCreditsUsed(0)
+                .notes("Payment ID: " + payment.getPaymentId())
+                .build();
+
+        aiSubscriptionRepository.save(subscription);
+        log.info("Created subscription for user: {} with plan: {}", user.getEmail(), plan);
     }
 
     private AISubscription.SubscriptionPlan extractPlanFromPayment(Payment payment) {
