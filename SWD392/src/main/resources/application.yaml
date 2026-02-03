@@ -65,20 +65,25 @@ cloudinary:
 assembly:
   api-key: ${ASSEMBLY_API_KEY}
 
+gemini:
+  api-key: ${GEMINI_API_KEY}
+
 app:
   frontend-url: ${FRONTEND_URL}
 
 # MOMO Payment Configuration
+# Các cấu hình database, server... giữ nguyên hoặc dùng ${...} nếu đã cấu hình sẵn
+
 momo:
-  partnerCode: MOMOLRJZ20181206
-  accessKey: mTCKt9W3eU1m39TW
-  secretKey: SetA5RDnLHvt51AULf51DyauxUo3kDU6
-  endpoint: https://test-payment.momo.vn/v2/gateway/api/create
-  redirectUrl: http://localhost:5173/payment-result
-  ipnUrl: http://localhost:8080/api/identity/payment/momo/callback
+  partnerCode: ${MOMO_PARTNER_CODE}
+  accessKey: ${MOMO_ACCESS_KEY}
+  secretKey: ${MOMO_SECRET_KEY}
+  endpoint: ${MOMO_ENDPOINT}
+  redirectUrl: ${MOMO_REDIRECT_URL}
+  ipnUrl: ${MOMO_IPN_URL}
 
 vnpay:
-  tmn-code: J7B3SOOI
-  hash-secret: W9R2G31QO7SCEJIHUQ4W6831FZD7JQS7
-  payment-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  return-url: http://localhost:8080/api/identity/payment/vnpay/callback
+  tmn-code: ${VNPAY_TMN_CODE}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  payment-url: ${VNPAY_PAYMENT_URL}
+  return-url: ${VNPAY_RETURN_URL}

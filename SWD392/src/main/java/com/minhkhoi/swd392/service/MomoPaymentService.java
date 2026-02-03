@@ -19,6 +19,7 @@ import com.minhkhoi.swd392.repository.UserRepository;
 import com.minhkhoi.swd392.repository.CourseRepository;
 import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -63,6 +64,66 @@ public class MomoPaymentService {
         // Validate user role (only INSTRUCTOR or STUDENT can purchase)
         if (user.getRole() != User.Role.INSTRUCTOR && user.getRole() != User.Role.STUDENT) {
             throw new AppException(ErrorCode.ONLY_STUDENT_OR_INSTRUCTOR_CAN_PURCHASE);
+        }
+
+        // --- COURSE PAYMENT ---
+        if (request.getCourseId() != null) {
+            Course course = courseRepository.findById(request.getCourseId())
+                    .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+            // Check if enrollment exists
+            Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, course)
+                    .orElseGet(() -> Enrollment.builder()
+                            .user(user)
+                            .course(course)
+                            .enrolledAt(LocalDateTime.now())
+                            .status(EnrollmentStatus.PENDING)
+                            .build());
+
+            if (enrollment.getStatus() == EnrollmentStatus.ACTIVE || enrollment.getStatus() == EnrollmentStatus.COMPLETED) {
+                // If user is already active, we shouldn't charge them again.
+                // But for testing purposes or strict logic, throw error.
+                throw new RuntimeException("User already owns this course");
+            }
+            
+            // Ensure status is PENDING if it was null or CANCELLED or PENDING
+            enrollment.setStatus(EnrollmentStatus.PENDING);
+            enrollment = enrollmentRepository.save(enrollment);
+
+            String orderId = UUID.randomUUID().toString();
+            String requestId = UUID.randomUUID().toString();
+            long amount = course.getPrice().longValue(); // Trust params from DB
+            String orderInfo = "Buy Course: " + course.getTitle();
+
+            try {
+                MomoPaymentResponse momoResponse = createMomoPayment(orderId, requestId, amount, orderInfo);
+
+                Payment payment = Payment.builder()
+                        .user(user)
+                        .enrollment(enrollment)
+                        .amount(BigDecimal.valueOf(amount))
+                        .status(Payment.PaymentStatus.PENDING)
+                        .method(Payment.PaymentMethod.MOMO)
+                        .transactionId(orderId)
+                        .notes("Course: " + course.getTitle()) // Pattern to identify course payment
+                        .build();
+
+                payment = paymentRepository.save(payment);
+
+                PaymentResponse response = paymentMapper.toPaymentResponse(payment);
+                response.setPaymentUrl(momoResponse.getPayUrl());
+                return response;
+
+            } catch (Exception e) {
+                log.error("Error creating MOMO payment for course: ", e);
+                if (e instanceof AppException) throw (AppException) e;
+                throw new AppException(ErrorCode.PAYMENT_CREATION_FAILED, e.getMessage());
+            }
+        }
+
+        // --- SUBSCRIPTION PAYMENT (Existing Logic) ---
+        if (request.getSubscriptionPlan() == null) {
+            throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
         }
 
         // Validate subscription plan
@@ -264,8 +325,19 @@ public class MomoPaymentService {
             payment.setStatus(Payment.PaymentStatus.COMPLETED);
             payment.setCompletedAt(LocalDateTime.now());
             
-            // Create or update AI subscription
-            createOrUpdateSubscription(payment);
+            // Check if it's a Course Payment or Subscription
+            if (payment.getNotes() != null && payment.getNotes().startsWith("Course:")) {
+                // Activate Enrollment
+                Enrollment enrollment = payment.getEnrollment();
+                if (enrollment != null) {
+                    enrollment.setStatus(EnrollmentStatus.ACTIVE);
+                    enrollmentRepository.save(enrollment);
+                    log.info("Activated enrollment for user {} course {}", payment.getUser().getEmail(), enrollment.getCourse().getTitle());
+                }
+            } else {
+                // Create or update AI subscription
+                createOrUpdateSubscription(payment);
+            }
             
             log.info("Payment completed successfully for orderId: {}", orderId);
         } else {
