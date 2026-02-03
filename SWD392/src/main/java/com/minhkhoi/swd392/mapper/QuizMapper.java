@@ -13,6 +13,9 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface QuizMapper {
 
+    @Mapping(target = "lessonId", source = "lesson.lessonId")
+    @Mapping(target = "lessonTitle", source = "lesson.title")
+    @Mapping(target = "totalQuestions", expression = "java(quiz.getQuestions() != null ? quiz.getQuestions().size() : 0)")
     QuizResponse toQuizResponse(Quiz quiz);
 
     QuestionResponse toQuestionResponse(Question question);
