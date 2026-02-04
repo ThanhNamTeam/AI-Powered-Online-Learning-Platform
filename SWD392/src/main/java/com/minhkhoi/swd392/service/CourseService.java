@@ -98,11 +98,12 @@ public class CourseService {
     public PageResponse<CourseResponse> getAllCoursesForStudent(int page, int size) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
+
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        Page<Course> courses = courseRepository.findByEnrollments_User_Email(email, pageable);
+        Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndStatus(email, CourseStatus.APPROVED, pageable);
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)

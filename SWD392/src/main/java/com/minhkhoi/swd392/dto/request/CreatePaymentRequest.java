@@ -23,4 +23,6 @@ public class CreatePaymentRequest {
     private BigDecimal amount;
     
     private String orderInfo;
+
+    private String courseId;
 }

@@ -16,4 +16,7 @@ public interface AISubscriptionRepository extends JpaRepository<AISubscription, 
     
     @Query("SELECT s FROM AISubscription s WHERE s.instructor = :instructor AND s.status = 'ACTIVE' AND s.endDate > CURRENT_TIMESTAMP")
     List<AISubscription> findValidSubscriptions(@Param("instructor") User instructor);
+
+    AISubscription findByInstructor_EmailAndStatus(String instructorEmail, AISubscription.SubscriptionStatus status);
+
 }

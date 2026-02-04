@@ -1,5 +1,6 @@
 package com.minhkhoi.swd392.repository;
 
+import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findByUser_UserIdAndStatus(String userId, Payment.PaymentStatus status);
     
     List<Payment> findByStatus(Payment.PaymentStatus status);
+
+    boolean existsByUser_EmailAndEnrollment_CourseAndStatus(String email, Course enrollmentCourse, Payment.PaymentStatus status);
+
+    Payment findByPaymentId(UUID paymentId);
 }

@@ -72,7 +72,15 @@ public enum ErrorCode {
     MOMO_CALLBACK_ERROR("Error handling MOMO callback", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_VNPAY_SIGNATURE("Invalid VNPAY signature", HttpStatus.BAD_REQUEST),
     VNPAY_CALLBACK_ERROR("Error handling VNPAY callback", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_COURSE_STATUS_FOR_APPROVAL("Course must be in PENDING_APPROVAL status to be verified", HttpStatus.BAD_REQUEST);
+    INVALID_COURSE_STATUS_FOR_APPROVAL("Course must be in PENDING_APPROVAL status to be verified", HttpStatus.BAD_REQUEST),
+
+    //SUBSCRIPTIOM
+    SUBSCRIPTION_EXPIRED("Gói hiện tại của bạn đã hết hạn", HttpStatus.BAD_REQUEST),
+    PLAN_LIMIT_REACHED("Gói hiện tại đã đăng ký tối đa khóa học", HttpStatus.BAD_REQUEST),
+    ALREADY_ENROLLED("Bạn đã đăng ký khóa học này rồi.", HttpStatus.BAD_REQUEST),
+    PAYMENT_REQUIRED("Thanh toán chưa thành công", HttpStatus.PAYMENT_REQUIRED),
+    FREE_NOT_ALLOW_ASSIGN("Gói miễn phí không cho phép đăng ký khóa học", HttpStatus.PAYMENT_REQUIRED),
+    SUBSCRIPTION_REQUIRED("Phải đăng ký gói mới được mở khóa khóa học.", HttpStatus.PAYMENT_REQUIRED);
 
     private final String message;
     private final HttpStatus httpStatus;

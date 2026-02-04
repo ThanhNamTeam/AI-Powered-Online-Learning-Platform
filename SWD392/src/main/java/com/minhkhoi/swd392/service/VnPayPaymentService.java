@@ -1,6 +1,7 @@
 package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.config.VnPayConfig;
+import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import com.minhkhoi.swd392.dto.request.CreatePaymentRequest;
 import com.minhkhoi.swd392.dto.response.PaymentResponse;
 import com.minhkhoi.swd392.entity.*;
@@ -39,80 +40,140 @@ public class VnPayPaymentService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
     private final PaymentMapper paymentMapper;
+    private final AISubscriptionRepository aiSubscriptionRepository;
 
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request, HttpServletRequest httpServletRequest) {
-        // Authenticate User
+        // 1. Authenticate User
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
-        User user = userRepository.findByEmail(userEmail)
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        // Validate Role
+        // 2. Validate Role
         if (user.getRole() != User.Role.INSTRUCTOR && user.getRole() != User.Role.STUDENT) {
             throw new AppException(ErrorCode.ONLY_STUDENT_OR_INSTRUCTOR_CAN_PURCHASE);
         }
 
-        // Validate Plan
-        AISubscription.SubscriptionPlan plan;
-        try {
-            plan = AISubscription.SubscriptionPlan.valueOf(request.getSubscriptionPlan().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
-        }
-
+        String planType = request.getSubscriptionPlan().toUpperCase();
         String orderId = UUID.randomUUID().toString();
-        long amount = request.getAmount().longValue() * 100; // VNPAY expects amount * 100
-        String orderInfo = "Pay for " + plan.name();
+        long amount = request.getAmount().longValue() * 100;
+        String orderInfo;
+        Enrollment enrollment;
+        String paymentNote;
 
-        // --- Enrollment Logic ---
-        List<Course> existingCourses = courseRepository.findByConstructor_Email(user.getEmail());
-        Course placeholderCourse = existingCourses.stream()
-                .filter(c -> "SUBSCRIPTION_PLACEHOLDER".equals(c.getTitle()))
-                .findFirst()
-                .orElse(null);
 
-        if (placeholderCourse == null) {
-            placeholderCourse = Course.builder()
-                    .constructor(user)
-                    .title("SUBSCRIPTION_PLACEHOLDER")
-                    .description("Placeholder course for subscription payments")
-                    .status(CourseStatus.DRAFT)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-            placeholderCourse = courseRepository.save(placeholderCourse);
+        if ("COURSE".equals(planType)) {
+            // ================= TRƯỜNG HỢP 1: MUA LẺ KHÓA HỌC =================
+
+            // a. Validate Course ID
+            if (request.getCourseId() == null) {
+                throw new AppException(ErrorCode.COURSE_NOT_FOUND); // Hoặc lỗi "Course ID required"
+            }
+
+            Course targetCourse = courseRepository.findById(UUID.fromString(request.getCourseId()))
+                    .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+            // b. Tạo nội dung thanh toán
+            orderInfo = "Pay for Course " + targetCourse.getTitle();
+            paymentNote = "Course Purchase: " + targetCourse.getTitle();
+
+            // c. Xử lý Enrollment (Ghi danh tạm hoặc lấy ghi danh cũ)
+            // LƯU Ý: Nếu logic của bạn là chưa thanh toán thì chưa active,
+            // bạn nên đảm bảo Enrollment này có trạng thái là PENDING hoặc chưa Active.
+            enrollment = enrollmentRepository.findByUserAndCourse(user, targetCourse)
+                    .orElseGet(() -> {
+                        Enrollment newEnroll = Enrollment.builder()
+                                .user(user)
+                                .course(targetCourse)
+                                .enrolledAt(LocalDateTime.now())
+                                .status(EnrollmentStatus.PENDING) // Khuyên dùng: Thêm status cho enrollment
+                                .build();
+                        return enrollmentRepository.save(newEnroll);
+                    });
+
+        } else {
+            // ================= TRƯỜNG HỢP 2: MUA GÓI SUBSCRIPTION =================
+
+            // a. Validate Enum (BASIC, PREMIUM...)
+            AISubscription.SubscriptionPlan plan;
+            try {
+                plan = AISubscription.SubscriptionPlan.valueOf(planType);
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
+            }
+
+            // b. Tạo nội dung thanh toán
+            orderInfo = "Pay for " + plan.name();
+            paymentNote = "Subscription Plan: " + plan.name();
+
+            // c. Logic Placeholder Course (Logic cũ của bạn)
+            // (Tôi giữ nguyên logic này vì nó liên quan đến cách bạn quản lý Subscription)
+            List<Course> existingCourses = courseRepository.findByConstructor_Email(user.getEmail());
+            Course placeholderCourse = existingCourses.stream()
+                    .filter(c -> "SUBSCRIPTION_PLACEHOLDER".equals(c.getTitle()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (placeholderCourse == null) {
+                placeholderCourse = Course.builder()
+                        .constructor(user)
+                        .title("SUBSCRIPTION_PLACEHOLDER")
+                        .description("Placeholder course for subscription payments")
+                        .status(CourseStatus.DRAFT)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                placeholderCourse = courseRepository.save(placeholderCourse);
+            }
+
+            Course finalPlaceholderCourse = placeholderCourse;
+            enrollment = enrollmentRepository.findByUserAndCourse(user, placeholderCourse)
+                    .orElseGet(() -> {
+                        Enrollment newEnroll = Enrollment.builder()
+                                .user(user)
+                                .course(finalPlaceholderCourse) // Biến local variable phải final hoặc effectively final
+                                .enrolledAt(LocalDateTime.now())
+                                .build();
+                        return enrollmentRepository.save(newEnroll);
+                    });
         }
-        final Course finalCourse = placeholderCourse;
 
-        Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, finalCourse)
-                .orElseGet(() -> {
-                    Enrollment newEnroll = Enrollment.builder()
-                            .user(user)
-                            .course(finalCourse)
-                            .enrolledAt(LocalDateTime.now())
-                            .build();
-                    return enrollmentRepository.save(newEnroll);
-                });
-        // ------------------------
+        // ---------------------------------------------------------
+        Course course = courseRepository.findByCourseId(UUID.fromString(request.getCourseId()));
 
-        // Create Payment Record (PENDING)
+        // 3. Create Payment Record (PENDING)
         Payment payment = Payment.builder()
                 .user(user)
-                .enrollment(enrollment)
+                .enrollment(enrollment) // Link tới Enrollment thật hoặc Placeholder tùy case
                 .amount(request.getAmount())
                 .status(Payment.PaymentStatus.PENDING)
                 .method(Payment.PaymentMethod.VNPAY)
                 .transactionId(orderId)
-                .notes("Subscription Plan: " + plan.name())
+                .notes(paymentNote)
+
+                // QUAN TRỌNG: Lưu thêm type và courseId vào Payment để sau này IPN xử lý
+                // Bạn cần thêm field này vào Entity Payment như đã bàn ở câu trước
+                .type("COURSE".equals(planType) ? Payment.PaymentType.COURSE : Payment.PaymentType.SUBSCRIPTION)
+                .course("COURSE".equals(planType) ? course : null)
+
                 .build();
+
         payment = paymentRepository.save(payment);
 
-        // Build VNPAY URL
-        String vnp_Url = buildVnPayUrl(orderId, amount, orderInfo, httpServletRequest);
-        
+        // 4. Build VNPAY URL
+        // Lưu ý: orderInfo nên bỏ dấu tiếng Việt để tránh lỗi checksum VNPAY
+        String safeOrderInfo = removeAccents(orderInfo);
+        String vnp_Url = buildVnPayUrl(orderId, amount, safeOrderInfo, httpServletRequest);
+
         PaymentResponse response = paymentMapper.toPaymentResponse(payment);
         response.setPaymentUrl(vnp_Url);
         return response;
+    }
+
+    // Helper function để bỏ dấu tiếng Việt (nếu chưa có)
+    private String removeAccents(String s) {
+        if (s == null) return "";
+        String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        return temp.replaceAll("\\p{M}", "").replaceAll("[^a-zA-Z0-9 ]", "");
     }
 
     private String buildVnPayUrl(String orderId, long amount, String orderInfo, HttpServletRequest request) {
@@ -158,17 +219,17 @@ public class VnPayPaymentService {
                     query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
                     query.append('=');
                     query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                    
+
                     if (itr.hasNext()) {
                         query.append('&');
                         hashData.append('&');
                     }
                 } catch (UnsupportedEncodingException e) {
-                     e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         }
-        
+
         // Remove trailing & if exists (safety)
         // logic above appends if itr.hasNext(), assuming last one is valid.
 
@@ -181,84 +242,127 @@ public class VnPayPaymentService {
 
     @Transactional
     public void handleVnPayCallback(Map<String, String> params) {
-         Map<String, String> vnp_Params = new HashMap<>(params);
-         String vnp_SecureHash = vnp_Params.get("vnp_SecureHash");
-         
-         if (vnp_SecureHash == null) {
-              log.error("VNPAY Callback missing SecureHash");
-              throw new AppException(ErrorCode.INVALID_VNPAY_SIGNATURE);
-         }
+        Map<String, String> vnp_Params = new HashMap<>(params);
+        String vnp_SecureHash = vnp_Params.get("vnp_SecureHash");
 
-         vnp_Params.remove("vnp_SecureHash");
-         vnp_Params.remove("vnp_SecureHashType");
+        if (vnp_SecureHash == null) {
+            log.error("VNPAY Callback missing SecureHash");
+            throw new AppException(ErrorCode.INVALID_VNPAY_SIGNATURE);
+        }
+
+        vnp_Params.remove("vnp_SecureHash");
+        vnp_Params.remove("vnp_SecureHashType");
 
         // Use filtered list for sorting and hashing
         List<String> fieldNames = vnp_Params.keySet().stream()
                 .filter(k -> vnp_Params.get(k) != null && !vnp_Params.get(k).isEmpty())
                 .sorted()
                 .collect(Collectors.toList());
-        
+
         StringBuilder hashData = new StringBuilder();
         Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
-            
+
             try {
                 // Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
                 hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
-                
+
                 if (itr.hasNext()) {
                     hashData.append('&');
                 }
-            } catch(UnsupportedEncodingException e) { 
-                e.printStackTrace(); 
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
             }
         }
-        
+
         String calculatedHash = hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
-        
+
         if (!calculatedHash.equals(vnp_SecureHash)) {
-             log.error("Invalid VNPAY signature. Calculated: {}, Received: {}", calculatedHash, vnp_SecureHash);
-             throw new AppException(ErrorCode.INVALID_VNPAY_SIGNATURE);
+            log.error("Invalid VNPAY signature. Calculated: {}, Received: {}", calculatedHash, vnp_SecureHash);
+            throw new AppException(ErrorCode.INVALID_VNPAY_SIGNATURE);
         }
 
-         String orderId = params.get("vnp_TxnRef");
-         String responseCode = params.get("vnp_ResponseCode");
+        String orderId = params.get("vnp_TxnRef");
+        String responseCode = params.get("vnp_ResponseCode");
 
-         Payment payment = paymentRepository.findByTransactionId(orderId)
-            .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+        Payment payment = paymentRepository.findByTransactionId(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
 
-         if ("00".equals(responseCode)) {
-             payment.setStatus(Payment.PaymentStatus.COMPLETED);
-             payment.setCompletedAt(LocalDateTime.now());
+        if ("00".equals(responseCode)) {
+            payment.setStatus(Payment.PaymentStatus.COMPLETED);
+            payment.setCompletedAt(LocalDateTime.now());
 
+            createOrUpdateSubscription(payment);
 
-
-             paymentRepository.save(payment);
-         } else {
-             payment.setStatus(Payment.PaymentStatus.FAILED);
-             paymentRepository.save(payment);
-         }
+            paymentRepository.save(payment);
+        } else {
+            payment.setStatus(Payment.PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+        }
     }
 
-    private AISubscription.SubscriptionPlan extractPlanFromPayment(Payment payment) {
+    private String extractSubscriptionPlan(String notes) {
+        if (notes.contains("BASIC")) return "BASIC";
+        if (notes.contains("PREMIUM")) return "PREMIUM";
+        if (notes.contains("ENTERPRISE")) return "ENTERPRISE";
+        return "BASIC"; // Default
+    }
+
+    private void createOrUpdateSubscription(Payment payment) {
+        User user = payment.getUser();
+
+        // Extract subscription plan from payment notes
         String notes = payment.getNotes();
-        // "Subscription Plan: BASIC | Order Info: Thanh toan goi BASIC"
+        String planName = extractSubscriptionPlan(notes);
+        AISubscription.SubscriptionPlan plan = AISubscription.SubscriptionPlan.valueOf(planName);
 
-        try {
-            String planStr = notes
-                    .split(":")[1]   // " BASIC | Order Info: ..."
-                    .split("\\|")[0]                  // " BASIC "
-                    .trim();                          // "BASIC"
-
-            return AISubscription.SubscriptionPlan.valueOf(planStr);
-        } catch (Exception e) {
-            throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN, "Cannot parse plan from payment notes");
+        // Calculate subscription period (1 month)
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = null;
+        if (plan.equals(AISubscription.SubscriptionPlan.BASIC)) {
+            endDate = startDate.plusMonths(3);
         }
+
+        if (plan.equals(AISubscription.SubscriptionPlan.PREMIUM)) {
+            endDate = startDate.plusMonths(12);
+        }
+
+        if (plan.equals(AISubscription.SubscriptionPlan.ENTERPRISE)) {
+            endDate = startDate.plusYears(2);
+        }
+        // Set AI credits based on plan
+        Integer aiCredits = switch (plan) {
+            case FREE -> 0;
+            case BASIC -> 100;
+            case PREMIUM -> 500;
+            case ENTERPRISE -> null; // Unlimited
+        };
+
+        if (payment.getType().equals(Payment.PaymentType.SUBSCRIPTION)) {
+
+            // Create new subscription
+            AISubscription subscription = AISubscription.builder()
+                    .instructor(user)
+                    .plan(plan)
+                    .status(AISubscription.SubscriptionStatus.ACTIVE)
+                    .price(payment.getAmount())
+                    .startDate(startDate)
+                    .endDate(endDate)
+                    .autoRenew(false)
+                    .aiCredits(aiCredits)
+                    .aiCreditsUsed(0)
+                    .notes("Payment ID: " + payment.getPaymentId())
+                    .build();
+
+            aiSubscriptionRepository.save(subscription);
+        }
+        log.info("Created subscription for user: {} with plan: {}", user.getEmail(), plan);
     }
+
 
     private String getIpAddress(HttpServletRequest request) {
         String ipAdress;
