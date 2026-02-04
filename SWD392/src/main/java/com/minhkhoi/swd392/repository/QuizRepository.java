@@ -11,4 +11,5 @@ import java.util.UUID;
 @Repository
 public interface QuizRepository extends JpaRepository<Quiz, UUID> {
     Optional<Quiz> findFirstByLesson_LessonIdOrderByCreatedAtDesc(UUID lessonId);
+    List<Quiz> findByLesson_LessonIdOrderByCreatedAtDesc(UUID lessonId);
 }

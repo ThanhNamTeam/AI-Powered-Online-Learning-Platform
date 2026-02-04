@@ -72,6 +72,15 @@ public class LessonController {
                 lessonService.getLessonsByModule(moduleId)));
     }
 
+    @GetMapping("/{lessonId}/document")
+    @Operation(summary = "Download Lesson Document", description = "Redirect to the downloadable URL for the lesson document (PDF)")
+    public ResponseEntity<Void> downloadDocument(@PathVariable UUID lessonId) {
+        String documentUrl = lessonService.getDownloadDocumentUrl(lessonId);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(java.net.URI.create(documentUrl))
+                .build();
+    }
+
     @PostMapping("/{lessonId}/generate-quiz")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @Operation(summary = "Generate Quiz (Instructor)",
@@ -102,7 +111,7 @@ public class LessonController {
     }
 
     @GetMapping("/{lessonId}/quiz")
-    @Operation(summary = "Get Generated Quiz", description = "Retrieve the latest AI-generated quiz for a specific lesson")
+    @Operation(summary = "Get Latest Quiz", description = "Retrieve the latest AI-generated quiz for a specific lesson")
     public ResponseEntity<ApiResponse<QuizResponse>> getLessonQuiz(@PathVariable UUID lessonId) {
         Quiz quiz = quizRepository.findFirstByLesson_LessonIdOrderByCreatedAtDesc(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
@@ -110,6 +119,24 @@ public class LessonController {
         QuizResponse response = quizMapper.toQuizResponse(quiz);
 
         return ResponseEntity.ok(ApiResponse.success("Quiz retrieved successfully", response));
+    }
+
+    @GetMapping("/{lessonId}/quizzes")
+    @Operation(summary = "Get All Quizzes", description = "Retrieve all quizzes for a specific lesson (ordered by created date)")
+    public ResponseEntity<ApiResponse<List<QuizResponse>>> getAllLessonQuizzes(@PathVariable UUID lessonId) {
+        // Verify lesson exists
+        lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        List<Quiz> quizzes = quizRepository.findByLesson_LessonIdOrderByCreatedAtDesc(lessonId);
+        
+        List<QuizResponse> responses = quizzes.stream()
+                .map(quizMapper::toQuizResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success(
+                String.format("Found %d quiz(es) for lesson", responses.size()), 
+                responses));
     }
 
     @DeleteMapping("/{lessonId}")

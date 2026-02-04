@@ -56,6 +56,11 @@ public class LessonService {
 
         // 2. Upload Document (Optional)
         if (request.getDocumentFile() != null && !request.getDocumentFile().isEmpty()) {
+            String contentType = request.getDocumentFile().getContentType();
+            if (contentType == null || !contentType.equals("application/pdf")) {
+                throw new AppException(ErrorCode.DOCUMENT_NOT_PDF);
+            }
+            
             Map<String, Object> docResult = cloudinaryService.uploadFile(request.getDocumentFile(), "raw");
             lesson.setDocumentUrl((String) docResult.get("secure_url"));
             
@@ -176,5 +181,16 @@ public class LessonService {
             log.error("Failed to extract text content", e);
             return null;
         }
+    }
+
+    public String getDownloadDocumentUrl(UUID lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        if (lesson.getDocumentUrl() == null || lesson.getDocumentUrl().isEmpty()) {
+            throw new AppException(ErrorCode.DOCUMENT_NOT_FOUND);
+        }
+
+        return lesson.getDocumentUrl();
     }
 }

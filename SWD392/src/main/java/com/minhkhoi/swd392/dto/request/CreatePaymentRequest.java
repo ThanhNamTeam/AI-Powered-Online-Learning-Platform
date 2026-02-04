@@ -14,10 +14,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class CreatePaymentRequest {
+    private String subscriptionPlan; // BASIC, PREMIUM, ENTERPRISE (Optional if buying course)
     
-    @NotNull(message = "Subscription plan is required")
-    private String subscriptionPlan; // BASIC, PREMIUM, ENTERPRISE
-    
+
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
