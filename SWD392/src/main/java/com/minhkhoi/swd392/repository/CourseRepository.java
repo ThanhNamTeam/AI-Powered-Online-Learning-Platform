@@ -1,6 +1,7 @@
 package com.minhkhoi.swd392.repository;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.constant.JlptLevel;
 import com.minhkhoi.swd392.entity.Course;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,4 +24,12 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
                               Pageable pageable);
 
     List<Course> findByConstructor_Email(String constructorEmail);
+
+    /**
+     * Tìm các khóa học đã được duyệt và phù hợp với mức JLPT.
+     * Dùng để gợi ý khóa học sau khi đánh giá placement test.
+     */
+    List<Course> findByStatusAndJlptLevelIn(CourseStatus status, List<JlptLevel> levels);
+
+    List<Course> findByStatusAndJlptLevel(CourseStatus status, JlptLevel jlptLevel);
 }

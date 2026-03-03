@@ -32,6 +32,9 @@ public class CreateCourseRequest {
 
     @NotNull(message = "Thumbnail file is required")
     private MultipartFile thumbnailFile;
+
+    @NotBlank(message = "JLPT level is required (N5-N1)")
+    private String jlptLevel;
     
     private CourseStatus status;
 }

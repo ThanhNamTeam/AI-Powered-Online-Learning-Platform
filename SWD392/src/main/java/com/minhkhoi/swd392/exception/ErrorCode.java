@@ -45,6 +45,8 @@ public enum ErrorCode {
     VIDEO_REQUIRED("Video file is required for lesson creation", HttpStatus.BAD_REQUEST),
     DOCUMENT_NOT_PDF("Document must be a PDF file", HttpStatus.BAD_REQUEST),
     DOCUMENT_NOT_FOUND("No document attached to this lesson", HttpStatus.NOT_FOUND),
+    AUDIO_INVALID("Invalid audio file. Supported formats: MP3, WAV, M4A, OGG. Max size: 50MB", HttpStatus.BAD_REQUEST),
+    PLACEMENT_DOCUMENT_NOT_FOUND("Placement document not found", HttpStatus.NOT_FOUND),
 
     // Course/Module errors (4000-4999)
     COURSE_NOT_FOUND("Course not found", HttpStatus.NOT_FOUND),

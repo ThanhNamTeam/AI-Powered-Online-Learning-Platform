@@ -49,8 +49,13 @@ public class SecurityConfig {
                                 "/payment-result.html",          // Payment Result Page
                                 "/api/identity/payment/momo/callback", // MOMO Callback
                                 "/api/identity/payment/vnpay/callback", // VNPAY Callback
-                                "/api/courses/all-course/public" // Public Course List
+                                "/api/courses/all-course/public",        // Public Course List
+                                "/api/placement-test/**"                  // Placement Test (Guest access)
                         ).permitAll()
+                        // Staff endpoints - yêu cầu STAFF hoặc ADMIN role
+                        .requestMatchers(
+                                "/api/placement-documents/**"             // Quản lý tài liệu Placement Test
+                        ).authenticated()
                         // Protected endpoints - Authentication required (use Authorize button in Swagger)
                         .requestMatchers(
                                 "/api/accounts/me",

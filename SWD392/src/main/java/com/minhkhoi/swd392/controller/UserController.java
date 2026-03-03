@@ -32,7 +32,7 @@ public class UserController {
     }
 
     @PutMapping("/update-profile")
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasAnyRole('STAFF', 'INSTRUCTOR')")
     public ResponseEntity<ApiResponse<Void>> updateProfile(@RequestBody UpdateUserInfoRequest request){
         userService.updateUserInfo(request);
         return ResponseEntity.ok(ApiResponse.success("Update profile successfully", null));
