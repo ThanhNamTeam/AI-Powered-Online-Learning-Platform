@@ -1,6 +1,7 @@
 package com.minhkhoi.swd392.entity;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.constant.JlptLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -48,6 +49,14 @@ public class Course {
 
     @Column(name = "course_rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
+
+    /**
+     * Cấp độ JLPT của khóa học (N5, N4, N3, N2, N1).
+     * Dùng để gợi ý khóa học phù hợp từ kết quả Placement Test.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "course_jlpt_level")
+    private JlptLevel jlptLevel;
 
     @Column(name = "course_thumbnail_url")
     private String thumbnailUrl;
