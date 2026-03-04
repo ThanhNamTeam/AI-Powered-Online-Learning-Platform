@@ -1,9 +1,11 @@
 package com.minhkhoi.swd392.entity;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.constant.JlptLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +27,10 @@ public class Course {
     @JoinColumn(name = "course_constructor_id", nullable = false)
     private User constructor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_handled_by_staff_id")
+    private User handledByStaff;
+
     @Column(name = "course_title", length = 200, nullable = false)
     private String title;
 
@@ -38,8 +44,19 @@ public class Course {
     @Column(name = "course_status")
     private CourseStatus status;
 
+    @Column(name = "course_created_at", nullable = true)
+    private LocalDateTime createdAt;
+
     @Column(name = "course_rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
+
+    /**
+     * Cấp độ JLPT của khóa học (N5, N4, N3, N2, N1).
+     * Dùng để gợi ý khóa học phù hợp từ kết quả Placement Test.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "course_jlpt_level")
+    private JlptLevel jlptLevel;
 
     @Column(name = "course_thumbnail_url")
     private String thumbnailUrl;
@@ -49,4 +66,7 @@ public class Course {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Enrollment> enrollments;
+
+    @OneToMany(mappedBy = "reportedCourse", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Report> reports;
 }

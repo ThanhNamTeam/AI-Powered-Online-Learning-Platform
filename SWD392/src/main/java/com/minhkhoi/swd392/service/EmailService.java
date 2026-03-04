@@ -57,6 +57,19 @@ public class EmailService {
         }
     }
 
+    public void sendResetPasswordEmail(String toEmail, String resetPasswordUrl) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Yêu cầu đặt lại mật khẩu");
+        message.setText("Chào bạn,\n\n"
+                + "Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấn vào link bên dưới:\n"
+                + resetPasswordUrl + "\n\n"
+                + "Link này sẽ hết hạn sau 15 phút.\n"
+                + "Nếu bạn không yêu cầu, vui lòng bỏ qua email này.");
+
+        mailSender.send(message);
+    }
+
     private String buildWelcomeEmailContent(String fullName) {
         return String.format("""
                 Hello %s,

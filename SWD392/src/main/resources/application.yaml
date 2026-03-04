@@ -7,27 +7,35 @@ spring:
   profiles:
     active: local
   datasource:
-    # URL của Postgres (cần tạo DB trước)
-    url: jdbc:postgresql://localhost:5432/swd392_db
-    username: postgres
-    password: admin123
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
-         # Quan trọng: Dialect cho Postgres
-         dialect: org.hibernate.dialect.PostgreSQLDialect
-        # Format SQL cho dễ đọc
-         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  # File upload configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
 
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:huynhvuminhkhoi08042004@gmail.com}
-    password: ${MAIL_PASSWORD:pgakceelvslhkumz}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -43,5 +51,39 @@ springdoc:
     enabled: true
 
 jwt:
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-  expiration: 86400000
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+  folder: swd392-videos
+
+# AssemblyAI Configuration for Real Transcription
+assembly:
+  api-key: ${ASSEMBLY_API_KEY}
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+
+app:
+  frontend-url: ${FRONTEND_URL}
+
+# MOMO Payment Configuration
+# Các cấu hình database, server... giữ nguyên hoặc dùng ${...} nếu đã cấu hình sẵn
+
+momo:
+  partnerCode: ${MOMO_PARTNER_CODE}
+  accessKey: ${MOMO_ACCESS_KEY}
+  secretKey: ${MOMO_SECRET_KEY}
+  endpoint: ${MOMO_ENDPOINT}
+  redirectUrl: ${MOMO_REDIRECT_URL}
+  ipnUrl: ${MOMO_IPN_URL}
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE}
+  hash-secret: ${VNPAY_HASH_SECRET}
+  payment-url: ${VNPAY_PAYMENT_URL}
+  return-url: ${VNPAY_RETURN_URL}
