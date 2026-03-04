@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  # ---- PostgreSQL Database ----
+  # ---- PostgreSQL Database (với pgvector extension) ----
   postgres:
-    image: pgvector/pgvector:pg16      # pgvector built-in (dự án dùng extension này)
+    image: pgvector/pgvector:pg16
     container_name: swd392_postgres
     restart: unless-stopped
     environment:
@@ -25,7 +25,6 @@ services:
     image: redis:7-alpine
     container_name: swd392_redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis123}
     ports:
       - "6379:6379"
     volumes:
@@ -39,8 +38,8 @@ services:
   # ---- Spring Boot App ----
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./SWD392       # source code nằm trong SWD392/
+      dockerfile: ../Dockerfile  # Dockerfile nằm ở root
     container_name: swd392_app
     restart: unless-stopped
     ports:
@@ -94,13 +93,6 @@ services:
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET}
       VNPAY_PAYMENT_URL: ${VNPAY_PAYMENT_URL}
       VNPAY_RETURN_URL: ${VNPAY_RETURN_URL}
-
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
 volumes:
   postgres_data:
