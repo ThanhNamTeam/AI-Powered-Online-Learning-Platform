@@ -5,16 +5,16 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# Copy Maven wrapper & POM trước để cache dependency layer
-COPY mvnw mvnw.cmd ./
-COPY .mvn .mvn
-COPY pom.xml ./
+# SỬA TẠI ĐÂY: Trỏ đường dẫn vào thư mục SWD392
+COPY SWD392/mvnw SWD392/mvnw.cmd ./
+COPY SWD392/.mvn .mvn
+COPY SWD392/pom.xml ./
 
-# Download dependencies (cache layer riêng, chỉ re-run khi pom.xml thay đổi)
+# Download dependencies
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
-# Copy source code rồi build
-COPY src ./src
+# SỬA TẠI ĐÂY: Copy source code từ thư mục SWD392
+COPY SWD392/src ./src
 RUN ./mvnw package -DskipTests -B
 
 # ============================================================
@@ -22,23 +22,19 @@ RUN ./mvnw package -DskipTests -B
 # ============================================================
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
-# Tạo user non-root để chạy app (best practice bảo mật)
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-# Copy JAR từ build stage
+# Copy JAR từ build stage (Giữ nguyên vì file JAR đã được build vào /app/target trong container)
 COPY --from=builder /app/target/*.jar app.jar
 
-# Đổi owner cho user non-root
 RUN chown appuser:appgroup app.jar
 
 USER appuser
 
-# Port mặc định của Spring Boot
 EXPOSE 8080
 
-# Chạy app với các JVM options tối ưu cho container
 ENTRYPOINT ["java", \
   "-XX:+UseContainerSupport", \
   "-XX:MaxRAMPercentage=75.0", \
