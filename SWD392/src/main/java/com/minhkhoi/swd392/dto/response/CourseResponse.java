@@ -27,6 +27,7 @@ public class CourseResponse {
     private String constructorName;
     private UUID handledByStaffId;
     private String handledByStaffName;
+    private String jlptLevel;
     private LocalDateTime createdAt;
 
     private List<ModuleResponse> modules;

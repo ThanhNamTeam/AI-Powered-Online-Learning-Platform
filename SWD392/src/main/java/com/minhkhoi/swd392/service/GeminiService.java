@@ -176,6 +176,114 @@ REQUIREMENTS:
         }
     }
 
+    // ────────────────────────────────────────────────────────────────────────
+    //  Generic Gemini caller – dùng cho bất kỳ prompt nào (Placement Test, ...)
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Gọi Gemini AI với một prompt bất kỳ.
+     * Tái sử dụng semaphore và retry logic chống rate-limit.
+     *
+     * @param prompt Nội dung prompt cần gửi
+     * @return Phản hồi raw text từ Gemini (đã strip markdown fence)
+     */
+    public String callGeminiWithPrompt(String prompt) {
+        if (apiKey == null || apiKey.isEmpty() || apiKey.length() < 10) {
+            log.warn("[Gemini] API Key không hợp lệ.");
+            throw new RuntimeException("Gemini API key not configured");
+        }
+
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Semaphore interrupted", e);
+        }
+
+        try {
+            int maxRetries = 3;
+            int retryCount = 0;
+            long backoff = 2000;
+
+            while (true) {
+                try {
+                    JSONObject part = new JSONObject();
+                    part.put("text", prompt);
+
+                    JSONObject contentObj = new JSONObject();
+                    contentObj.put("parts", new JSONArray().put(part));
+
+                    JSONObject requestBody = new JSONObject();
+                    requestBody.put("contents", new JSONArray().put(contentObj));
+
+                    okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                            .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                            .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                            .build();
+
+                    okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
+                    okhttp3.RequestBody body = okhttp3.RequestBody.create(mediaType, requestBody.toString());
+
+                    okhttp3.HttpUrl.Builder urlBuilder = okhttp3.HttpUrl.parse(GEMINI_API_URL).newBuilder();
+                    urlBuilder.addQueryParameter("key", apiKey);
+
+                    okhttp3.Request request = new okhttp3.Request.Builder()
+                            .url(urlBuilder.build())
+                            .post(body)
+                            .addHeader("Content-Type", "application/json")
+                            .build();
+
+                    try (okhttp3.Response response = client.newCall(request).execute()) {
+                        if (response.isSuccessful()) {
+                            String responseBody = response.body().string();
+                            JSONObject jsonResp = new JSONObject(responseBody);
+                            JSONArray candidates = jsonResp.optJSONArray("candidates");
+                            if (candidates != null && !candidates.isEmpty()) {
+                                JSONObject first = candidates.getJSONObject(0);
+                                JSONObject resContent = first.optJSONObject("content");
+                                if (resContent != null) {
+                                    JSONArray parts = resContent.optJSONArray("parts");
+                                    if (parts != null && !parts.isEmpty()) {
+                                        return cleanAiJsonResponse(parts.getJSONObject(0).optString("text"));
+                                    }
+                                }
+                            }
+                            return "{}";
+                        }
+
+                        if (response.code() == 429) {
+                            if (retryCount < maxRetries) {
+                                log.warn("[Gemini] Rate limit 429. Retry {}/{} in {}ms", retryCount + 1, maxRetries, backoff);
+                                Thread.sleep(backoff);
+                                backoff *= 2;
+                                retryCount++;
+                                continue;
+                            }
+                            throw new RuntimeException("Gemini quota exhausted after " + maxRetries + " retries");
+                        }
+
+                        String errBody = response.body() != null ? response.body().string() : "unknown";
+                        throw new RuntimeException("Gemini API error " + response.code() + ": " + errBody);
+                    }
+                } catch (RuntimeException re) {
+                    throw re;
+                } catch (Exception e) {
+                    if (retryCount < maxRetries) {
+                        log.warn("[Gemini] Error attempt {}: {}", retryCount + 1, e.getMessage());
+                        try { Thread.sleep(backoff); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                        backoff *= 2;
+                        retryCount++;
+                    } else {
+                        throw new RuntimeException("Gemini call failed after retries: " + e.getMessage(), e);
+                    }
+                }
+            }
+        } finally {
+            semaphore.release();
+        }
+    }
+
     private String getMockJapaneseQuizData() {
         return """
             [
