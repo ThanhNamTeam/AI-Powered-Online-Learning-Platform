@@ -19,4 +19,6 @@ public interface AISubscriptionRepository extends JpaRepository<AISubscription, 
 
     AISubscription findByInstructor_EmailAndStatus(String instructorEmail, AISubscription.SubscriptionStatus status);
 
+    AISubscription findTopByInstructor_EmailAndStatusOrderByEndDateDesc(String instructorEmail, AISubscription.SubscriptionStatus status);
+
 }

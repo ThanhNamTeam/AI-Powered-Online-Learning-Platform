@@ -41,6 +41,7 @@ public class VnPayPaymentService {
     private final CourseRepository courseRepository;
     private final PaymentMapper paymentMapper;
     private final AISubscriptionRepository aiSubscriptionRepository;
+    private final EnrollmentService enrollmentService;
 
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request, HttpServletRequest httpServletRequest) {
@@ -224,6 +225,7 @@ public class VnPayPaymentService {
                 Enrollment enrollment = payment.getEnrollment();
                 if (enrollment != null) {
                     enrollment.setStatus(EnrollmentStatus.ACTIVE);
+                    enrollment.setType(Enrollment.EnrollmentType.SINGLE_PURCHASE);
                     enrollmentRepository.save(enrollment);
                     log.info("Activated enrollment for course: {} user: {}", payment.getCourse().getTitle(), payment.getUser().getEmail());
                 }
@@ -243,6 +245,21 @@ public class VnPayPaymentService {
 
     private void createOrUpdateSubscription(Payment payment) {
         User user = payment.getUser();
+        String email = user.getEmail();
+
+        // 🔥 BƯỚC 1: Tắt subscription cũ
+        AISubscription oldSub = aiSubscriptionRepository
+                .findTopByInstructor_EmailAndStatusOrderByEndDateDesc(
+                        email,
+                        AISubscription.SubscriptionStatus.ACTIVE
+                );
+
+        if (oldSub != null) {
+            oldSub.setStatus(AISubscription.SubscriptionStatus.CANCELLED);
+            aiSubscriptionRepository.save(oldSub);
+        }
+
+        // 🔽 Phần code cũ của bạn giữ nguyên
         String notes = payment.getNotes();
         String planName = extractSubscriptionPlan(notes);
         AISubscription.SubscriptionPlan plan;
@@ -251,33 +268,31 @@ public class VnPayPaymentService {
             plan = AISubscription.SubscriptionPlan.valueOf(planName);
         } catch (Exception e) {
             log.error("Unknown plan in payment notes: {}", planName);
-            plan = AISubscription.SubscriptionPlan.BASIC; // Default fallback
+            plan = AISubscription.SubscriptionPlan.BASIC;
         }
 
         LocalDateTime startDate = LocalDateTime.now();
         LocalDateTime endDate;
         Integer aiCredits;
 
-        // Cấu hình thời gian và credits cho từng gói
         switch (plan) {
             case BASIC:
-                endDate = startDate.plusMonths(3); // Giả sử Basic là 3 tháng
+                endDate = startDate.plusMonths(3);
                 aiCredits = 100;
                 break;
             case PREMIUM:
-                endDate = startDate.plusMonths(12); // Premium 1 năm
+                endDate = startDate.plusMonths(12);
                 aiCredits = 500;
                 break;
             case ENTERPRISE:
-                endDate = startDate.plusYears(2); // Enterprise 2 năm
-                aiCredits = null; // Unlimited (cần handle null ở logic sử dụng credits)
+                endDate = startDate.plusYears(2);
+                aiCredits = null;
                 break;
-            default: // FREE hoặc gói lạ
+            default:
                 endDate = startDate.plusMonths(1);
                 aiCredits = 0;
         }
 
-        // Tạo Subscription mới
         AISubscription subscription = AISubscription.builder()
                 .instructor(user)
                 .plan(plan)
@@ -292,7 +307,8 @@ public class VnPayPaymentService {
                 .build();
 
         aiSubscriptionRepository.save(subscription);
-        log.info("Created/Updated subscription for user: {} with plan: {}", user.getEmail(), plan);
+
+        log.info("Created subscription for user: {} with plan: {}", email, plan);
     }
 
     private String extractSubscriptionPlan(String notes) {

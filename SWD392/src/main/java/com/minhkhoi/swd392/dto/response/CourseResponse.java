@@ -30,4 +30,5 @@ public class CourseResponse {
     private LocalDateTime createdAt;
 
     private List<ModuleResponse> modules;
+    private boolean enrolled;
 }
