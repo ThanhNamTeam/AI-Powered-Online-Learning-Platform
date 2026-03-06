@@ -15,7 +15,7 @@ import java.util.UUID;
 public interface CourseRepository extends JpaRepository<Course, UUID> {
 //    List<Course> findByConstructor_UserId(String userId);
 
-    Page<Course> findByEnrollments_User_Email(String enrollmentsUserEmail, Pageable pageable);
+    Page<Course> findByEnrollments_User_EmailAndStatus(String enrollmentsUserEmail, CourseStatus status, Pageable pageable);
 
     Page<Course> findByStatus(CourseStatus status,
                               Pageable pageable);
@@ -24,6 +24,8 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
                               Pageable pageable);
 
     List<Course> findByConstructor_Email(String constructorEmail);
+
+    Course findByCourseId(UUID courseId);
 
     /**
      * Tìm các khóa học đã được duyệt và phù hợp với mức JLPT.

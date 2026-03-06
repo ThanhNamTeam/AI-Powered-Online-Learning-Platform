@@ -80,6 +80,7 @@ public class PlacementTestService {
                         .topic(q.getTopic())
                         .jlptLevel(q.getJlptLevel())
                         .questionType(q.getQuestionType())
+                        .correctAnswer(q.getCorrectAnswer())
                         .audioUrl(q.getAudioUrl())
                         .build())
                 .collect(Collectors.toList());

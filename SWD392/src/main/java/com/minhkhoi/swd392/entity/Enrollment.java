@@ -33,6 +33,9 @@ public class Enrollment {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
+    @Enumerated(EnumType.STRING)
+    private EnrollmentType type;
+
     @CreationTimestamp
     @Column(name = "enrollments_enrolled_at", nullable = false, updatable = false)
     private LocalDateTime enrolledAt;
@@ -47,6 +50,11 @@ public class Enrollment {
 
     @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments;
+
+    public enum EnrollmentType {
+        SUBSCRIPTION,  // đăng ký bằng gói
+        SINGLE_PURCHASE // mua lẻ khóa
+    }
 }
 
 

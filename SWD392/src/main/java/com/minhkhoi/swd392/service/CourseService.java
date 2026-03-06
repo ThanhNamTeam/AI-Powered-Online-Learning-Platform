@@ -1,6 +1,7 @@
 package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import com.minhkhoi.swd392.dto.PageResponse;
 import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
@@ -11,6 +12,7 @@ import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.mapper.CourseMapper;
 import com.minhkhoi.swd392.repository.CourseRepository;
+import com.minhkhoi.swd392.repository.EnrollmentRepository;
 import com.minhkhoi.swd392.repository.ModuleRepository;
 import com.minhkhoi.swd392.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class CourseService {
     private final CourseMapper courseMapper;
     private final CloudinaryService cloudinaryService;
     private final ModuleRepository moduleRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -102,7 +105,7 @@ public class CourseService {
 
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        Page<Course> courses = courseRepository.findByEnrollments_User_Email(email, pageable);
+        Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndStatus(email, CourseStatus.APPROVED, pageable);
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)
@@ -115,6 +118,7 @@ public class CourseService {
 
     public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
 
@@ -124,35 +128,56 @@ public class CourseService {
         Page<Course> courses;
 
         if (user.getRole() == User.Role.STUDENT) {
-            // Student chỉ xem khóa học đã duyệt
             courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
-
         } else if (user.getRole() == User.Role.STAFF) {
-            // Staff xem tất cả trừ DRAFT
             courses = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
-
         } else {
-            // ADMIN hoặc role khác -> xem tất cả
             courses = courseRepository.findAll(pageable);
         }
+
+        // 🔥 LẤY DANH SÁCH COURSE ĐÃ ENROLL (1 QUERY DUY NHẤT)
+        List<UUID> enrolledCourseIds =
+                enrollmentRepository.findCourseIdsByUserEmail(email);
+
+        // 🔥 MAP + SET ENROLLED
+        List<CourseResponse> data = courses.getContent()
+                .stream()
+                .map(course -> {
+                    CourseResponse res = courseMapper.toCourseResponse(course);
+
+                    res.setEnrolled(
+                            enrolledCourseIds.contains(course.getCourseId())
+                    );
+
+                    return res;
+                })
+                .collect(Collectors.toList());
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)
                 .pageSize(size)
                 .totalPages(courses.getTotalPages())
                 .totalElements(courses.getTotalElements())
-                .data(courses.getContent()
-                        .stream()
-                        .map(courseMapper::toCourseResponse)
-                        .collect(Collectors.toList()))
+                .data(data)
                 .build();
     }
 
 
     public CourseResponse getCourseById(UUID courseId) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-        return courseMapper.toCourseResponse(course);
+
+        CourseResponse response = courseMapper.toCourseResponse(course);
+
+        List<UUID> enrolledCourseIds =
+                enrollmentRepository.findCourseIdsByUserEmail(email);
+
+        response.setEnrolled(enrolledCourseIds.contains(course.getCourseId()));
+
+        return response;
     }
 
 
