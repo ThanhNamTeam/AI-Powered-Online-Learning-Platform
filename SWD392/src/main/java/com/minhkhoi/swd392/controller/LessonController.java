@@ -12,6 +12,8 @@ import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.repository.LessonRepository;
 import com.minhkhoi.swd392.repository.QuizRepository;
+import com.minhkhoi.swd392.repository.UserRepository;
+import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.service.LessonAsyncService;
 import com.minhkhoi.swd392.service.LessonService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +42,7 @@ public class LessonController {
     private final LessonAsyncService lessonAsyncService;
     private final QuizRepository quizRepository;
     private final LessonRepository lessonRepository;
+    private final UserRepository userRepository;
     private final com.minhkhoi.swd392.mapper.QuizMapper quizMapper;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -118,6 +121,13 @@ public class LessonController {
 
         QuizResponse response = quizMapper.toQuizResponse(quiz);
 
+        // Hide answers for students so they can't cheat
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email).orElse(null);
+        if (currentUser != null && currentUser.getRole() == User.Role.STUDENT) {
+            response.hideAnswers();
+        }
+
         return ResponseEntity.ok(ApiResponse.success("Quiz retrieved successfully", response));
     }
 
@@ -133,6 +143,13 @@ public class LessonController {
         List<QuizResponse> responses = quizzes.stream()
                 .map(quizMapper::toQuizResponse)
                 .collect(Collectors.toList());
+
+        // Hide answers for students
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email).orElse(null);
+        if (currentUser != null && currentUser.getRole() == User.Role.STUDENT) {
+            responses.forEach(QuizResponse::hideAnswers);
+        }
 
         return ResponseEntity.ok(ApiResponse.success(
                 String.format("Found %d quiz(es) for lesson", responses.size()), 

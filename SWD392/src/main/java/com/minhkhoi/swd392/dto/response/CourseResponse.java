@@ -1,6 +1,8 @@
 package com.minhkhoi.swd392.dto.response;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.entity.Course;
+import com.minhkhoi.swd392.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -31,4 +34,23 @@ public class CourseResponse {
     private LocalDateTime createdAt;
 
     private List<ModuleResponse> modules;
+
+    public static CourseResponse fromEntity(Course course) {
+        return CourseResponse.builder()
+                .courseId(course.getCourseId())
+                .title(course.getTitle())
+                .description(course.getDescription())
+                .price(course.getPrice())
+                .status(course.getStatus())
+                .thumbnailUrl(course.getThumbnailUrl())
+                .rejectionReason(course.getRejectionReason())
+                .constructorId(UUID.fromString(course.getConstructor().getUserId()))
+                .constructorName(course.getConstructor().getFullName())
+                .handledByStaffId(course.getHandledByStaff() != null ? UUID.fromString(course.getHandledByStaff().getUserId()) : null)
+                .handledByStaffName(course.getHandledByStaff() != null ? course.getHandledByStaff().getFullName() : null)
+                .jlptLevel(course.getJlptLevel() != null ? course.getJlptLevel().name() : null)
+                .createdAt(course.getCreatedAt())
+                .modules(course.getModules() != null ? course.getModules().stream().map(ModuleResponse::fromEntity).collect(Collectors.toList()) : null)
+                .build();
+    }
 }

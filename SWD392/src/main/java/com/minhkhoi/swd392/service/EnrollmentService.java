@@ -10,7 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.minhkhoi.swd392.dto.response.EnrollmentResponse;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -44,4 +47,22 @@ public class EnrollmentService {
         enrollmentRepository.save(enrollment);
     }
 
+    public List<EnrollmentResponse> getEnrollmentsForInstructor() {
+        String email = org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+        var instructor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Instructor not found: " + email));
+
+        return enrollmentRepository.findByCourseConstructor(instructor).stream()
+                .map(EnrollmentResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<EnrollmentResponse> getAllEnrollments() {
+        return enrollmentRepository.findAll().stream()
+                .map(EnrollmentResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }
