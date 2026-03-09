@@ -34,13 +34,11 @@ public class LessonAsyncService {
     private final ObjectMapper objectMapper;
     private final com.minhkhoi.swd392.mapper.QuizMapper quizMapper;
 
-    /**
-     * Chỉ xử lý Transcribe video bất đồng bộ sau khi upload.
-     */
+
     @Async
     @Transactional
     public void processTranscription(UUID lessonId) {
-        log.info(">>>> Bắt đầu Transcription cho Lesson ID: {}", lessonId);
+        log.info("Transcription cho Lesson ID: {}", lessonId);
         try {
             Lesson lesson = lessonRepository.findById(lessonId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy bài học ID: " + lessonId));

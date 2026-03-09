@@ -21,4 +21,13 @@ public class QuizResponse {
     private LocalDateTime createdAt;
     private Integer totalQuestions;
     private List<QuestionResponse> questions;
+
+    public void hideAnswers() {
+        if (questions != null) {
+            questions.forEach(q -> {
+                q.setCorrectAnswer(null);
+                q.setExplanation(null);
+            });
+        }
+    }
 }
