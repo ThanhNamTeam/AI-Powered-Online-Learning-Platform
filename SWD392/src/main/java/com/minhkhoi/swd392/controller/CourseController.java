@@ -5,6 +5,7 @@ import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
+import com.minhkhoi.swd392.dto.response.CourseStatsResponse;
 import com.minhkhoi.swd392.service.CourseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -78,9 +79,15 @@ public class CourseController {
     @GetMapping("/all-course/public")
     public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getAllCoursesPublic(
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "search", required = false) String search
     ) {
-        return ResponseEntity.ok(ApiResponse.success("List courses for student", courseService.getAllCoursesPublic(page, size)));
+        return ResponseEntity.ok(ApiResponse.success("List courses public", courseService.getAllCoursesPublic(page, size, search)));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<CourseStatsResponse>> getCourseStats() {
+        return ResponseEntity.ok(ApiResponse.success("Course statistics", courseService.getCourseStats()));
     }
 
     @GetMapping("/{courseId}")

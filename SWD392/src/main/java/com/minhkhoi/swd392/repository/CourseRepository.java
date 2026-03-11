@@ -23,6 +23,14 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     Page<Course> findByStatusNot(CourseStatus status,
                               Pageable pageable);
 
+    Page<Course> findByStatusAndTitleContainingIgnoreCase(CourseStatus status, String title, Pageable pageable);
+
+    Page<Course> findByStatusNotAndTitleContainingIgnoreCase(CourseStatus status, String title, Pageable pageable);
+
+    long countByStatus(CourseStatus status);
+
+    long countByStatusNot(CourseStatus status);
+
     List<Course> findByConstructor_Email(String constructorEmail);
 
     /**

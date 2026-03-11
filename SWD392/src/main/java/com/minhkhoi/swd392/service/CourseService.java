@@ -5,6 +5,7 @@ import com.minhkhoi.swd392.dto.PageResponse;
 import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
+import com.minhkhoi.swd392.dto.response.CourseStatsResponse;
 import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.exception.AppException;
@@ -115,27 +116,41 @@ public class CourseService {
                 .build();
     }
 
-    public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
-
+    @Transactional(readOnly = true)
+    public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size, String search) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = (auth != null) ? auth.getName() : "anonymousUser";
+        
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
         Page<Course> courses;
+        boolean hasSearch = search != null && !search.trim().isEmpty();
 
-        if (user.getRole() == User.Role.STUDENT) {
-            // Student chỉ xem khóa học đã duyệt
-            courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
-
-        } else if (user.getRole() == User.Role.STAFF) {
-            // Staff xem tất cả trừ DRAFT
-            courses = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
-
+        // 1. Nếu là khách (chưa đăng nhập) hoặc Student -> Chỉ xem APPROVED
+        if (email == null || email.equals("anonymousUser")) {
+            if (hasSearch) {
+                courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search, pageable);
+            } else {
+                courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
+            }
         } else {
-            // ADMIN hoặc role khác -> xem tất cả
-            courses = courseRepository.findAll(pageable);
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user != null && (user.getRole() == User.Role.STAFF || user.getRole() == User.Role.ADMIN)) {
+                // Staff/Admin xem tất cả trừ DRAFT để kiểm duyệt
+                if (hasSearch) {
+                    courses = courseRepository.findByStatusNotAndTitleContainingIgnoreCase(CourseStatus.DRAFT, search, pageable);
+                } else {
+                    courses = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
+                }
+            } else {
+                // Mặc định (Student đã login) -> Chỉ xem APPROVED
+                if (hasSearch) {
+                    courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search, pageable);
+                } else {
+                    courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
+                }
+            }
         }
 
         return PageResponse.<CourseResponse>builder()
@@ -147,6 +162,15 @@ public class CourseService {
                         .stream()
                         .map(courseMapper::toCourseResponse)
                         .collect(Collectors.toList()))
+                .build();
+    }
+
+    public CourseStatsResponse getCourseStats() {
+        return CourseStatsResponse.builder()
+                .pendingCount(courseRepository.countByStatus(CourseStatus.PENDING_APPROVAL))
+                .approvedCount(courseRepository.countByStatus(CourseStatus.APPROVED))
+                .rejectedCount(courseRepository.countByStatus(CourseStatus.REJECTED))
+                .totalCount(courseRepository.countByStatusNot(CourseStatus.DRAFT))
                 .build();
     }
 
