@@ -11,6 +11,7 @@ import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.mapper.CourseMapper;
 import com.minhkhoi.swd392.repository.CourseRepository;
+import com.minhkhoi.swd392.repository.EnrollmentRepository;
 import com.minhkhoi.swd392.repository.ModuleRepository;
 import com.minhkhoi.swd392.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class CourseService {
     private final CourseMapper courseMapper;
     private final CloudinaryService cloudinaryService;
     private final ModuleRepository moduleRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -152,7 +154,30 @@ public class CourseService {
     public CourseResponse getCourseById(UUID courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-        return courseMapper.toCourseResponse(course);
+
+        CourseResponse response = courseMapper.toCourseResponse(course);
+
+        // Kiểm tra xem user hiện tại có enrollment ACTIVE/COMPLETED không
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            if (email != null && !email.equals("anonymousUser")) {
+                boolean isEnrolled = enrollmentRepository.existsByUser_EmailAndCourseAndStatusIn(
+                        email, course,
+                        java.util.List.of(
+                            com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE,
+                            com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED
+                        )
+                );
+                response.setEnrolled(isEnrolled);
+            } else {
+                response.setEnrolled(false);
+            }
+        } catch (Exception e) {
+            log.warn("Could not check enrollment status: {}", e.getMessage());
+            response.setEnrolled(false);
+        }
+
+        return response;
     }
 
 

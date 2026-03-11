@@ -34,6 +34,7 @@ public class CourseResponse {
     private LocalDateTime createdAt;
 
     private List<ModuleResponse> modules;
+    private Boolean enrolled; // true nếu user hiện tại đã mua/đăng ký khóa học này
 
     public static CourseResponse fromEntity(Course course) {
         return CourseResponse.builder()
