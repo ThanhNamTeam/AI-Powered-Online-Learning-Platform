@@ -18,4 +18,9 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findByUser_UserIdAndStatus(String userId, Payment.PaymentStatus status);
     
     List<Payment> findByStatus(Payment.PaymentStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND p.createdAt >= :date")
+    java.math.BigDecimal sumCompletedAmountAfter(java.time.LocalDateTime date);
+
+    List<Payment> findByStatusAndCreatedAtAfter(Payment.PaymentStatus status, java.time.LocalDateTime date);
 }

@@ -117,39 +117,50 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size, String search) {
+    public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size, String search, String sortBy) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null) ? auth.getName() : "anonymousUser";
         
-        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
-
         Page<Course> courses;
         boolean hasSearch = search != null && !search.trim().isEmpty();
+        String finalSearch = hasSearch ? search : null;
 
-        // 1. Nếu là khách (chưa đăng nhập) hoặc Student -> Chỉ xem APPROVED
-        if (email == null || email.equals("anonymousUser")) {
+        // Staff/Admin sees moderation view
+        User userLogged = (email != null && !email.equals("anonymousUser")) 
+                ? userRepository.findByEmail(email).orElse(null) : null;
+        
+        if (userLogged != null && (userLogged.getRole() == User.Role.STAFF || userLogged.getRole() == User.Role.ADMIN)) {
+            Pageable pageable = PageRequest.of(page - 1, size, Sort.unsorted());
             if (hasSearch) {
-                courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search, pageable);
+                courses = courseRepository.findForStaffWithSearch(search, pageable);
             } else {
-                courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
+                courses = courseRepository.findForStaff(pageable);
             }
         } else {
-            User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null && (user.getRole() == User.Role.STAFF || user.getRole() == User.Role.ADMIN)) {
-                // Staff/Admin xem tất cả trừ DRAFT để kiểm duyệt
-                if (hasSearch) {
-                    courses = courseRepository.findByStatusNotAndTitleContainingIgnoreCase(CourseStatus.DRAFT, search, pageable);
+            // Student/Public Sorting
+            if ("newest".equalsIgnoreCase(sortBy)) {
+                Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+                courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search != null ? search : "", pageable);
+            } else if ("oldest".equalsIgnoreCase(sortBy)) {
+                Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "createdAt"));
+                courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search != null ? search : "", pageable);
+            } else if ("rated".equalsIgnoreCase(sortBy)) {
+                Pageable pageable = PageRequest.of(page - 1, size);
+                courses = courseRepository.findTopRatedCourses(finalSearch, pageable);
+            } else if ("recommended".equalsIgnoreCase(sortBy) || sortBy == null) {
+                // Personalized recommendation for student
+                if (userLogged != null && userLogged.getEstimatedJlptLevel() != null) {
+                    Pageable pageable = PageRequest.of(page - 1, size);
+                    courses = courseRepository.findByStatusAndJlptLevelAndTitleContainingIgnoreCase(
+                            CourseStatus.APPROVED, userLogged.getEstimatedJlptLevel(), search != null ? search : "", pageable);
                 } else {
-                    courses = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
+                    // Fallback to trending
+                    Pageable pageable = PageRequest.of(page - 1, size);
+                    courses = courseRepository.findTopTrendingCourses(finalSearch, pageable);
                 }
-            } else {
-                // Mặc định (Student đã login) -> Chỉ xem APPROVED
-                if (hasSearch) {
-                    courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search, pageable);
-                } else {
-                    courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
-                }
+            } else { // default to trending
+                Pageable pageable = PageRequest.of(page - 1, size);
+                courses = courseRepository.findTopTrendingCourses(finalSearch, pageable);
             }
         }
 

@@ -19,5 +19,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUserId(String userId);
 
     String existsByRole(User.Role role);
+
+    long countByRoleAndCreatedAtAfter(User.Role role, java.time.LocalDateTime date);
 }
 

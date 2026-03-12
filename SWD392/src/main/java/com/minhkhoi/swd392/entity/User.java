@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import com.minhkhoi.swd392.constant.JlptLevel;
 
 @Entity
 @Table(name = "users")
@@ -60,6 +61,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estimated_jlpt_level")
+    private JlptLevel estimatedJlptLevel;
 
     @CreationTimestamp
     @Builder.Default

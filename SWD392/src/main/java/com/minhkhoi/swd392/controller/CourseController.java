@@ -80,9 +80,10 @@ public class CourseController {
     public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getAllCoursesPublic(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "search", required = false) String search
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "sortBy", defaultValue = "trending") String sortBy
     ) {
-        return ResponseEntity.ok(ApiResponse.success("List courses public", courseService.getAllCoursesPublic(page, size, search)));
+        return ResponseEntity.ok(ApiResponse.success("List courses public", courseService.getAllCoursesPublic(page, size, search, sortBy)));
     }
 
     @GetMapping("/stats")
