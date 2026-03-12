@@ -77,6 +77,7 @@ public enum ErrorCode {
     INVALID_VNPAY_SIGNATURE("Invalid VNPAY signature", HttpStatus.BAD_REQUEST),
     VNPAY_CALLBACK_ERROR("Error handling VNPAY callback", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_COURSE_STATUS_FOR_APPROVAL("Course must be in PENDING_APPROVAL status to be verified", HttpStatus.BAD_REQUEST),
+    ENROLLMENT_NOT_FOUND("Bạn chưa đăng ký khóa học này", HttpStatus.NOT_FOUND),
     QUESTION_NOT_FOUND("Question not found", HttpStatus.NOT_FOUND);
 
     private final String message;

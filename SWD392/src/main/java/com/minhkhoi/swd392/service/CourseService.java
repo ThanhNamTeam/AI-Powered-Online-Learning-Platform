@@ -7,6 +7,8 @@ import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
 import com.minhkhoi.swd392.dto.response.CourseStatsResponse;
 import com.minhkhoi.swd392.entity.Course;
+import com.minhkhoi.swd392.entity.Enrollment;
+import com.minhkhoi.swd392.entity.Lesson;
 import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
@@ -14,6 +16,7 @@ import com.minhkhoi.swd392.mapper.CourseMapper;
 import com.minhkhoi.swd392.repository.CourseRepository;
 import com.minhkhoi.swd392.repository.EnrollmentRepository;
 import com.minhkhoi.swd392.repository.ModuleRepository;
+import com.minhkhoi.swd392.repository.ProgressRepository;
 import com.minhkhoi.swd392.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +46,7 @@ public class CourseService {
     private final CloudinaryService cloudinaryService;
     private final ModuleRepository moduleRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final ProgressRepository progressRepository;
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -98,21 +102,48 @@ public class CourseService {
 
 
 
+    @Transactional(readOnly = true)
     public PageResponse<CourseResponse> getAllCoursesForStudent(int page, int size) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
         Page<Course> courses = courseRepository.findByEnrollments_User_Email(email, pageable);
+
+        // Lấy user để tìm enrollment
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        List<CourseResponse> result = courses.stream().map(course -> {
+            CourseResponse resp = courseMapper.toCourseResponse(course);
+
+            // Tính tiến độ từ Enrollment.progressList
+            if (user != null) {
+                enrollmentRepository
+                    .findByUserAndCourse(user, course)
+                    .ifPresent(enrollment -> {
+                        // Dùng JPQL query — không lazy-load collections
+                        long totalLessons     = progressRepository.countTotalLessonsByCourseId(course.getCourseId());
+                        long completedLessons = progressRepository.countCompletedByEnrollment(enrollment);
+
+                        int progressPct = (totalLessons > 0)
+                            ? (int) Math.round((double) completedLessons / totalLessons * 100)
+                            : 0;
+
+                        resp.setTotalLessons((int) totalLessons);
+                        resp.setCompletedLessons((int) completedLessons);
+                        resp.setProgressPercentage(progressPct);
+                    });
+            }
+            return resp;
+        }).collect(Collectors.toList());
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)
                 .pageSize(size)
                 .totalPages(courses.getTotalPages())
                 .totalElements(courses.getTotalElements())
-                .data(courses.stream().map(courseMapper::toCourseResponse).collect(Collectors.toList()))
+                .data(result)
                 .build();
     }
 

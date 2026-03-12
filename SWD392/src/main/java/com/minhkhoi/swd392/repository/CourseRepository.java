@@ -52,14 +52,30 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
             "c.createdAt ASC")
     Page<Course> findForStaffWithSearch(String search, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query("SELECT c FROM Course c LEFT JOIN Review r ON c.courseId = r.course.courseId " +
-            "WHERE c.status = 'APPROVED' AND (:search IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-            "GROUP BY c.courseId ORDER BY COALESCE(AVG(r.rating), 0) DESC, c.createdAt DESC")
+    @org.springframework.data.jpa.repository.Query(value = 
+            "SELECT c.* FROM courses c " +
+            "LEFT JOIN reviews r ON c.course_id = r.course_id " +
+            "WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "GROUP BY c.course_id " +
+            "ORDER BY COALESCE(AVG(r.rating), 0) DESC, c.course_created_at DESC",
+            countQuery = "SELECT COUNT(*) FROM courses c WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%')))",
+            nativeQuery = true)
     Page<Course> findTopRatedCourses(String search, Pageable pageable);
 
     Page<Course> findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(CourseStatus status, String title, Pageable pageable);
     Page<Course> findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtAsc(CourseStatus status, String title, Pageable pageable); 
 
-    @org.springframework.data.jpa.repository.Query("SELECT c FROM Course c LEFT JOIN c.enrollments e WHERE c.status = 'APPROVED' AND (:search IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%'))) GROUP BY c.courseId ORDER BY COUNT(e) DESC")
+    @org.springframework.data.jpa.repository.Query(value =
+            "SELECT c.* FROM courses c " +
+            "LEFT JOIN enrollments e ON e.course_id = c.course_id " +
+            "WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "GROUP BY c.course_id " +
+            "ORDER BY COUNT(e.enrollments_id) DESC, c.course_created_at DESC",
+            countQuery = "SELECT COUNT(*) FROM courses c WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%')))",
+            nativeQuery = true)
     Page<Course> findTopTrendingCourses(String search, Pageable pageable);
 }

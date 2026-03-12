@@ -188,6 +188,11 @@ public class PlacementDocumentService {
             String rawResponse  = geminiService.callGeminiWithPrompt(prompt);
 
             List<PlacementQuestion> questions = parseGeneratedQuestions(rawResponse, doc);
+
+            if (questions.isEmpty()) {
+                throw new RuntimeException("AI không sinh được câu hỏi nào. Phản hồi AI: " + rawResponse.substring(0, Math.min(200, rawResponse.length())));
+            }
+
             questionRepository.saveAll(questions);
 
             doc.setStatus(DocumentStatus.PROCESSED);
@@ -237,6 +242,11 @@ public class PlacementDocumentService {
 
             // BƯỚC 3: Parse câu hỏi, gắn audio URL
             List<PlacementQuestion> questions = parseListeningQuestions(rawResponse, doc);
+
+            if (questions.isEmpty()) {
+                throw new RuntimeException("AI không sinh được câu hỏi nghe nào. Phản hồi AI: " + rawResponse.substring(0, Math.min(200, rawResponse.length())));
+            }
+
             questionRepository.saveAll(questions);
 
             doc.setStatus(DocumentStatus.PROCESSED);
