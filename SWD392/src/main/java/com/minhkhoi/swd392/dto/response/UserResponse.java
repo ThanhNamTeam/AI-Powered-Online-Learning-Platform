@@ -27,6 +27,11 @@ public class UserResponse {
     private String gender;
     private LocalDate birthOfDate;
     private String notes;
+    private Integer level;
+    private Integer currentXp;
+    private Integer nextLevelXp;
+    private Integer streak;
+    private Integer totalBadges;
 
 
     public static UserResponse fromEntity(User user) {
@@ -42,7 +47,17 @@ public class UserResponse {
                 .gender(user.getGender())
                 .birthOfDate(user.getBirthOfDate())
                 .notes(user.getNotes())
+                .level(user.getLevel() != null ? user.getLevel() : 1)
+                .currentXp(user.getCurrentXp() != null ? user.getCurrentXp() : 0)
+                .nextLevelXp(computeNextLevelXp(user.getLevel() != null ? user.getLevel() : 1))
+                .streak(user.getStreak() != null ? user.getStreak() : 0)
+                .totalBadges(user.getTotalBadges() != null ? user.getTotalBadges() : 0)
                 .build();
+    }
+
+    // XP cần để lên level tiếp theo: 1000 + (level-1)*500
+    private static int computeNextLevelXp(int level) {
+        return 1000 + (level - 1) * 500;
     }
 }
 

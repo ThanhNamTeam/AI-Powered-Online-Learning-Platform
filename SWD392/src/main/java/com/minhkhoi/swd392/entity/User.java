@@ -66,6 +66,22 @@ public class User {
     @Column(name = "estimated_jlpt_level")
     private JlptLevel estimatedJlptLevel;
 
+    @Column(name = "level")
+    @Builder.Default
+    private Integer level = 1;
+
+    @Column(name = "current_xp")
+    @Builder.Default
+    private Integer currentXp = 0;
+
+    @Column(name = "streak")
+    @Builder.Default
+    private Integer streak = 0;
+
+    @Column(name = "total_badges")
+    @Builder.Default
+    private Integer totalBadges = 0;
+
     @CreationTimestamp
     @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
