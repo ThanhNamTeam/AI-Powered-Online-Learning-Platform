@@ -30,6 +30,8 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
 
     long countByStatus(CourseStatus status);
 
+    long countByStatusIn(List<CourseStatus> statuses);
+
     long countByStatusNot(CourseStatus status);
 
     List<Course> findByConstructor_Email(String constructorEmail);
@@ -43,12 +45,20 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     List<Course> findByStatusAndJlptLevel(CourseStatus status, JlptLevel jlptLevel);
 
     @org.springframework.data.jpa.repository.Query("SELECT c FROM Course c WHERE c.status <> 'DRAFT' " +
-            "ORDER BY CASE WHEN c.status = 'PENDING_APPROVAL' THEN 0 ELSE 1 END ASC, " +
+            "ORDER BY CASE " +
+            "  WHEN c.status = 'PENDING_APPROVAL' THEN 0 " +
+            "  WHEN c.status = 'PENDING_UPDATE' THEN 0 " +
+            "  WHEN c.status = 'PENDING_DELETION' THEN 0 " +
+            "  ELSE 1 END ASC, " +
             "c.createdAt ASC")
     Page<Course> findForStaff(Pageable pageable);
 
     @org.springframework.data.jpa.repository.Query("SELECT c FROM Course c WHERE c.status <> 'DRAFT' AND LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "ORDER BY CASE WHEN c.status = 'PENDING_APPROVAL' THEN 0 ELSE 1 END ASC, " +
+            "ORDER BY CASE " +
+            "  WHEN c.status = 'PENDING_APPROVAL' THEN 0 " +
+            "  WHEN c.status = 'PENDING_UPDATE' THEN 0 " +
+            "  WHEN c.status = 'PENDING_DELETION' THEN 0 " +
+            "  ELSE 1 END ASC, " +
             "c.createdAt ASC")
     Page<Course> findForStaffWithSearch(String search, Pageable pageable);
 

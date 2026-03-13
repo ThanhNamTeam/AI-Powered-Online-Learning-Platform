@@ -25,6 +25,17 @@ public class Lesson {
     @Column(name = "lessons_title", length = 200)
     private String title;
 
+    @Column(name = "order_index")
+    private Integer orderIndex;
+
+    @Builder.Default
+    @Column(name = "is_pending")
+    private Boolean isPending = false;
+
+    @Builder.Default
+    @Column(name = "is_pending_deletion")
+    private Boolean isPendingDeletion = false;
+
     @Column(name = "lessons_video_url")
     private String videoUrl;
 

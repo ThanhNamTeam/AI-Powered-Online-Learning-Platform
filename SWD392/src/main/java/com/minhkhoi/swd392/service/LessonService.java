@@ -1,5 +1,6 @@
 package com.minhkhoi.swd392.service;
 
+import com.minhkhoi.swd392.constant.CourseStatus;
 import com.minhkhoi.swd392.dto.request.CreateLessonRequest;
 import com.minhkhoi.swd392.dto.response.LessonResponse;
 import com.minhkhoi.swd392.mapper.LessonMapper;
@@ -43,7 +44,14 @@ public class LessonService {
         Module module = moduleRepository.findById(request.getModuleId())
                 .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
 
+        validateCourseMutable(module);
+
         Lesson lesson = lessonMapper.toLesson(request, module);
+        
+        // Mark as pending if course is in EDITING mode
+        if (module.getCourse().getStatus() == CourseStatus.EDITING) {
+            lesson.setIsPending(true);
+        }
 
         // 1. Upload Video to Cloudinary (Mandatory)
         if (request.getVideoFile() == null || request.getVideoFile().isEmpty()) {
@@ -104,11 +112,84 @@ public class LessonService {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        // Delete from Cloudinary
-        deleteCloudinaryResources(lesson);
+        validateCourseMutable(lesson.getModule());
 
-        // Delete from DB (this automatically deletes transcript as it's a field in Lesson)
-        lessonRepository.delete(lesson);
+        if (lesson.getModule().getCourse().getStatus() == CourseStatus.EDITING) {
+            // Mark for deletion instead of removing
+            lesson.setIsPendingDeletion(true);
+            lessonRepository.save(lesson);
+            log.info("Lesson {} marked for deletion (pending approval)", lessonId);
+        } else {
+            // Delete from Cloudinary
+            deleteCloudinaryResources(lesson);
+            // Delete from DB permanently
+            lessonRepository.delete(lesson);
+            log.info("Lesson {} deleted permanently", lessonId);
+        }
+    }
+
+    @Transactional
+    public LessonResponse updateLesson(UUID lessonId, String title, Integer orderIndex, 
+                                     MultipartFile videoFile, MultipartFile documentFile) {
+        log.info("Updating lesson: {}", lessonId);
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        validateCourseMutable(lesson.getModule());
+
+        if (title != null && !title.isBlank()) {
+            lesson.setTitle(title);
+        }
+        
+        if (orderIndex != null) {
+            lesson.setOrderIndex(orderIndex);
+        }
+
+        boolean videoUpdated = false;
+
+        // Update video if provided
+        if (videoFile != null && !videoFile.isEmpty()) {
+            // Delete old video from Cloudinary
+            if (lesson.getVideoUrl() != null) {
+                String publicId = extractPublicIdFromUrl(lesson.getVideoUrl());
+                if (publicId != null) cloudinaryService.deleteFile(publicId, "video");
+            }
+            
+            // Upload new video
+            Map<String, Object> uploadResult = cloudinaryService.uploadVideo(videoFile);
+            lesson.setVideoUrl((String) uploadResult.get("secure_url"));
+            lesson.setDuration(mapDuration(uploadResult));
+            lesson.setTranscript(null);
+            lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.NOT_STARTED);
+            videoUpdated = true;
+        }
+
+        // Update document if provided
+        if (documentFile != null && !documentFile.isEmpty()) {
+            // Delete old document
+            if (lesson.getDocumentUrl() != null) {
+                String publicId = extractPublicIdFromUrl(lesson.getDocumentUrl());
+                if (publicId != null) cloudinaryService.deleteFile(publicId, "raw");
+            }
+
+            Map<String, Object> docResult = cloudinaryService.uploadFile(documentFile, "raw");
+            lesson.setDocumentUrl((String) docResult.get("secure_url"));
+        }
+
+        lesson = lessonRepository.save(lesson);
+
+        // If video updated, trigger transcription and other AI processes
+        if (videoUpdated) {
+            final UUID finalLessonId = lesson.getLessonId();
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    lessonAsyncService.processTranscription(finalLessonId);
+                }
+            });
+        }
+
+        return lessonMapper.toLessonResponse(lesson);
     }
 
     @Transactional
@@ -116,6 +197,8 @@ public class LessonService {
         log.info("Deleting video from lesson: {}", lessonId);
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        validateCourseMutable(lesson.getModule());
 
         if (lesson.getVideoUrl() != null) {
             String publicId = extractPublicIdFromUrl(lesson.getVideoUrl());
@@ -129,6 +212,13 @@ public class LessonService {
             lesson.setTranscript(null); // Xóa transcript trong database như yêu cầu
             
             lessonRepository.save(lesson);
+        }
+    }
+
+    private void validateCourseMutable(Module module) {
+        CourseStatus status = module.getCourse().getStatus();
+        if (status != CourseStatus.DRAFT && status != CourseStatus.EDITING && status != CourseStatus.REJECTED) {
+            throw new AppException(ErrorCode.INVALID_COURSE_STATUS_FOR_UPDATE);
         }
     }
 

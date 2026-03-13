@@ -41,4 +41,25 @@ public class ModuleController {
         List<ModuleResponse> response = moduleService.getModulesByCourse(courseId);
         return ResponseEntity.ok(ApiResponse.success("Modules retrieved successfully", response));
     }
+
+    @PutMapping("/{moduleId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Update Module", description = "Update an existing module's title or order.")
+    public ResponseEntity<ApiResponse<ModuleResponse>> updateModule(
+            @PathVariable UUID moduleId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) Integer orderIndex) {
+        log.info("Instructor updating module: {}", moduleId);
+        ModuleResponse response = moduleService.updateModule(moduleId, title, orderIndex);
+        return ResponseEntity.ok(ApiResponse.success("Module updated successfully", response));
+    }
+
+    @DeleteMapping("/{moduleId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Delete Module", description = "Delete an existing module.")
+    public ResponseEntity<ApiResponse<Void>> deleteModule(@PathVariable UUID moduleId) {
+        log.info("Instructor deleting module: {}", moduleId);
+        moduleService.deleteModule(moduleId);
+        return ResponseEntity.ok(ApiResponse.success("Module deleted successfully", null));
+    }
 }

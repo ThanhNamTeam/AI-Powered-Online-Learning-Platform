@@ -78,7 +78,12 @@ public enum ErrorCode {
     VNPAY_CALLBACK_ERROR("Error handling VNPAY callback", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_COURSE_STATUS_FOR_APPROVAL("Course must be in PENDING_APPROVAL status to be verified", HttpStatus.BAD_REQUEST),
     ENROLLMENT_NOT_FOUND("Bạn chưa đăng ký khóa học này", HttpStatus.NOT_FOUND),
-    QUESTION_NOT_FOUND("Question not found", HttpStatus.NOT_FOUND);
+    QUESTION_NOT_FOUND("Question not found", HttpStatus.NOT_FOUND),
+    REPORT_NOT_FOUND("Report not found", HttpStatus.NOT_FOUND),
+    DISCUSSION_NOT_FOUND("Discussion not found", HttpStatus.NOT_FOUND),
+    REVIEW_NOT_FOUND("Review not found", HttpStatus.NOT_FOUND),
+    INVALID_COURSE_STATUS_FOR_UPDATE("Course must be APPROVED to submit an update request", HttpStatus.BAD_REQUEST),
+    INVALID_COURSE_STATUS_FOR_DELETION("Course must be APPROVED or PENDING_UPDATE to request deletion", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus httpStatus;

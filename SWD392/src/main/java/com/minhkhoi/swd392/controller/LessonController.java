@@ -172,6 +172,22 @@ public class LessonController {
         return ResponseEntity.ok(ApiResponse.success("Lesson deleted successfully", null));
     }
 
+    @PutMapping(value = "/{lessonId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @Operation(summary = "Update Lesson (Instructor)",
+            description = "Update lesson title, order index, or replace video/document files")
+    public ResponseEntity<ApiResponse<LessonResponse>> updateLesson(
+            @PathVariable UUID lessonId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) Integer orderIndex,
+            @RequestParam(value = "videoFile", required = false) MultipartFile videoFile,
+            @RequestParam(value = "documentFile", required = false) MultipartFile documentFile) {
+        log.info("Instructor requested lesson update: {}. New video: {}, New doc: {}", 
+                lessonId, videoFile != null, documentFile != null);
+        LessonResponse response = lessonService.updateLesson(lessonId, title, orderIndex, videoFile, documentFile);
+        return ResponseEntity.ok(ApiResponse.success("Lesson updated successfully", response));
+    }
+
     @DeleteMapping("/{lessonId}/video")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @Operation(summary = "Delete Video from Lesson (Instructor)",
