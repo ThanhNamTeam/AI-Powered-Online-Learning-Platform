@@ -520,4 +520,59 @@ public class UserService {
         userRepository.save(user);
     }
 
+    /** Lấy thông tin user đang đăng nhập (từ SecurityContext) */
+    public UserResponse getCurrentUser() {
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+        return UserResponse.fromEntity(user);
+    }
+
+    /**
+     * Cập nhật điểm XP, streak và số badge của user.
+     * Tự động tính level mới dựa theo công thức: nextLevelXp = 1000 + (level-1)*500
+     */
+    @Transactional
+    public UserResponse updateUserStats(UpdateUserStatsRequest request) {
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        // Cộng XP delta
+        if (request.getXpDelta() != null && request.getXpDelta() > 0) {
+            int newXp = (user.getCurrentXp() != null ? user.getCurrentXp() : 0) + request.getXpDelta();
+            int level  = user.getLevel() != null ? user.getLevel() : 1;
+
+            // Auto level-up loop
+            while (true) {
+                int nextLevelXp = 1000 + (level - 1) * 500;
+                if (newXp >= nextLevelXp) {
+                    newXp -= nextLevelXp;
+                    level++;
+                } else {
+                    break;
+                }
+            }
+            user.setCurrentXp(newXp);
+            user.setLevel(level);
+        }
+
+        // Cập nhật streak
+        if (request.getStreak() != null) {
+            user.setStreak(request.getStreak());
+        }
+
+        // Cập nhật total badges
+        if (request.getTotalBadges() != null) {
+            user.setTotalBadges(request.getTotalBadges());
+        }
+
+        userRepository.save(user);
+        log.info("Stats updated for user: {} | level={} xp={} streak={}",
+                email, user.getLevel(), user.getCurrentXp(), user.getStreak());
+        return UserResponse.fromEntity(user);
+    }
+
 }
