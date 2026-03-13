@@ -23,6 +23,8 @@ public interface CourseMapper {
     @Mapping(target = "rejectionReason", ignore = true)
     @Mapping(target = "handledByStaff", ignore = true)
     @Mapping(target = "thumbnailUrl", ignore = true)
+    @Mapping(target = "pendingUpdateNote", ignore = true)
+    @Mapping(target = "deletionRequestNote", ignore = true)
     Course toCourse(CreateCourseRequest request, User constructor);
 
     @Mapping(target = "constructorId", source = "constructor.userId")
@@ -30,6 +32,11 @@ public interface CourseMapper {
     @Mapping(target = "handledByStaffId", source = "handledByStaff.userId")
     @Mapping(target = "handledByStaffName", source = "handledByStaff.fullName")
     @Mapping(target = "modules", source = "modules")
+    @Mapping(target = "enrolled", ignore = true)
+    @Mapping(target = "progressPercentage", ignore = true)
+    @Mapping(target = "completedLessons", ignore = true)
+    @Mapping(target = "totalLessons", ignore = true)
+    @Mapping(target = "lastAccessed", ignore = true)
     CourseResponse toCourseResponse(Course course);
 
 }

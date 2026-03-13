@@ -23,6 +23,17 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     Page<Course> findByStatusNot(CourseStatus status,
                               Pageable pageable);
 
+    Page<Course> findByStatusAndTitleContainingIgnoreCase(CourseStatus status, String title, Pageable pageable);
+    Page<Course> findByStatusAndJlptLevelAndTitleContainingIgnoreCase(CourseStatus status, JlptLevel jlptLevel, String title, Pageable pageable);
+
+    Page<Course> findByStatusNotAndTitleContainingIgnoreCase(CourseStatus status, String title, Pageable pageable);
+
+    long countByStatus(CourseStatus status);
+
+    long countByStatusIn(List<CourseStatus> statuses);
+
+    long countByStatusNot(CourseStatus status);
+
     List<Course> findByConstructor_Email(String constructorEmail);
 
     /**
@@ -32,4 +43,49 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     List<Course> findByStatusAndJlptLevelIn(CourseStatus status, List<JlptLevel> levels);
 
     List<Course> findByStatusAndJlptLevel(CourseStatus status, JlptLevel jlptLevel);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM Course c WHERE c.status <> 'DRAFT' " +
+            "ORDER BY CASE " +
+            "  WHEN c.status = 'PENDING_APPROVAL' THEN 0 " +
+            "  WHEN c.status = 'PENDING_UPDATE' THEN 0 " +
+            "  WHEN c.status = 'PENDING_DELETION' THEN 0 " +
+            "  ELSE 1 END ASC, " +
+            "c.createdAt ASC")
+    Page<Course> findForStaff(Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM Course c WHERE c.status <> 'DRAFT' AND LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "ORDER BY CASE " +
+            "  WHEN c.status = 'PENDING_APPROVAL' THEN 0 " +
+            "  WHEN c.status = 'PENDING_UPDATE' THEN 0 " +
+            "  WHEN c.status = 'PENDING_DELETION' THEN 0 " +
+            "  ELSE 1 END ASC, " +
+            "c.createdAt ASC")
+    Page<Course> findForStaffWithSearch(String search, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query(value = 
+            "SELECT c.* FROM courses c " +
+            "LEFT JOIN reviews r ON c.course_id = r.course_id " +
+            "WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "GROUP BY c.course_id " +
+            "ORDER BY COALESCE(AVG(r.rating), 0) DESC, c.course_created_at DESC",
+            countQuery = "SELECT COUNT(*) FROM courses c WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%')))",
+            nativeQuery = true)
+    Page<Course> findTopRatedCourses(String search, Pageable pageable);
+
+    Page<Course> findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(CourseStatus status, String title, Pageable pageable);
+    Page<Course> findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtAsc(CourseStatus status, String title, Pageable pageable); 
+
+    @org.springframework.data.jpa.repository.Query(value =
+            "SELECT c.* FROM courses c " +
+            "LEFT JOIN enrollments e ON e.course_id = c.course_id " +
+            "WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "GROUP BY c.course_id " +
+            "ORDER BY COUNT(e.enrollments_id) DESC, c.course_created_at DESC",
+            countQuery = "SELECT COUNT(*) FROM courses c WHERE c.course_status = 'APPROVED' " +
+            "AND (:search IS NULL OR LOWER(c.course_title) LIKE LOWER(CONCAT('%', :search, '%')))",
+            nativeQuery = true)
+    Page<Course> findTopTrendingCourses(String search, Pageable pageable);
 }

@@ -188,6 +188,11 @@ public class PlacementDocumentService {
             String rawResponse  = geminiService.callGeminiWithPrompt(prompt);
 
             List<PlacementQuestion> questions = parseGeneratedQuestions(rawResponse, doc);
+
+            if (questions.isEmpty()) {
+                throw new RuntimeException("AI không sinh được câu hỏi nào. Phản hồi AI: " + rawResponse.substring(0, Math.min(200, rawResponse.length())));
+            }
+
             questionRepository.saveAll(questions);
 
             doc.setStatus(DocumentStatus.PROCESSED);
@@ -237,6 +242,11 @@ public class PlacementDocumentService {
 
             // BƯỚC 3: Parse câu hỏi, gắn audio URL
             List<PlacementQuestion> questions = parseListeningQuestions(rawResponse, doc);
+
+            if (questions.isEmpty()) {
+                throw new RuntimeException("AI không sinh được câu hỏi nghe nào. Phản hồi AI: " + rawResponse.substring(0, Math.min(200, rawResponse.length())));
+            }
+
             questionRepository.saveAll(questions);
 
             doc.setStatus(DocumentStatus.PROCESSED);
@@ -609,8 +619,11 @@ public class PlacementDocumentService {
     // ─────────────────────────────────────────────────────────────────────────
 
     private void validateDocumentFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) throw new AppException(ErrorCode.INVALID_FILE);
-        if (file.getSize() > MAX_DOCUMENT_SIZE) throw new AppException(ErrorCode.INVALID_FILE);
+        if (file == null || file.isEmpty())
+            throw new IllegalArgumentException("File r\u1ed7ng ho\u1eb7c kh\u00f4ng c\u00f3 n\u1ed9i dung. Vui l\u00f2ng ch\u1ecdn file h\u1ee3p l\u1ec7.");
+        if (file.getSize() > MAX_DOCUMENT_SIZE)
+            throw new IllegalArgumentException("File qu\u00e1 l\u1edbn. T\u1ed1i \u0111a 20MB cho PDF/DOC (hi\u1ec7n t\u1ea1i: "
+                    + String.format("%.1f", file.getSize() / 1024.0 / 1024.0) + "MB)");
         String ct = file.getContentType();
         String fn = Objects.requireNonNull(file.getOriginalFilename()).toLowerCase();
         boolean validType = ct != null && ALLOWED_DOCUMENT_TYPES.contains(ct);
@@ -619,8 +632,11 @@ public class PlacementDocumentService {
     }
 
     private void validateAudioFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) throw new AppException(ErrorCode.INVALID_FILE);
-        if (file.getSize() > MAX_AUDIO_SIZE) throw new AppException(ErrorCode.INVALID_FILE);
+        if (file == null || file.isEmpty())
+            throw new IllegalArgumentException("File \u00e2m thanh r\u1ed7ng ho\u1eb7c kh\u00f4ng c\u00f3 n\u1ed9i dung.");
+        if (file.getSize() > MAX_AUDIO_SIZE)
+            throw new IllegalArgumentException("File \u00e2m thanh qu\u00e1 l\u1edbn. T\u1ed1i \u0111a 50MB (hi\u1ec7n t\u1ea1i: "
+                    + String.format("%.1f", file.getSize() / 1024.0 / 1024.0) + "MB)");
         String ct = file.getContentType();
         String fn = Objects.requireNonNull(file.getOriginalFilename()).toLowerCase();
         boolean validType = ct != null && ALLOWED_AUDIO_TYPES.contains(ct);

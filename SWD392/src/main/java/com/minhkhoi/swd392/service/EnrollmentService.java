@@ -22,6 +22,7 @@ public class EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final com.minhkhoi.swd392.repository.PaymentRepository paymentRepository;
 
     @Transactional
     public void enrollCourse(EnrollmentRequest enrollmentRequest) {
@@ -44,7 +45,21 @@ public class EnrollmentService {
                 .status(EnrollmentStatus.ACTIVE)
                 .build();
 
-        enrollmentRepository.save(enrollment);
+        enrollment = enrollmentRepository.save(enrollment);
+
+        // Add mock payment to simulate revenue for the instructor
+        if (course.getPrice() != null && course.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            var payment = com.minhkhoi.swd392.entity.Payment.builder()
+                    .user(user)
+                    .enrollment(enrollment)
+                    .amount(course.getPrice())
+                    .status(com.minhkhoi.swd392.entity.Payment.PaymentStatus.COMPLETED)
+                    .method(com.minhkhoi.swd392.entity.Payment.PaymentMethod.VNPAY) // Mocking as VNPAY
+                    .transactionId("MOCK-" + UUID.randomUUID().toString())
+                    .completedAt(java.time.LocalDateTime.now())
+                    .build();
+            paymentRepository.save(payment);
+        }
     }
 
     public List<EnrollmentResponse> getEnrollmentsForInstructor() {

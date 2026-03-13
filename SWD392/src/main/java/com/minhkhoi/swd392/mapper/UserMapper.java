@@ -28,6 +28,7 @@ public interface UserMapper {
     @Mapping(target = "address", ignore = true)
     @Mapping(target = "gender", ignore = true)
     @Mapping(target = "birthOfDate", ignore = true)
+    @Mapping(target = "estimatedJlptLevel", ignore = true)
     User toUser(CreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -49,5 +50,6 @@ public interface UserMapper {
     @Mapping(target = "address", ignore = true)
     @Mapping(target = "gender", ignore = true)
     @Mapping(target = "birthOfDate", ignore = true)
+    @Mapping(target = "estimatedJlptLevel", ignore = true)
     void updateUserFromRequest(UpdateUserRequest request, @MappingTarget User user);
 }
