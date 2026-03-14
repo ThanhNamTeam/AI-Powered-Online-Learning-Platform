@@ -32,7 +32,7 @@ public class CourseResponse {
     private String handledByStaffName;
     private String jlptLevel;
     private LocalDateTime createdAt;
-    
+
     private String pendingUpdateNote;
     private String deletionRequestNote;
 
@@ -65,5 +65,4 @@ public class CourseResponse {
                 .modules(course.getModules() != null ? course.getModules().stream().map(ModuleResponse::fromEntity).collect(Collectors.toList()) : null)
                 .build();
     }
-    private boolean enrolled;
 }

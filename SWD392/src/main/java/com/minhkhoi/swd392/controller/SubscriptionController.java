@@ -53,11 +53,13 @@ public class SubscriptionController {
                 .subscriptionId(sub.getSubscriptionId().toString())
                 .plan(sub.getPlan().name())
                 .status(sub.getStatus().name())
+                .active(sub.getStatus().name()) // satisfying frontend
                 .aiCredits(sub.getAiCredits())
                 .aiCreditsUsed(sub.getAiCreditsUsed())
                 .remainingCredits(sub.getRemainingCredits())
                 .startDate(sub.getStartDate() != null ? sub.getStartDate().toString() : null)
                 .endDate(sub.getEndDate() != null ? sub.getEndDate().toString() : null)
+                .expirationDate(sub.getEndDate() != null ? sub.getEndDate().toString() : null) // satisfying frontend
                 .autoRenew(sub.getAutoRenew())
                 .build();
 
@@ -70,11 +72,13 @@ public class SubscriptionController {
         private String  subscriptionId;
         private String  plan;
         private String  status;
+        private String  active;         // For frontend compatibility
         private Integer aiCredits;
         private Integer aiCreditsUsed;
         private Integer remainingCredits;
         private String  startDate;
         private String  endDate;
+        private String  expirationDate; // For frontend compatibility
         private Boolean autoRenew;
     }
 }

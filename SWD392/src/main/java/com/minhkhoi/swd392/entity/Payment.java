@@ -33,8 +33,8 @@ public class Payment {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_type", nullable = false) // COURSE hoặc SUBSCRIPTION
-    private PaymentType type;
+    @Column(name = "payment_type", nullable = true) // COURSE hoặc SUBSCRIPTION
+    private PaymentType type = PaymentType.COURSE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)

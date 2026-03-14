@@ -1,7 +1,6 @@
 package com.minhkhoi.swd392.service;
 
 import com.minhkhoi.swd392.constant.CourseStatus;
-import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import com.minhkhoi.swd392.dto.PageResponse;
 import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
@@ -47,11 +46,9 @@ public class CourseService {
     private final CourseMapper courseMapper;
     private final CloudinaryService cloudinaryService;
     private final ModuleRepository moduleRepository;
-
     private final LessonRepository lessonRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final ProgressRepository progressRepository;
-
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -69,26 +66,26 @@ public class CourseService {
         String thumbnailUrl;
         if (request.getThumbnailFile() != null && !request.getThumbnailFile().isEmpty()) {
             Map<String, Object> uploadResult = cloudinaryService.uploadFile(request.getThumbnailFile(), "image");
-            thumbnailUrl = (String) uploadResult.get("secure_url"); 
+            thumbnailUrl = (String) uploadResult.get("secure_url");
         } else {
-             throw new AppException(ErrorCode.INVALID_FILE);
+            throw new AppException(ErrorCode.INVALID_FILE);
         }
 
         // Map request to entity
         Course course = courseMapper.toCourse(request, user);
         course.setThumbnailUrl(thumbnailUrl);
         course.setCreatedAt(LocalDateTime.now());
-        
+
         // Set status based on request
         // Always set DRAFT initially
         if (request.getStatus() != null && request.getStatus() != CourseStatus.DRAFT) {
             throw new AppException(ErrorCode.INVALID_CREATE_STATUS);
         }
         course.setStatus(CourseStatus.DRAFT);
-        
+
         // Save to database
         Course savedCourse = courseRepository.save(course);
-        
+
         log.info("Course created successfully: {} by Instructor: {}", savedCourse.getTitle(), user.getEmail());
 
         return courseMapper.toCourseResponse(savedCourse);
@@ -114,7 +111,6 @@ public class CourseService {
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-
         Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndEnrollments_Status(
                 email, com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE, pageable);
 
@@ -128,23 +124,23 @@ public class CourseService {
             // Tính tiến độ từ Enrollment.progressList
             if (user != null) {
                 enrollmentRepository
-                    .findByUserAndCourse(user, course)
-                    .ifPresent(enrollment -> {
-                        // Dùng JPQL query — không lazy-load collections
-                        long totalLessons     = progressRepository.countTotalLessonsByCourseId(course.getCourseId());
-                        long completedLessons = progressRepository.countCompletedByEnrollment(enrollment);
+                        .findByUserAndCourse(user, course)
+                        .ifPresent(enrollment -> {
+                            // Dùng JPQL query — không lazy-load collections
+                            long totalLessons     = progressRepository.countTotalLessonsByCourseId(course.getCourseId());
+                            long completedLessons = progressRepository.countCompletedByEnrollment(enrollment);
 
-                        int progressPct = (totalLessons > 0)
-                            ? (int) Math.round((double) completedLessons / totalLessons * 100)
-                            : 0;
+                            int progressPct = (totalLessons > 0)
+                                    ? (int) Math.round((double) completedLessons / totalLessons * 100)
+                                    : 0;
 
-                        resp.setTotalLessons((int) totalLessons);
-                        resp.setCompletedLessons((int) completedLessons);
-                        resp.setProgressPercentage(progressPct);
-                        
-                        java.time.LocalDateTime maxUpdatedAt = progressRepository.findMaxUpdatedAtByEnrollment(enrollment).orElse(enrollment.getEnrolledAt());
-                        resp.setLastAccessed(maxUpdatedAt);
-                    });
+                            resp.setTotalLessons((int) totalLessons);
+                            resp.setCompletedLessons((int) completedLessons);
+                            resp.setProgressPercentage(progressPct);
+
+                            java.time.LocalDateTime maxUpdatedAt = progressRepository.findMaxUpdatedAtByEnrollment(enrollment).orElse(enrollment.getEnrolledAt());
+                            resp.setLastAccessed(maxUpdatedAt);
+                        });
             }
             return resp;
         }).collect(Collectors.toList());
@@ -157,9 +153,6 @@ public class CourseService {
             return c2.getLastAccessed().compareTo(c1.getLastAccessed());
         });
 
-        Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndStatus(email, CourseStatus.APPROVED, pageable);
-
-
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)
                 .pageSize(size)
@@ -169,32 +162,19 @@ public class CourseService {
                 .build();
     }
 
-
     @Transactional(readOnly = true)
     public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size, String search, String sortBy) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null) ? auth.getName() : "anonymousUser";
-        
-
-    public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
-
-        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
-
 
         Page<Course> courses;
         boolean hasSearch = search != null && !search.trim().isEmpty();
         String finalSearch = hasSearch ? search : null;
 
-
         // Staff/Admin sees moderation view
-        User userLogged = (email != null && !email.equals("anonymousUser")) 
+        User userLogged = (email != null && !email.equals("anonymousUser"))
                 ? userRepository.findByEmail(email).orElse(null) : null;
-        
+
         if (userLogged != null && (userLogged.getRole() == User.Role.STAFF || userLogged.getRole() == User.Role.ADMIN)) {
             Pageable pageable = PageRequest.of(page - 1, size, Sort.unsorted());
             if (hasSearch) {
@@ -228,40 +208,17 @@ public class CourseService {
                 Pageable pageable = PageRequest.of(page - 1, size);
                 courses = courseRepository.findTopTrendingCourses(finalSearch, pageable);
             }
-
-        if (user.getRole() == User.Role.STUDENT) {
-            courses = courseRepository.findByStatus(CourseStatus.APPROVED, pageable);
-        } else if (user.getRole() == User.Role.STAFF) {
-            courses = courseRepository.findByStatusNot(CourseStatus.DRAFT, pageable);
-        } else {
-            courses = courseRepository.findAll(pageable);
-
         }
-
-        // 🔥 LẤY DANH SÁCH COURSE ĐÃ ENROLL (1 QUERY DUY NHẤT)
-        List<UUID> enrolledCourseIds =
-                enrollmentRepository.findCourseIdsByUserEmail(email);
-
-        // 🔥 MAP + SET ENROLLED
-        List<CourseResponse> data = courses.getContent()
-                .stream()
-                .map(course -> {
-                    CourseResponse res = courseMapper.toCourseResponse(course);
-
-                    res.setEnrolled(
-                            enrolledCourseIds.contains(course.getCourseId())
-                    );
-
-                    return res;
-                })
-                .collect(Collectors.toList());
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)
                 .pageSize(size)
                 .totalPages(courses.getTotalPages())
                 .totalElements(courses.getTotalElements())
-                .data(data)
+                .data(courses.getContent()
+                        .stream()
+                        .map(courseMapper::toCourseResponse)
+                        .collect(Collectors.toList()))
                 .build();
     }
 
@@ -282,14 +239,10 @@ public class CourseService {
 
 
     public CourseResponse getCourseById(UUID courseId) {
-
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
         CourseResponse response = courseMapper.toCourseResponse(course);
-
 
         // Kiểm tra xem user hiện tại có enrollment ACTIVE/COMPLETED không
         try {
@@ -298,8 +251,8 @@ public class CourseService {
                 boolean isEnrolled = enrollmentRepository.existsByUser_EmailAndCourseAndStatusIn(
                         email, course,
                         java.util.List.of(
-                            com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE,
-                            com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED
+                                com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE,
+                                com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED
                         )
                 );
                 response.setEnrolled(isEnrolled);
@@ -310,12 +263,6 @@ public class CourseService {
             log.warn("Could not check enrollment status: {}", e.getMessage());
             response.setEnrolled(false);
         }
-
-        List<UUID> enrolledCourseIds =
-                enrollmentRepository.findCourseIdsByUserEmail(email);
-
-        response.setEnrolled(enrolledCourseIds.contains(course.getCourseId()));
-
 
         return response;
     }
@@ -358,9 +305,9 @@ public class CourseService {
         course.setHandledByStaff(staffUser);
 
         Course savedCourse = courseRepository.save(course);
-        log.info("Course {} verified with status: {} by Staff: {}", 
+        log.info("Course {} verified with status: {} by Staff: {}",
                 savedCourse.getCourseId(), savedCourse.getStatus(), staffUser.getEmail());
-        
+
         return courseMapper.toCourseResponse(savedCourse);
     }
 
@@ -467,7 +414,7 @@ public class CourseService {
         if ("APPROVED".equalsIgnoreCase(action)) {
             // ✅ COMMIT PENDING CHANGES
             processPendingChanges(course, true);
-            
+
             course.setStatus(CourseStatus.APPROVED);
             course.setPendingUpdateNote(null);
             course.setRejectionReason(null);
@@ -477,7 +424,7 @@ public class CourseService {
             }
             // ✅ ROLLBACK PENDING CHANGES
             processPendingChanges(course, false);
-            
+
             course.setStatus(CourseStatus.APPROVED);
             course.setRejectionReason(reason);
             course.setPendingUpdateNote(null);
@@ -502,7 +449,7 @@ public class CourseService {
     private void processPendingChanges(Course course, boolean commit) {
         // Explicitly use our entity Module to avoid conflict with java.lang.Module
         List<com.minhkhoi.swd392.entity.Module> modules = moduleRepository.findByCourse_CourseIdOrderByOrderIndexAsc(course.getCourseId());
-        
+
         for (com.minhkhoi.swd392.entity.Module module : modules) {
             // Process Lessons first
             List<Lesson> lessons = lessonRepository.findByModule_ModuleId(module.getModuleId());
@@ -639,4 +586,3 @@ public class CourseService {
         return courseMapper.toCourseResponse(saved);
     }
 }
-

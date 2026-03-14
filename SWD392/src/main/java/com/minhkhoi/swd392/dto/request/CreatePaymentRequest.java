@@ -15,13 +15,12 @@ import java.math.BigDecimal;
 @Builder
 public class CreatePaymentRequest {
     private String subscriptionPlan; // BASIC, PREMIUM, ENTERPRISE (Optional if buying course)
-    
+
+    private java.util.UUID courseId; // Optional if buying subscription
 
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
-    
-    private String orderInfo;
 
-    private String courseId;
+    private String orderInfo;
 }
