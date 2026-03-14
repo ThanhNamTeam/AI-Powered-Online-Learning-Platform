@@ -45,7 +45,7 @@ public class StudentDashboardService {
         }
 
         StudentDashboardResponse.Stats stats = StudentDashboardResponse.Stats.builder()
-                .totalLearningTime(calculateTotalLearningTime(enrollments))
+                .totalLearningTime(calculateTotalLearningTime(currentUser))
                 .completionRate(totalLessons > 0 ? (totalLessonsCompleted * 100 / totalLessons) : 0)
                 .averageScore(quizCount > 0 ? (totalScore / quizCount) : 0.0)
                 .build();
@@ -94,16 +94,18 @@ public class StudentDashboardService {
 
         return StudentDashboardResponse.builder()
                 .studentName(currentUser.getFullName())
-                .learningStreak(12) // Mock streak
+                .learningStreak(currentUser.getStreak() != null ? currentUser.getStreak() : 0)
                 .stats(stats)
                 .recentCourse(recentCourse)
                 .recommendedCourses(recommended)
                 .build();
     }
 
-    private String calculateTotalLearningTime(List<Enrollment> enrollments) {
-        // Mocking for now, could sum up watched time or durations of completed lessons
-        return "12.5h";
+    private String calculateTotalLearningTime(User user) {
+        Long totalStudyTimeSecondsValue = progressRepository.sumStudyTimeByUserEmail(user.getEmail());
+        long totalStudyTimeSeconds = totalStudyTimeSecondsValue != null ? totalStudyTimeSecondsValue : 0;
+        double hours = Math.round((totalStudyTimeSeconds / 3600.0) * 10.0) / 10.0;
+        return hours + "h";
     }
 
     private int calculateRemainingMinutes(Enrollment enrollment) {

@@ -111,13 +111,15 @@ public class CourseService {
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        Page<Course> courses = courseRepository.findByEnrollments_User_Email(email, pageable);
+        Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndEnrollments_Status(
+                email, com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE, pageable);
 
         // Lấy user để tìm enrollment
         User user = userRepository.findByEmail(email).orElse(null);
 
         List<CourseResponse> result = courses.stream().map(course -> {
             CourseResponse resp = courseMapper.toCourseResponse(course);
+            resp.setEnrolled(true); // Nếu đã vào tới đây thì chắc chắn là đã enrolled ACTIVE
 
             // Tính tiến độ từ Enrollment.progressList
             if (user != null) {

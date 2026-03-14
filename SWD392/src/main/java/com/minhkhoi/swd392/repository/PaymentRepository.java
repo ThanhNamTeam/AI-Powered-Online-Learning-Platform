@@ -23,4 +23,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     java.math.BigDecimal sumCompletedAmountAfter(java.time.LocalDateTime date);
 
     List<Payment> findByStatusAndCreatedAtAfter(Payment.PaymentStatus status, java.time.LocalDateTime date);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND p.enrollment.course.constructor.email = :email")
+    java.math.BigDecimal sumRevenueByInstructorEmail(@org.springframework.data.repository.query.Param("email") String email);
 }
