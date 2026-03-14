@@ -13,12 +13,10 @@ import com.minhkhoi.swd392.entity.OtpVerification;
 import com.minhkhoi.swd392.entity.RedisToken;
 import com.minhkhoi.swd392.entity.RefreshToken;
 import com.minhkhoi.swd392.entity.User;
-import com.minhkhoi.swd392.repository.RedisTokenRepository;
-import com.minhkhoi.swd392.repository.RefreshTokenRepository;
+import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.repository.*;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
-import com.minhkhoi.swd392.repository.OtpVerificationRepository;
-import com.minhkhoi.swd392.repository.UserRepository;
 import com.minhkhoi.swd392.mapper.UserMapper;
 import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +49,10 @@ public class UserService {
     private final UserMapper userMapper;
     private final RedisTokenRepository redisTokenRepository;
     private final JwtService jwtService;
+    private final ProgressRepository progressRepository;
+    private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final PaymentRepository paymentRepository;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -200,7 +202,9 @@ public class UserService {
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, userId));
-        return userMapper.toUserResponse(user);
+        UserResponse response = userMapper.toUserResponse(user);
+        populateUserStats(response, user.getEmail());
+        return response;
     }
 
     /**
@@ -209,7 +213,9 @@ public class UserService {
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
-        return userMapper.toUserResponse(user);
+        UserResponse response = userMapper.toUserResponse(user);
+        populateUserStats(response, user.getEmail());
+        return response;
     }
 
     /**
@@ -526,7 +532,37 @@ public class UserService {
         String email = Objects.requireNonNull(context.getAuthentication()).getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
-        return UserResponse.fromEntity(user);
+
+        UserResponse response = UserResponse.fromEntity(user);
+        populateUserStats(response, email);
+        return response;
+    }
+
+    private void populateUserStats(UserResponse response, String email) {
+        if (response.getRole() == User.Role.STUDENT) {
+            long completedLessons = progressRepository.countCompletedLessonsByUserEmail(email);
+            Long totalDurationSeconds = progressRepository.sumStudyTimeByUserEmail(email);
+
+            response.setCompletedLessonsCount((int) completedLessons);
+            // Làm tròn 1 chữ số thập phân cho đẹp như template (24.5h)
+            double hours = (totalDurationSeconds != null) ? totalDurationSeconds / 3600.0 : 0.0;
+            response.setStudyTimeHours(Math.round(hours * 10.0) / 10.0);
+        } else if (response.getRole() == User.Role.STAFF) {
+            response.setHandledCoursesCount(courseRepository.countByHandledByStaff_Email(email));
+            
+            // For pendingModerationCount, it's global for now
+            response.setPendingModerationCount(courseRepository.countByStatusIn(java.util.List.of(
+                CourseStatus.PENDING_APPROVAL,
+                CourseStatus.PENDING_UPDATE,
+                CourseStatus.PENDING_DELETION
+            )));
+        } else if (response.getRole() == User.Role.INSTRUCTOR) {
+            response.setCreatedCoursesCount(courseRepository.countByConstructor_Email(email));
+            response.setTotalStudentsCount(enrollmentRepository.countByCourse_Constructor_Email(email));
+            
+            java.math.BigDecimal revenue = paymentRepository.sumRevenueByInstructorEmail(email);
+            response.setTotalRevenue(revenue != null ? revenue.doubleValue() : 0.0);
+        }
     }
 
     /**
@@ -572,7 +608,10 @@ public class UserService {
         userRepository.save(user);
         log.info("Stats updated for user: {} | level={} xp={} streak={}",
                 email, user.getLevel(), user.getCurrentXp(), user.getStreak());
-        return UserResponse.fromEntity(user);
+
+        UserResponse response = UserResponse.fromEntity(user);
+        populateUserStats(response, email);
+        return response;
     }
 
 }

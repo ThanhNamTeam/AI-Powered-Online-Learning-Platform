@@ -34,4 +34,10 @@ public interface ProgressRepository extends JpaRepository<Progress, UUID> {
 
     @Query("SELECT MAX(p.updatedAt) FROM Progress p WHERE p.enrollment = :enrollment")
     Optional<java.time.LocalDateTime> findMaxUpdatedAtByEnrollment(@Param("enrollment") Enrollment enrollment);
+
+    @Query("SELECT COUNT(p) FROM Progress p WHERE p.enrollment.user.email = :email AND p.isCompleted = true")
+    long countCompletedLessonsByUserEmail(@Param("email") String email);
+
+    @Query("SELECT SUM(p.lesson.duration) FROM Progress p WHERE p.enrollment.user.email = :email AND p.isCompleted = true")
+    Long sumStudyTimeByUserEmail(@Param("email") String email);
 }

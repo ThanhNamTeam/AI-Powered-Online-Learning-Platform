@@ -16,6 +16,11 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
 //    List<Course> findByConstructor_UserId(String userId);
 
     Page<Course> findByEnrollments_User_Email(String enrollmentsUserEmail, Pageable pageable);
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c FROM Course c JOIN c.enrollments e WHERE e.user.email = :email AND e.status = :status")
+    Page<com.minhkhoi.swd392.entity.Course> findByEnrollments_User_EmailAndEnrollments_Status(
+            @org.springframework.data.repository.query.Param("email") String email, 
+            @org.springframework.data.repository.query.Param("status") com.minhkhoi.swd392.constant.EnrollmentStatus status, 
+            org.springframework.data.domain.Pageable pageable);
 
     Page<Course> findByStatus(CourseStatus status,
                               Pageable pageable);
@@ -35,6 +40,9 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     long countByStatusNot(CourseStatus status);
 
     List<Course> findByConstructor_Email(String constructorEmail);
+    long countByConstructor_Email(String constructorEmail);
+    long countByHandledByStaff_Email(String email);
+    long countByHandledByStaff_EmailAndStatus(String email, CourseStatus status);
 
     /**
      * Tìm các khóa học đã được duyệt và phù hợp với mức JLPT.

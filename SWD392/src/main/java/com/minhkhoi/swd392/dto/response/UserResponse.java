@@ -32,6 +32,15 @@ public class UserResponse {
     private Integer nextLevelXp;
     private Integer streak;
     private Integer totalBadges;
+    private Double studyTimeHours;
+    private Integer completedLessonsCount;
+    // Staff stats
+    private Long handledCoursesCount;
+    private Long pendingModerationCount;
+    // Instructor stats
+    private Long createdCoursesCount;
+    private Long totalStudentsCount;
+    private Double totalRevenue;
 
 
     public static UserResponse fromEntity(User user) {
