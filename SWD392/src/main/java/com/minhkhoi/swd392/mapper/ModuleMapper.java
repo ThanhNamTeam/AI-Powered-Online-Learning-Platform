@@ -15,6 +15,8 @@ public interface ModuleMapper {
     @Mapping(target = "course", source = "course")
     @Mapping(target = "lessons", ignore = true)
     @Mapping(target = "orderIndex", source = "request.orderIndex")
+    @Mapping(target = "isPending", ignore = true)
+    @Mapping(target = "isPendingDeletion", ignore = true)
     Module toModule(CreateModuleRequest request, Course course);
 
     @Mapping(target = "lessons", source = "lessons")

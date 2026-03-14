@@ -47,7 +47,8 @@ public class SecurityConfig {
                                 "/api/accounts/reset-password",
                                 "/momo-test.html",               // Payment Test Page
                                 "/payment-result.html",          // Payment Result Page
-                                "/api/identity/payment/momo/callback", // MOMO Callback
+                                "/api/identity/payment/momo/callback", // MOMO IPN Callback
+                                "/api/identity/payment/momo/return",    // MOMO Return URL (redirect)
                                 "/api/identity/payment/vnpay/callback", // VNPAY Callback
                                 "/api/courses/all-course/public",        // Public Course List
                                 "/api/placement-test/**"                  // Placement Test (Guest access)

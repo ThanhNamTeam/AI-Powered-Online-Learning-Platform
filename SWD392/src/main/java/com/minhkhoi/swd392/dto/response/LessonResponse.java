@@ -1,5 +1,6 @@
 package com.minhkhoi.swd392.dto.response;
 
+import com.minhkhoi.swd392.entity.Lesson;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +19,15 @@ public class LessonResponse {
     private String documentUrl;
     private String transcript;
     private Integer duration;
+
+    public static LessonResponse fromEntity(Lesson lesson) {
+        return LessonResponse.builder()
+                .lessonId(lesson.getLessonId())
+                .title(lesson.getTitle())
+                .videoUrl(lesson.getVideoUrl())
+                .documentUrl(lesson.getDocumentUrl())
+                .transcript(lesson.getTranscript())
+                .duration(lesson.getDuration())
+                .build();
+    }
 }

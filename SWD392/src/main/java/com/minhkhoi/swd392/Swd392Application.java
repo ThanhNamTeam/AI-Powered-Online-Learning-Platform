@@ -22,5 +22,17 @@ public class Swd392Application {
 
 		SpringApplication.run(Swd392Application.class, args);
 	}
+
+	@org.springframework.context.annotation.Bean
+	public org.springframework.boot.CommandLineRunner fixDatabase(org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+		return args -> {
+			try {
+				jdbcTemplate.execute("ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_course_status_check");
+				System.out.println("✅ Dropped courses_course_status_check constraint");
+			} catch (Exception e) {
+				System.out.println("⚠️ Could not drop constraint (might not exist): " + e.getMessage());
+			}
+		};
+	}
 }
 

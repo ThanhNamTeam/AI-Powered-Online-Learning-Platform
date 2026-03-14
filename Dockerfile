@@ -5,16 +5,16 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-# SỬA TẠI ĐÂY: Trỏ đường dẫn vào thư mục SWD392
-COPY SWD392/mvnw SWD392/mvnw.cmd ./
-COPY SWD392/.mvn .mvn
-COPY SWD392/pom.xml ./
+# Copy Maven wrapper và pom.xml trước để cache dependencies
+COPY mvnw mvnw.cmd ./
+COPY .mvn .mvn
+COPY pom.xml ./
 
-# Download dependencies
+# Download dependencies (cache layer riêng để tái sử dụng khi chỉ thay đổi source)
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
-# SỬA TẠI ĐÂY: Copy source code từ thư mục SWD392
-COPY SWD392/src ./src
+# Copy source code và build
+COPY src ./src
 RUN ./mvnw package -DskipTests -B
 
 # ============================================================
@@ -22,11 +22,12 @@ RUN ./mvnw package -DskipTests -B
 # ============================================================
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
+# Tạo user không phải root để chạy app an toàn hơn
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-# Copy JAR từ build stage (Giữ nguyên vì file JAR đã được build vào /app/target trong container)
+# Copy JAR từ build stage
 COPY --from=builder /app/target/*.jar app.jar
 
 RUN chown appuser:appgroup app.jar

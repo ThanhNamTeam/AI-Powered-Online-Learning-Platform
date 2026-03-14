@@ -55,6 +55,60 @@ public class VnPayPaymentService {
             throw new AppException(ErrorCode.ONLY_STUDENT_OR_INSTRUCTOR_CAN_PURCHASE);
         }
 
+
+        // --- COURSE PAYMENT (mua lẻ khóa học) ---
+        if (request.getCourseId() != null) {
+            Course course = courseRepository.findById(request.getCourseId())
+                    .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+            // Check if already enrolled
+            Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, course)
+                    .orElseGet(() -> Enrollment.builder()
+                            .user(user)
+                            .course(course)
+                            .enrolledAt(LocalDateTime.now())
+                            .status(com.minhkhoi.swd392.constant.EnrollmentStatus.PENDING)
+                            .build());
+
+            if (enrollment.getStatus() == com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE
+                    || enrollment.getStatus() == com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED) {
+                throw new RuntimeException("User already owns this course");
+            }
+
+            enrollment.setStatus(com.minhkhoi.swd392.constant.EnrollmentStatus.PENDING);
+            enrollment = enrollmentRepository.save(enrollment);
+
+            String orderId = UUID.randomUUID().toString();
+            long amount = course.getPrice().longValue() * 100; // VNPAY: amount * 100
+            String orderInfo = "Buy Course: " + course.getTitle();
+
+            Payment payment = Payment.builder()
+                    .user(user)
+                    .enrollment(enrollment)
+                    .amount(course.getPrice())
+                    .status(Payment.PaymentStatus.PENDING)
+                    .method(Payment.PaymentMethod.VNPAY)
+                    .transactionId(orderId)
+                    .notes("Course: " + course.getTitle())
+                    .build();
+            payment = paymentRepository.save(payment);
+
+            String vnp_Url = buildVnPayUrl(orderId, amount, orderInfo, httpServletRequest);
+            PaymentResponse response = paymentMapper.toPaymentResponse(payment);
+            response.setPaymentUrl(vnp_Url);
+            return response;
+        }
+
+        // --- SUBSCRIPTION PAYMENT ---
+        // Validate Plan
+        AISubscription.SubscriptionPlan plan;
+        try {
+            plan = AISubscription.SubscriptionPlan.valueOf(request.getSubscriptionPlan().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
+        }
+
+
         String planType = request.getSubscriptionPlan().toUpperCase();
         String orderId = UUID.randomUUID().toString();
         long amount = request.getAmount().longValue() * 100;
@@ -214,6 +268,21 @@ public class VnPayPaymentService {
             return;
         }
 
+
+             // Check if it's a Course Payment or Subscription
+             if (payment.getNotes() != null && payment.getNotes().startsWith("Course:")) {
+                 // Activate Enrollment
+                 Enrollment enrollment = payment.getEnrollment();
+                 if (enrollment != null) {
+                     enrollment.setStatus(com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE);
+                     enrollmentRepository.save(enrollment);
+                     log.info("VNPAY: Activated enrollment for user {} course {}",
+                             payment.getUser().getEmail(), enrollment.getCourse().getTitle());
+                 }
+             } else {
+                 createOrUpdateSubscription(payment);
+             }
+
         if ("00".equals(responseCode)) {
             // === THANH TOÁN THÀNH CÔNG ===
             payment.setStatus(Payment.PaymentStatus.COMPLETED);
@@ -233,6 +302,7 @@ public class VnPayPaymentService {
                 // Case 2: Mua gói -> Tạo Subscription
                 createOrUpdateSubscription(payment);
             }
+
 
         } else {
             // === THANH TOÁN THẤT BẠI ===
