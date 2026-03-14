@@ -25,6 +25,8 @@ public class PlacementQuestionResponse {
     private Map<String, String> options;
     private String topic;
     private JlptLevel jlptLevel;
+    private String correctAnswer;
+
 
     /**
      * Loại câu hỏi: READING hoặc LISTENING.

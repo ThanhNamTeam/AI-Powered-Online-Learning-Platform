@@ -65,6 +65,7 @@ public class AISubscription {
     private String notes;
 
     public enum SubscriptionPlan {
+        FREE,
         BASIC,      // 100 AI credits/month
         PREMIUM,    // 500 AI credits/month
         ENTERPRISE  // Unlimited AI credits

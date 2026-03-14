@@ -22,6 +22,7 @@ import com.minhkhoi.swd392.constant.CourseStatus;
 import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -68,7 +69,7 @@ public class MomoPaymentService {
 
         // --- COURSE PAYMENT ---
         if (request.getCourseId() != null) {
-            Course course = courseRepository.findById(request.getCourseId())
+            Course course = courseRepository.findById(UUID.fromString(request.getCourseId()))
                     .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
             // Check if enrollment exists
@@ -258,16 +259,16 @@ public class MomoPaymentService {
         log.info("Request body: {}", requestBody.toString());
 
         // Send request to MOMO
-        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
-        okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
-        okhttp3.RequestBody body = okhttp3.RequestBody.create(mediaType, requestBody.toString());
-        okhttp3.Request request = new okhttp3.Request.Builder()
+        OkHttpClient client = new OkHttpClient();
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, requestBody.toString());
+        Request request = new Request.Builder()
                 .url(momoConfig.getEndpoint())
                 .post(body)
                 .addHeader("Content-Type", "application/json")
                 .build();
 
-        okhttp3.Response response = client.newCall(request).execute();
+        Response response = client.newCall(request).execute();
         String responseBody = response.body().string();
         
         log.info("MOMO Response: {}", responseBody);
@@ -363,10 +364,22 @@ public class MomoPaymentService {
 
         // Calculate subscription period (1 month)
         LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = startDate.plusMonths(1);
+        LocalDateTime endDate = null;
+        if(plan.equals(AISubscription.SubscriptionPlan.BASIC)) {
+            endDate = startDate.plusMonths(3);
+        }
+
+        if(plan.equals(AISubscription.SubscriptionPlan.PREMIUM)) {
+            endDate = startDate.plusMonths(12);
+        }
+
+        if (plan.equals(AISubscription.SubscriptionPlan.ENTERPRISE)) {
+            endDate = startDate.plusYears(2);
+        }
 
         // Set AI credits based on plan
         Integer aiCredits = switch (plan) {
+            case FREE -> 0;
             case BASIC -> 100;
             case PREMIUM -> 500;
             case ENTERPRISE -> null; // Unlimited

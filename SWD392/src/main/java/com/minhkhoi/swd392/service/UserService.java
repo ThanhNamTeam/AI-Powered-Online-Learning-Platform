@@ -9,11 +9,13 @@ import com.minhkhoi.swd392.dto.request.*;
 import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.dto.response.ValidateTokenResponse;
+
 import com.minhkhoi.swd392.entity.OtpVerification;
 import com.minhkhoi.swd392.entity.RedisToken;
 import com.minhkhoi.swd392.entity.RefreshToken;
 import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.entity.*;
 import com.minhkhoi.swd392.repository.*;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
@@ -29,6 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -53,6 +56,9 @@ public class UserService {
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final PaymentRepository paymentRepository;
+
+    private final AISubscriptionRepository aiSubscriptionRepository;
+
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -121,6 +127,18 @@ public class UserService {
 
         // Save user
         User savedUser = userRepository.save(user);
+
+        AISubscription freeSub = AISubscription.builder()
+                .instructor(savedUser)
+                .plan(AISubscription.SubscriptionPlan.FREE)
+                .status(AISubscription.SubscriptionStatus.ACTIVE)
+                .startDate(LocalDateTime.now())
+                .aiCredits(0)
+                .price(BigDecimal.valueOf(0))
+                .endDate(LocalDateTime.now().plusYears(100))
+                .build();
+
+        aiSubscriptionRepository.save(freeSub);
 
         // Send welcome email
         sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());

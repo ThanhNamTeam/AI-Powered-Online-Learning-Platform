@@ -33,6 +33,10 @@ public class Payment {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type", nullable = false) // COURSE hoặc SUBSCRIPTION
+    private PaymentType type;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
     @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
@@ -40,6 +44,10 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method")
     private PaymentMethod method;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = true)
+    private Course course;
 
     @Column(name = "payment_transaction_id", unique = true)
     private String transactionId;
@@ -65,5 +73,10 @@ public class Payment {
     public enum PaymentMethod {
         VNPAY,
         MOMO
+    }
+    // Thêm Enum mới cho Type
+    public enum PaymentType {
+        COURSE,         // Mua lẻ
+        SUBSCRIPTION    // Mua gói
     }
 }
