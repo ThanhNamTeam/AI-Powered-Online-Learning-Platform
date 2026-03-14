@@ -85,7 +85,7 @@ public enum ErrorCode {
     INVALID_COURSE_STATUS_FOR_UPDATE("Course must be APPROVED to submit an update request", HttpStatus.BAD_REQUEST),
     INVALID_COURSE_STATUS_FOR_DELETION("Course must be APPROVED or PENDING_UPDATE to request deletion", HttpStatus.BAD_REQUEST),
 
-    //SUBSCRIPTIOM
+    // SUBSCRIPTION
     SUBSCRIPTION_EXPIRED("Gói hiện tại của bạn đã hết hạn", HttpStatus.BAD_REQUEST),
     PLAN_LIMIT_REACHED("Gói hiện tại đã đăng ký tối đa khóa học", HttpStatus.BAD_REQUEST),
     ALREADY_ENROLLED("Bạn đã đăng ký khóa học này rồi.", HttpStatus.BAD_REQUEST),

@@ -18,7 +18,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
     List<Enrollment> findByCourseConstructor(User constructor);
     long countByCourse_Constructor_Email(String email);
 
-    // Ki\u1ec3m tra user \u0111\u00e3 c\u00f3 enrollment ACTIVE/COMPLETED cho kh\u00f3a h\u1ecdc ch\u01b0a
+    // Kiểm tra user đã có enrollment ACTIVE/COMPLETED cho khóa học chưa
     boolean existsByUser_EmailAndCourseAndStatusIn(String email, Course course,
             java.util.List<com.minhkhoi.swd392.constant.EnrollmentStatus> statuses);
 
@@ -40,4 +40,3 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
 """)
     List<UUID> findCourseIdsByUserEmail(String email);
 }
-
