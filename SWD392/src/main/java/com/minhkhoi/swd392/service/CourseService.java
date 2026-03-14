@@ -52,8 +52,6 @@ public class CourseService {
     private final EnrollmentRepository enrollmentRepository;
     private final ProgressRepository progressRepository;
 
-    private final EnrollmentRepository enrollmentRepository;
-
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {

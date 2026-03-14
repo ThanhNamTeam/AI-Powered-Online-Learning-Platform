@@ -29,9 +29,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
 
     // Tìm enrollment của user (theo email) cho 1 lesson cụ thể (qua course)
     Optional<Enrollment> findFirstByUser_EmailAndCourse_Modules_Lessons_LessonId(String email, UUID lessonId);
-}
-    boolean existsByUserAndCourse(User user,  Course course);
-    java.util.Optional<Enrollment> findByUserAndCourse(User user, Course course);
+
     long countByUserAndType(User user, Enrollment.EnrollmentType type);
 
     @Query("""

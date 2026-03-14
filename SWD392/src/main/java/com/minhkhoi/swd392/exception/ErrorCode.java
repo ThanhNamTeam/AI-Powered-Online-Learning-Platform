@@ -57,7 +57,7 @@ public enum ErrorCode {
     INVALID_PRICE("Price must be greater than or equal to 0", HttpStatus.BAD_REQUEST),
     MISSING_REJECTION_REASON("Rejection reason is required when rejecting a course", HttpStatus.BAD_REQUEST),
     INVALID_VERIFY_STATUS("Only PUBLISHED or REJECTED status is allowed for verification", HttpStatus.BAD_REQUEST),
-    
+
     // Quiz errors
     QUIZ_NOT_FOUND("Quiz not found", HttpStatus.NOT_FOUND),
     PREMIUM_REQUIRED("Bạn cần mua gói PREMIUM để sử dụng tính năng tạo câu hỏi bằng AI. Vui lòng nâng cấp tài khoản!", HttpStatus.PAYMENT_REQUIRED),
@@ -83,7 +83,7 @@ public enum ErrorCode {
     DISCUSSION_NOT_FOUND("Discussion not found", HttpStatus.NOT_FOUND),
     REVIEW_NOT_FOUND("Review not found", HttpStatus.NOT_FOUND),
     INVALID_COURSE_STATUS_FOR_UPDATE("Course must be APPROVED to submit an update request", HttpStatus.BAD_REQUEST),
-    INVALID_COURSE_STATUS_FOR_DELETION("Course must be APPROVED or PENDING_UPDATE to request deletion", HttpStatus.BAD_REQUEST);
+    INVALID_COURSE_STATUS_FOR_DELETION("Course must be APPROVED or PENDING_UPDATE to request deletion", HttpStatus.BAD_REQUEST),
 
     //SUBSCRIPTIOM
     SUBSCRIPTION_EXPIRED("Gói hiện tại của bạn đã hết hạn", HttpStatus.BAD_REQUEST),
