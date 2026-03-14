@@ -22,7 +22,6 @@ import com.minhkhoi.swd392.constant.CourseStatus;
 import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.*;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -58,7 +57,7 @@ public class MomoPaymentService {
         // Get current authenticated user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
-        
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
@@ -69,7 +68,7 @@ public class MomoPaymentService {
 
         // --- COURSE PAYMENT ---
         if (request.getCourseId() != null) {
-            Course course = courseRepository.findById(UUID.fromString(request.getCourseId()))
+            Course course = courseRepository.findById(request.getCourseId())
                     .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
             // Check if enrollment exists
@@ -86,7 +85,7 @@ public class MomoPaymentService {
                 // But for testing purposes or strict logic, throw error.
                 throw new RuntimeException("User already owns this course");
             }
-            
+
             // Ensure status is PENDING if it was null or CANCELLED or PENDING
             enrollment.setStatus(EnrollmentStatus.PENDING);
             enrollment = enrollmentRepository.save(enrollment);
@@ -105,6 +104,8 @@ public class MomoPaymentService {
                         .amount(BigDecimal.valueOf(amount))
                         .status(Payment.PaymentStatus.PENDING)
                         .method(Payment.PaymentMethod.MOMO)
+                        .type(Payment.PaymentType.COURSE)
+                        .course(course)
                         .transactionId(orderId)
                         .notes("Course: " + course.getTitle()) // Pattern to identify course payment
                         .build();
@@ -138,13 +139,13 @@ public class MomoPaymentService {
         // Generate unique IDs
         String orderId = UUID.randomUUID().toString();
         String requestId = UUID.randomUUID().toString();
-        
+
         // Convert amount to long (MOMO requires amount in VND, no decimals)
         long amount = request.getAmount().longValue();
-        
-        String orderInfo = request.getOrderInfo() != null 
-            ? request.getOrderInfo() 
-            : "Premium Subscription - " + plan.name();
+
+        String orderInfo = request.getOrderInfo() != null
+                ? request.getOrderInfo()
+                : "Premium Subscription - " + plan.name();
 
         try {
             // Start Fix: Handle Enrollment for Subscription
@@ -179,7 +180,7 @@ public class MomoPaymentService {
                         return enrollmentRepository.save(newEnroll);
                     });
             // End Fix
-            
+
             // Create MOMO payment request
             MomoPaymentResponse momoResponse = createMomoPayment(orderId, requestId, amount, orderInfo);
 
@@ -190,10 +191,12 @@ public class MomoPaymentService {
                     .amount(request.getAmount())
                     .status(Payment.PaymentStatus.PENDING)
                     .method(Payment.PaymentMethod.MOMO)
+                    .type(Payment.PaymentType.SUBSCRIPTION)
+                    .course(finalCourse)
                     .transactionId(orderId)
                     .notes("Subscription Plan: " + plan.name())
                     .build();
-            
+
             payment = paymentRepository.save(payment);
 
             // Build response using mapper
@@ -259,18 +262,18 @@ public class MomoPaymentService {
         log.info("Request body: {}", requestBody.toString());
 
         // Send request to MOMO
-        OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("application/json");
-        RequestBody body = RequestBody.create(mediaType, requestBody.toString());
-        Request request = new Request.Builder()
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
+        okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
+        okhttp3.RequestBody body = okhttp3.RequestBody.create(mediaType, requestBody.toString());
+        okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(momoConfig.getEndpoint())
                 .post(body)
                 .addHeader("Content-Type", "application/json")
                 .build();
 
-        Response response = client.newCall(request).execute();
+        okhttp3.Response response = client.newCall(request).execute();
         String responseBody = response.body().string();
-        
+
         log.info("MOMO Response: {}", responseBody);
 
         JSONObject jsonResponse = new JSONObject(responseBody);
@@ -325,9 +328,9 @@ public class MomoPaymentService {
             // Payment successful
             payment.setStatus(Payment.PaymentStatus.COMPLETED);
             payment.setCompletedAt(LocalDateTime.now());
-            
+
             // Check if it's a Course Payment or Subscription
-            if (payment.getNotes() != null && payment.getNotes().startsWith("Course:")) {
+            if (payment.getType() == Payment.PaymentType.COURSE) {
                 // Activate Enrollment
                 Enrollment enrollment = payment.getEnrollment();
                 if (enrollment != null) {
@@ -339,7 +342,7 @@ public class MomoPaymentService {
                 // Create or update AI subscription
                 createOrUpdateSubscription(payment);
             }
-            
+
             log.info("Payment completed successfully for orderId: {}", orderId);
         } else {
             // Payment failed
@@ -356,7 +359,7 @@ public class MomoPaymentService {
      */
     private void createOrUpdateSubscription(Payment payment) {
         User user = payment.getUser();
-        
+
         // Extract subscription plan from payment notes
         String notes = payment.getNotes();
         String planName = extractSubscriptionPlan(notes);
@@ -364,25 +367,14 @@ public class MomoPaymentService {
 
         // Calculate subscription period (1 month)
         LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = null;
-        if(plan.equals(AISubscription.SubscriptionPlan.BASIC)) {
-            endDate = startDate.plusMonths(3);
-        }
-
-        if(plan.equals(AISubscription.SubscriptionPlan.PREMIUM)) {
-            endDate = startDate.plusMonths(12);
-        }
-
-        if (plan.equals(AISubscription.SubscriptionPlan.ENTERPRISE)) {
-            endDate = startDate.plusYears(2);
-        }
+        LocalDateTime endDate = startDate.plusMonths(1);
 
         // Set AI credits based on plan
         Integer aiCredits = switch (plan) {
-            case FREE -> 0;
             case BASIC -> 100;
             case PREMIUM -> 500;
             case ENTERPRISE -> null; // Unlimited
+            case FREE -> 0;
         };
 
         // Create new subscription
@@ -410,6 +402,7 @@ public class MomoPaymentService {
         if (notes.contains("BASIC")) return "BASIC";
         if (notes.contains("PREMIUM")) return "PREMIUM";
         if (notes.contains("ENTERPRISE")) return "ENTERPRISE";
+        if (notes.contains("FREE")) return "FREE";
         return "BASIC"; // Default
     }
 
@@ -478,7 +471,7 @@ public class MomoPaymentService {
     public List<PaymentResponse> getUserPayments() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
-        
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
