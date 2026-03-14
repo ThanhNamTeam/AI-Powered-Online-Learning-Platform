@@ -9,16 +9,16 @@ import com.minhkhoi.swd392.dto.request.*;
 import com.minhkhoi.swd392.dto.response.LoginResponse;
 import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.dto.response.ValidateTokenResponse;
+
 import com.minhkhoi.swd392.entity.OtpVerification;
 import com.minhkhoi.swd392.entity.RedisToken;
 import com.minhkhoi.swd392.entity.RefreshToken;
 import com.minhkhoi.swd392.entity.User;
-import com.minhkhoi.swd392.repository.RedisTokenRepository;
-import com.minhkhoi.swd392.repository.RefreshTokenRepository;
+import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.entity.*;
+import com.minhkhoi.swd392.repository.*;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
-import com.minhkhoi.swd392.repository.OtpVerificationRepository;
-import com.minhkhoi.swd392.repository.UserRepository;
 import com.minhkhoi.swd392.mapper.UserMapper;
 import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -51,6 +52,13 @@ public class UserService {
     private final UserMapper userMapper;
     private final RedisTokenRepository redisTokenRepository;
     private final JwtService jwtService;
+    private final ProgressRepository progressRepository;
+    private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final PaymentRepository paymentRepository;
+
+    private final AISubscriptionRepository aiSubscriptionRepository;
+
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -119,6 +127,18 @@ public class UserService {
 
         // Save user
         User savedUser = userRepository.save(user);
+
+        AISubscription freeSub = AISubscription.builder()
+                .instructor(savedUser)
+                .plan(AISubscription.SubscriptionPlan.FREE)
+                .status(AISubscription.SubscriptionStatus.ACTIVE)
+                .startDate(LocalDateTime.now())
+                .aiCredits(0)
+                .price(BigDecimal.valueOf(0))
+                .endDate(LocalDateTime.now().plusYears(100))
+                .build();
+
+        aiSubscriptionRepository.save(freeSub);
 
         // Send welcome email
         sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
@@ -200,7 +220,9 @@ public class UserService {
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, userId));
-        return userMapper.toUserResponse(user);
+        UserResponse response = userMapper.toUserResponse(user);
+        populateUserStats(response, user.getEmail());
+        return response;
     }
 
     /**
@@ -209,7 +231,9 @@ public class UserService {
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
-        return userMapper.toUserResponse(user);
+        UserResponse response = userMapper.toUserResponse(user);
+        populateUserStats(response, user.getEmail());
+        return response;
     }
 
     /**
@@ -518,6 +542,94 @@ public class UserService {
 
         // lưu lại
         userRepository.save(user);
+    }
+
+    /** Lấy thông tin user đang đăng nhập (từ SecurityContext) */
+    public UserResponse getCurrentUser() {
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        UserResponse response = UserResponse.fromEntity(user);
+        populateUserStats(response, email);
+        return response;
+    }
+
+    private void populateUserStats(UserResponse response, String email) {
+        if (response.getRole() == User.Role.STUDENT) {
+            long completedLessons = progressRepository.countCompletedLessonsByUserEmail(email);
+            Long totalDurationSeconds = progressRepository.sumStudyTimeByUserEmail(email);
+
+            response.setCompletedLessonsCount((int) completedLessons);
+            // Làm tròn 1 chữ số thập phân cho đẹp như template (24.5h)
+            double hours = (totalDurationSeconds != null) ? totalDurationSeconds / 3600.0 : 0.0;
+            response.setStudyTimeHours(Math.round(hours * 10.0) / 10.0);
+        } else if (response.getRole() == User.Role.STAFF) {
+            response.setHandledCoursesCount(courseRepository.countByHandledByStaff_Email(email));
+            
+            // For pendingModerationCount, it's global for now
+            response.setPendingModerationCount(courseRepository.countByStatusIn(java.util.List.of(
+                CourseStatus.PENDING_APPROVAL,
+                CourseStatus.PENDING_UPDATE,
+                CourseStatus.PENDING_DELETION
+            )));
+        } else if (response.getRole() == User.Role.INSTRUCTOR) {
+            response.setCreatedCoursesCount(courseRepository.countByConstructor_Email(email));
+            response.setTotalStudentsCount(enrollmentRepository.countByCourse_Constructor_Email(email));
+            
+            java.math.BigDecimal revenue = paymentRepository.sumRevenueByInstructorEmail(email);
+            response.setTotalRevenue(revenue != null ? revenue.doubleValue() : 0.0);
+        }
+    }
+
+    /**
+     * Cập nhật điểm XP, streak và số badge của user.
+     * Tự động tính level mới dựa theo công thức: nextLevelXp = 1000 + (level-1)*500
+     */
+    @Transactional
+    public UserResponse updateUserStats(UpdateUserStatsRequest request) {
+        var context = SecurityContextHolder.getContext();
+        String email = Objects.requireNonNull(context.getAuthentication()).getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
+
+        // Cộng XP delta
+        if (request.getXpDelta() != null && request.getXpDelta() > 0) {
+            int newXp = (user.getCurrentXp() != null ? user.getCurrentXp() : 0) + request.getXpDelta();
+            int level  = user.getLevel() != null ? user.getLevel() : 1;
+
+            // Auto level-up loop
+            while (true) {
+                int nextLevelXp = 1000 + (level - 1) * 500;
+                if (newXp >= nextLevelXp) {
+                    newXp -= nextLevelXp;
+                    level++;
+                } else {
+                    break;
+                }
+            }
+            user.setCurrentXp(newXp);
+            user.setLevel(level);
+        }
+
+        // Cập nhật streak
+        if (request.getStreak() != null) {
+            user.setStreak(request.getStreak());
+        }
+
+        // Cập nhật total badges
+        if (request.getTotalBadges() != null) {
+            user.setTotalBadges(request.getTotalBadges());
+        }
+
+        userRepository.save(user);
+        log.info("Stats updated for user: {} | level={} xp={} streak={}",
+                email, user.getLevel(), user.getCurrentXp(), user.getStreak());
+
+        UserResponse response = UserResponse.fromEntity(user);
+        populateUserStats(response, email);
+        return response;
     }
 
 }

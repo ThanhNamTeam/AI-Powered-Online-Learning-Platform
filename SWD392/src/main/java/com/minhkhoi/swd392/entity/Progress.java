@@ -31,4 +31,8 @@ public class Progress {
 
     @Column(name = "progress_is_completed")
     private Boolean isCompleted;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
 }

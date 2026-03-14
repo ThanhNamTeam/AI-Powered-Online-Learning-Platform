@@ -28,6 +28,14 @@ public class Module {
     @Column(name = "modules_order_index")
     private Integer orderIndex;
 
+    @Builder.Default
+    @Column(name = "is_pending")
+    private Boolean isPending = false;
+
+    @Builder.Default
+    @Column(name = "is_pending_deletion")
+    private Boolean isPendingDeletion = false;
+
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Lesson> lessons;
 }

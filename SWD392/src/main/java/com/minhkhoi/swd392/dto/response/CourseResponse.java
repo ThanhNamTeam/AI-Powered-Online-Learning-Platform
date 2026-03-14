@@ -32,8 +32,18 @@ public class CourseResponse {
     private String handledByStaffName;
     private String jlptLevel;
     private LocalDateTime createdAt;
+    
+    private String pendingUpdateNote;
+    private String deletionRequestNote;
 
     private List<ModuleResponse> modules;
+    private Boolean enrolled; // true nếu user hiện tại đã mua/đăng ký khóa học này
+
+    // ── Progress fields (chỉ trả về khi gọi qua /all-course/students) ──────
+    private Integer progressPercentage; // 0-100
+    private Integer completedLessons;
+    private Integer totalLessons;
+    private LocalDateTime lastAccessed;
 
     public static CourseResponse fromEntity(Course course) {
         return CourseResponse.builder()
@@ -50,7 +60,10 @@ public class CourseResponse {
                 .handledByStaffName(course.getHandledByStaff() != null ? course.getHandledByStaff().getFullName() : null)
                 .jlptLevel(course.getJlptLevel() != null ? course.getJlptLevel().name() : null)
                 .createdAt(course.getCreatedAt())
+                .pendingUpdateNote(course.getPendingUpdateNote())
+                .deletionRequestNote(course.getDeletionRequestNote())
                 .modules(course.getModules() != null ? course.getModules().stream().map(ModuleResponse::fromEntity).collect(Collectors.toList()) : null)
                 .build();
     }
+    private boolean enrolled;
 }

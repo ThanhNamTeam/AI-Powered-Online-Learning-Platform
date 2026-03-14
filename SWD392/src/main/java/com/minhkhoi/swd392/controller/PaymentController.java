@@ -85,6 +85,44 @@ public class PaymentController {
         }
     }
 
+    /**
+     * MOMO Return URL handler (GET) — dùng cho sandbox local
+     * MoMo redirect user về đây sau khi thanh toán, kèm theo params resultCode, orderId...
+     * Endpoint này xử lý DB và redirect FE với status=success|failed
+     */
+    @GetMapping("/momo/return")
+    @Operation(
+        summary = "MOMO return URL handler",
+        description = "Handles MoMo redirect after payment. Updates DB and redirects to frontend with result."
+    )
+    public void momoReturn(@RequestParam Map<String, String> params, HttpServletResponse response) throws IOException {
+        log.info("Received MOMO return redirect: {}", params);
+        String orderId = params.get("orderId");
+        String resultCode = params.getOrDefault("resultCode", "-1");
+        String message = params.getOrDefault("message", "Unknown error");
+
+        try {
+            // Convert String params to Object params for existing handler
+            Map<String, Object> objectParams = new java.util.HashMap<>(params);
+            momoPaymentService.handleMomoCallback(objectParams);
+            log.info("MOMO return processed successfully for orderId: {}", orderId);
+        } catch (Exception e) {
+            log.error("Error processing MOMO return for orderId {}: {}", orderId, e.getMessage());
+            // Không throw, vẫn redirect để không treo user
+        }
+
+        // Redirect FE với đúng status
+        String encodedOrderId = URLEncoder.encode(orderId != null ? orderId : "", StandardCharsets.UTF_8);
+        String encodedMessage = URLEncoder.encode(message, StandardCharsets.UTF_8);
+
+        if ("0".equals(resultCode)) {
+            response.sendRedirect(frontendUrl + "/payment-result?status=success&orderId=" + encodedOrderId);
+        } else {
+            response.sendRedirect(frontendUrl + "/payment-result?status=failed&orderId=" + encodedOrderId
+                    + "&error=" + encodedMessage + "&resultCode=" + resultCode);
+        }
+    }
+
     @GetMapping("/vnpay/callback")
     public void vnPayCallback(@RequestParam Map<String, String> params, HttpServletResponse response) throws IOException {
         log.info("Received VNPAY callback: {}", params);
@@ -93,7 +131,8 @@ public class PaymentController {
             response.sendRedirect(frontendUrl + "/payment-result?status=success&orderId=" + params.get("vnp_TxnRef"));
         } catch (Exception e) {
             log.error("VNPAY Callback Error", e);
-            response.sendRedirect(frontendUrl + "/payment-result?status=success&orderId=" + URLEncoder.encode(e.getMessage() != null ? e.getMessage() : "Unknown Error", StandardCharsets.UTF_8));
+            response.sendRedirect(frontendUrl + "/payment-result?status=failed&orderId=" + params.getOrDefault("vnp_TxnRef", "")
+                    + "&error=" + URLEncoder.encode(e.getMessage() != null ? e.getMessage() : "Unknown Error", StandardCharsets.UTF_8));
         }
     }
 

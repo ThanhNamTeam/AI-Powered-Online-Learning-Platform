@@ -32,6 +32,7 @@ public class PlacementTestService {
     private final PlacementQuestionRepository placementQuestionRepository;
     private final CourseRepository courseRepository;
     private final GeminiService geminiService;
+    private final com.minhkhoi.swd392.repository.UserRepository userRepository;
 
     // ── 1. Lấy bộ câu hỏi ngẫu nhiên (có tỷ lệ câu nghe) ───────────────────
 
@@ -80,6 +81,7 @@ public class PlacementTestService {
                         .topic(q.getTopic())
                         .jlptLevel(q.getJlptLevel())
                         .questionType(q.getQuestionType())
+                        .correctAnswer(q.getCorrectAnswer())
                         .audioUrl(q.getAudioUrl())
                         .build())
                 .collect(Collectors.toList());
@@ -178,7 +180,18 @@ public class PlacementTestService {
         // -- Step D: Gọi Gemini AI phân tích --
         PlacementAiAnalysis aiAnalysis = analyzeWithGemini(correctCount, totalQuestions, scorePercent, wrongAnswers);
 
-        // -- Step E: Tìm khóa học phù hợp --
+        // -- Step E: Cập nhật trình độ cho user nếu đã đăng nhập --
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            String email = auth.getName();
+            userRepository.findByEmail(email).ifPresent(user -> {
+                log.info("[PlacementTest] Lưu level {} cho user {}", aiAnalysis.estimatedLevel(), email);
+                user.setEstimatedJlptLevel(aiAnalysis.estimatedLevel());
+                userRepository.save(user);
+            });
+        }
+
+        // -- Step F: Tìm khóa học phù hợp --
         List<SuggestedCourseCard> suggestedCourses = findSuggestedCourses(aiAnalysis.estimatedLevel());
 
         // -- Step F: Tổng hợp kết quả --

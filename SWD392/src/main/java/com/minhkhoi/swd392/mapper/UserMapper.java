@@ -9,6 +9,14 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
+    @Mapping(target = "nextLevelXp", ignore = true)
+    @Mapping(target = "studyTimeHours", ignore = true)
+    @Mapping(target = "completedLessonsCount", ignore = true)
+    @Mapping(target = "handledCoursesCount", ignore = true)
+    @Mapping(target = "pendingModerationCount", ignore = true)
+    @Mapping(target = "createdCoursesCount", ignore = true)
+    @Mapping(target = "totalStudentsCount", ignore = true)
+    @Mapping(target = "totalRevenue", ignore = true)
     UserResponse toUserResponse(User user);
 
     @Mapping(target = "userId", ignore = true)
@@ -27,7 +35,11 @@ public interface UserMapper {
     @Mapping(target = "phoneNumber", ignore = true)
     @Mapping(target = "address", ignore = true)
     @Mapping(target = "gender", ignore = true)
-    @Mapping(target = "birthOfDate", ignore = true)
+    @Mapping(target = "estimatedJlptLevel", ignore = true)
+    @Mapping(target = "level", ignore = true)
+    @Mapping(target = "currentXp", ignore = true)
+    @Mapping(target = "streak", ignore = true)
+    @Mapping(target = "totalBadges", ignore = true)
     User toUser(CreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -49,5 +61,10 @@ public interface UserMapper {
     @Mapping(target = "address", ignore = true)
     @Mapping(target = "gender", ignore = true)
     @Mapping(target = "birthOfDate", ignore = true)
+    @Mapping(target = "estimatedJlptLevel", ignore = true)
+    @Mapping(target = "level", ignore = true)
+    @Mapping(target = "currentXp", ignore = true)
+    @Mapping(target = "streak", ignore = true)
+    @Mapping(target = "totalBadges", ignore = true)
     void updateUserFromRequest(UpdateUserRequest request, @MappingTarget User user);
 }

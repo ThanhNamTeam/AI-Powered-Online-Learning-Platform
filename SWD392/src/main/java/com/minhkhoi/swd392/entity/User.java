@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import com.minhkhoi.swd392.constant.JlptLevel;
 
 @Entity
 @Table(name = "users")
@@ -60,6 +61,26 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estimated_jlpt_level")
+    private JlptLevel estimatedJlptLevel;
+
+    @Column(name = "level")
+    @Builder.Default
+    private Integer level = 1;
+
+    @Column(name = "current_xp")
+    @Builder.Default
+    private Integer currentXp = 0;
+
+    @Column(name = "streak")
+    @Builder.Default
+    private Integer streak = 0;
+
+    @Column(name = "total_badges")
+    @Builder.Default
+    private Integer totalBadges = 0;
 
     @CreationTimestamp
     @Builder.Default
