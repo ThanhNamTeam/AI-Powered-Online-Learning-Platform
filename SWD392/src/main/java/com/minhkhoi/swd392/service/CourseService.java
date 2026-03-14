@@ -102,7 +102,7 @@ public class CourseService {
 
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        Page<Course> courses = courseRepository.findByEnrollments_User_Email(email, pageable);
+        Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndEnrollments_Status(email, com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE, pageable);
 
         return PageResponse.<CourseResponse>builder()
                 .currentPage(page)

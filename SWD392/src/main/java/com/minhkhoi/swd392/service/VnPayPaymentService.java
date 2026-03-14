@@ -9,6 +9,7 @@ import com.minhkhoi.swd392.exception.ErrorCode;
 import com.minhkhoi.swd392.mapper.PaymentMapper;
 import com.minhkhoi.swd392.repository.*;
 import com.minhkhoi.swd392.constant.CourseStatus;
+import com.minhkhoi.swd392.constant.EnrollmentStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,54 @@ public class VnPayPaymentService {
             throw new AppException(ErrorCode.ONLY_STUDENT_OR_INSTRUCTOR_CAN_PURCHASE);
         }
 
-        // Validate Plan
+        // --- COURSE PAYMENT ---
+        if (request.getCourseId() != null) {
+            Course course = courseRepository.findById(request.getCourseId())
+                    .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+
+            // Check if enrollment exists
+            Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, course)
+                    .orElseGet(() -> Enrollment.builder()
+                            .user(user)
+                            .course(course)
+                            .enrolledAt(LocalDateTime.now())
+                            .status(EnrollmentStatus.PENDING)
+                            .build());
+
+            if (enrollment.getStatus() == EnrollmentStatus.ACTIVE || enrollment.getStatus() == EnrollmentStatus.COMPLETED) {
+                throw new RuntimeException("User already owns this course");
+            }
+
+            enrollment.setStatus(EnrollmentStatus.PENDING);
+            enrollment = enrollmentRepository.save(enrollment);
+
+            String orderId = UUID.randomUUID().toString();
+            long amount = course.getPrice().longValue() * 100;
+            String orderInfo = "Buy Course: " + course.getTitle();
+
+            Payment payment = Payment.builder()
+                    .user(user)
+                    .enrollment(enrollment)
+                    .amount(course.getPrice())
+                    .status(Payment.PaymentStatus.PENDING)
+                    .method(Payment.PaymentMethod.VNPAY)
+                    .transactionId(orderId)
+                    .notes("Course: " + course.getTitle())
+                    .build();
+
+            payment = paymentRepository.save(payment);
+
+            String vnp_Url = buildVnPayUrl(orderId, amount, orderInfo, httpServletRequest);
+            PaymentResponse response = paymentMapper.toPaymentResponse(payment);
+            response.setPaymentUrl(vnp_Url);
+            return response;
+        }
+
+        // --- SUBSCRIPTION PAYMENT ---
+        if (request.getSubscriptionPlan() == null) {
+            throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
+        }
+
         AISubscription.SubscriptionPlan plan;
         try {
             plan = AISubscription.SubscriptionPlan.valueOf(request.getSubscriptionPlan().toUpperCase());
@@ -66,7 +114,7 @@ public class VnPayPaymentService {
         long amount = request.getAmount().longValue() * 100; // VNPAY expects amount * 100
         String orderInfo = "Pay for " + plan.name();
 
-        // --- Enrollment Logic ---
+        // --- Subscription Placeholder Logic ---
         List<Course> existingCourses = courseRepository.findByConstructor_Email(user.getEmail());
         Course placeholderCourse = existingCourses.stream()
                 .filter(c -> "SUBSCRIPTION_PLACEHOLDER".equals(c.getTitle()))
@@ -94,7 +142,6 @@ public class VnPayPaymentService {
                             .build();
                     return enrollmentRepository.save(newEnroll);
                 });
-        // ------------------------
 
         // Create Payment Record (PENDING)
         Payment payment = Payment.builder()
@@ -236,7 +283,19 @@ public class VnPayPaymentService {
              payment.setStatus(Payment.PaymentStatus.COMPLETED);
              payment.setCompletedAt(LocalDateTime.now());
 
-             createOrUpdateSubscription(payment);
+             // Check if it's a Course Payment or Subscription
+             if (payment.getNotes() != null && payment.getNotes().startsWith("Course:")) {
+                 // Activate Enrollment
+                 Enrollment enrollment = payment.getEnrollment();
+                 if (enrollment != null) {
+                     enrollment.setStatus(EnrollmentStatus.ACTIVE);
+                     enrollmentRepository.save(enrollment);
+                     log.info("Activated enrollment for user {} course {}", payment.getUser().getEmail(), enrollment.getCourse().getTitle());
+                 }
+             } else {
+                 // Create or update AI subscription
+                 createOrUpdateSubscription(payment);
+             }
 
              paymentRepository.save(payment);
          } else {
