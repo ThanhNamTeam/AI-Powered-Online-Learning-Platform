@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/swd392
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mail:
+    username: test@gmail.com
+    password: password
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 3600000 # 1 hour
+  refresh-expiration: 604800000 # 7 days
+
+cloudinary:
+  cloud-name: test
+  api-key: test
+  api-secret: test
+
+assembly:
+  api-key: test
+
+gemini:
+  api-key: test
+
+app:
+  frontend-url: http://localhost:3000
+
+momo:
+  partnerCode: test
+  accessKey: test
+  secretKey: test
+  endpoint: https://test-payment.momo.vn/v2/gateway/api/create
+  redirectUrl: http://localhost:3000/payment-result
+  ipnUrl: http://localhost:3000/ipn
+
+vnpay:
+  tmn-code: test
+  hash-secret: test
+  payment-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/api/v1/payments/vnpay-callback

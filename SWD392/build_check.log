@@ -1,0 +1,24 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.minhkhoi:SWD392 >-------------------------
+[INFO] Building SWD392 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ SWD392 ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ SWD392 ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 162 source files with javac [debug parameters release 21] to target\classes
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/GeminiService.java: Some input files use or override a deprecated API.
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/GeminiService.java: Recompile with -Xlint:deprecation for details.
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/CloudinaryService.java: D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392\src\main\java\com\minhkhoi\swd392\service\CloudinaryService.java uses unchecked or unsafe operations.
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/CloudinaryService.java: Recompile with -Xlint:unchecked for details.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  21.929 s
+[INFO] Finished at: 2026-03-15T11:44:50+07:00
+[INFO] ------------------------------------------------------------------------

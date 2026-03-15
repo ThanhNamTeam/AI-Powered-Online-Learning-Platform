@@ -2,6 +2,7 @@ package com.minhkhoi.swd392.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.context.annotation.Profile;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "vector_store")
+@Profile("!test")
 @Getter
 @Setter
 @NoArgsConstructor
