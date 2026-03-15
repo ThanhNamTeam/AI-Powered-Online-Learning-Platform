@@ -53,4 +53,11 @@ public class DiscussionController {
         discussionService.deleteDiscussion(discussionId);
         return ResponseEntity.ok(ApiResponse.success("Discussion deleted", null));
     }
+
+    @PostMapping("/{discussionId}/like")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN', 'INSTRUCTOR', 'STUDENT')")
+    @Operation(summary = "Like a discussion/question", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<DiscussionResponse>> likeDiscussion(@PathVariable UUID discussionId) {
+        return ResponseEntity.ok(ApiResponse.success("Liked successfully", discussionService.likeDiscussion(discussionId)));
+    }
 }

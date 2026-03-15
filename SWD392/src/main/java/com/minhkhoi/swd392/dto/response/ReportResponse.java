@@ -40,7 +40,7 @@ public class ReportResponse {
                 .id(report.getReportId())
                 .targetType(tType)
                 .targetContent(targetCont)
-                .targetLink(report.getReportedCourse() != null ? "/course/" + report.getReportedCourse().getCourseId() : "")
+                .targetLink(report.getReportedCourse() != null ? "/student/course/" + report.getReportedCourse().getCourseId() : "")
                 .reason(report.getDescription())
                 .reporter(report.getReporter() != null ? report.getReporter().getFullName() : "System")
                 .reportedUser(report.getReportedUser() != null ? report.getReportedUser().getFullName() : "N/A")

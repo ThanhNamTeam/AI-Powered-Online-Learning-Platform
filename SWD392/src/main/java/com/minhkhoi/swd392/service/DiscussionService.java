@@ -75,4 +75,13 @@ public class DiscussionService {
         }
         discussionRepository.deleteById(discussionId);
     }
+
+    @Transactional
+    public DiscussionResponse likeDiscussion(UUID discussionId) {
+        Discussion discussion = discussionRepository.findById(discussionId)
+                .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
+        
+        discussion.setLikes(discussion.getLikes() + 1);
+        return DiscussionResponse.fromEntity(discussionRepository.save(discussion));
+    }
 }
