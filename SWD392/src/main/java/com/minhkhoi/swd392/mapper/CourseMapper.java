@@ -33,6 +33,7 @@ public interface CourseMapper {
     @Mapping(target = "completedLessons", ignore = true)
     @Mapping(target = "totalLessons", ignore = true)
     @Mapping(target = "lastAccessed", ignore = true)
+    @Mapping(target = "rating", ignore = true)
     CourseResponse toCourseResponse(Course course);
 
 }

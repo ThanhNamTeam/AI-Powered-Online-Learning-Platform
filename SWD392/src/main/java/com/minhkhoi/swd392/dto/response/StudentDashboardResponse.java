@@ -23,6 +23,7 @@ public class StudentDashboardResponse {
     @Builder
     public static class Stats {
         private String totalLearningTime;
+        private Integer totalCourses;
         private Integer completionRate;
         private Double averageScore;
     }

@@ -91,7 +91,8 @@ public enum ErrorCode {
     ALREADY_ENROLLED("Bạn đã đăng ký khóa học này rồi.", HttpStatus.BAD_REQUEST),
     PAYMENT_REQUIRED("Thanh toán chưa thành công", HttpStatus.PAYMENT_REQUIRED),
     FREE_NOT_ALLOW_ASSIGN("Gói miễn phí không cho phép đăng ký khóa học", HttpStatus.PAYMENT_REQUIRED),
-    SUBSCRIPTION_REQUIRED("Phải đăng ký gói mới được mở khóa khóa học.", HttpStatus.PAYMENT_REQUIRED);
+    SUBSCRIPTION_REQUIRED("Phải đăng ký gói mới được mở khóa khóa học.", HttpStatus.PAYMENT_REQUIRED),
+    COURSE_NOT_COMPLETED("Bạn phải hoàn thành tất cả các bài học trước khi xem chứng chỉ.", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus httpStatus;

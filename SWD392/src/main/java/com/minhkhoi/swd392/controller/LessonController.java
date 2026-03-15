@@ -196,7 +196,7 @@ public class LessonController {
     @PostMapping("/{lessonId}/complete")
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "Mark Lesson as Completed (Student)",
-            description = "Student marks a lesson as watched/completed. Creates or updates a Progress record.")
+            description = "Called when video ends. Creates/updates Progress and checks if course is fully completed.")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> completeLesson(
             @PathVariable UUID lessonId) {
 
@@ -219,24 +219,30 @@ public class LessonController {
                         .build());
 
         progress.setIsCompleted(true);
-        progress.setLastWatchedTime(0);
         progressRepository.save(progress);
 
-        long totalLessons = enrollment.getCourse().getModules().stream()
-                .flatMap(m -> m.getLessons().stream())
-                .count();
-        long completedLessons = progressRepository.countByEnrollmentAndIsCompleted(enrollment, true);
+        long totalLessons = progressRepository.countActiveLessonsByCourseId(courseId);
+        long completedLessons = progressRepository.countCompletedByEnrollment(enrollment);
         int progressPercent = totalLessons > 0 ? (int)(completedLessons * 100 / totalLessons) : 0;
 
-        log.info("Student {} completed lesson {} | Progress: {}/{} = {}%",
-                email, lessonId, completedLessons, totalLessons, progressPercent);
+        boolean courseFinished = false;
+        if (totalLessons > 0 && completedLessons >= totalLessons) {
+            enrollment.setStatus(com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED);
+            enrollment.setCompletedAt(java.time.LocalDateTime.now());
+            enrollmentRepository.save(enrollment);
+            courseFinished = true;
+        }
+
+        log.info("Student {} completed lesson {} | Active Lessons Progress: {}/{} ({}%) | Course Finished: {}",
+                email, lessonId, completedLessons, totalLessons, progressPercent, courseFinished);
 
         return ResponseEntity.ok(ApiResponse.success("Lesson marked as completed",
                 java.util.Map.of(
                         "lessonId", lessonId,
                         "completedLessons", completedLessons,
                         "totalLessons", totalLessons,
-                        "progressPercent", progressPercent
+                        "progressPercent", progressPercent,
+                        "courseFinished", courseFinished
                 )));
     }
 }
