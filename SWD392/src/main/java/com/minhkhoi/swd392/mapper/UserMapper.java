@@ -40,6 +40,7 @@ public interface UserMapper {
     @Mapping(target = "currentXp", ignore = true)
     @Mapping(target = "streak", ignore = true)
     @Mapping(target = "totalBadges", ignore = true)
+    @Mapping(target = "birthOfDate", ignore = true)
     User toUser(CreateUserRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
