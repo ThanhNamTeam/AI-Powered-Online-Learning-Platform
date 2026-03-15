@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "enrollments", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "course_id"}) // ✅ FIX: Ngăn user đăng ký trùng khóa học
+        @UniqueConstraint(columnNames = {"user_id", "course_id"})
 })
 @Getter
 @Setter
@@ -43,6 +43,9 @@ public class Enrollment {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private EnrollmentStatus status;
+
+    @Column(name = "enrollments_completed_at")
+    private LocalDateTime completedAt;
 
 
     @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

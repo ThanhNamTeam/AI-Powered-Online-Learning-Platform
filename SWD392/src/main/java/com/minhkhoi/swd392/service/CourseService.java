@@ -6,8 +6,11 @@ import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.request.VerifyCourseRequest;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
 import com.minhkhoi.swd392.dto.response.CourseStatsResponse;
+import com.minhkhoi.swd392.dto.response.LessonResponse;
+import com.minhkhoi.swd392.dto.response.ModuleResponse;
 import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.entity.Lesson;
+import com.minhkhoi.swd392.entity.Progress;
 import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
@@ -47,6 +50,7 @@ public class CourseService {
     private final LessonRepository lessonRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final ProgressRepository progressRepository;
+    private final com.minhkhoi.swd392.repository.ReviewRepository reviewRepository;
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
@@ -93,14 +97,14 @@ public class CourseService {
 
 
     @Transactional(readOnly = true)
-    public PageResponse<CourseResponse> getAllCoursesForStudent(int page, int size) {
+    public PageResponse<CourseResponse> getAllCoursesForStudent(int page, int size, String search, com.minhkhoi.swd392.constant.EnrollmentStatus status) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(page - 1, size, sort);
 
-        Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndEnrollments_Status(
-                email, com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE, pageable);
+        String finalSearch = (search != null) ? search.trim() : "";
+        Page<Course> courses = courseRepository.findByStudentEmailWithFilters(email, status, finalSearch, pageable);
 
         User user = userRepository.findByEmail(email).orElse(null);
 
@@ -112,7 +116,7 @@ public class CourseService {
                 enrollmentRepository
                         .findByUserAndCourse(user, course)
                         .ifPresent(enrollment -> {
-                            long totalLessons     = progressRepository.countTotalLessonsByCourseId(course.getCourseId());
+                            long totalLessons     = progressRepository.countActiveLessonsByCourseId(course.getCourseId());
                             long completedLessons = progressRepository.countCompletedByEnrollment(enrollment);
 
                             int progressPct = (totalLessons > 0)
@@ -225,6 +229,7 @@ public class CourseService {
         try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             if (email != null && !email.equals("anonymousUser")) {
+                User user = userRepository.findByEmail(email).orElse(null);
                 boolean isEnrolled = enrollmentRepository.existsByUser_EmailAndCourseAndStatusIn(
                         email, course,
                         List.of(
@@ -233,6 +238,24 @@ public class CourseService {
                         )
                 );
                 response.setEnrolled(isEnrolled);
+
+                if (isEnrolled && user != null) {
+                    enrollmentRepository.findByUserAndCourse(user, course).ifPresent(enrollment -> {
+                        if (response.getModules() != null) {
+                            for (ModuleResponse moduleResp : response.getModules()) {
+                                if (moduleResp.getLessons() != null) {
+                                    for (LessonResponse lessonResp : moduleResp.getLessons()) {
+                                        boolean completed = progressRepository.findByEnrollmentAndLesson_LessonId(
+                                                enrollment, lessonResp.getLessonId())
+                                                .map(p -> p.getIsCompleted() != null && p.getIsCompleted())
+                                                .orElse(false);
+                                        lessonResp.setIsCompleted(completed);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
             } else {
                 response.setEnrolled(false);
             }
@@ -240,6 +263,8 @@ public class CourseService {
             log.warn("Could not check enrollment status: {}", e.getMessage());
             response.setEnrolled(false);
         }
+
+        response.setRating(getAverageRating(courseId));
 
         return response;
     }
@@ -261,6 +286,30 @@ public class CourseService {
         if (request.getStatus() == CourseStatus.APPROVED) {
             course.setStatus(CourseStatus.APPROVED);
             course.setRejectionReason(null);
+            
+            // Clear isPending flags and handle pending deletions for modules and lessons
+            if (course.getModules() != null) {
+                java.util.Iterator<com.minhkhoi.swd392.entity.Module> modIt = course.getModules().iterator();
+                while (modIt.hasNext()) {
+                    com.minhkhoi.swd392.entity.Module m = modIt.next();
+                    if (Boolean.TRUE.equals(m.getIsPendingDeletion())) {
+                        modIt.remove();
+                        continue;
+                    }
+                    m.setIsPending(false);
+                    if (m.getLessons() != null) {
+                        java.util.Iterator<Lesson> lesIt = m.getLessons().iterator();
+                        while (lesIt.hasNext()) {
+                            Lesson l = lesIt.next();
+                            if (Boolean.TRUE.equals(l.getIsPendingDeletion())) {
+                                lesIt.remove();
+                                continue;
+                            }
+                            l.setIsPending(false);
+                        }
+                    }
+                }
+            }
         } else if (request.getStatus() == CourseStatus.REJECTED) {
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
                 throw new AppException(ErrorCode.MISSING_REJECTION_REASON);
@@ -506,5 +555,10 @@ public class CourseService {
         Course saved = courseRepository.save(course);
         log.info("Course {} deletion request {} by Staff: {}", courseId, action, staffEmail);
         return courseMapper.toCourseResponse(saved);
+    }
+
+    private double getAverageRating(UUID courseId) {
+        Double avg = reviewRepository.findAverageRatingByCourseId(courseId);
+        return avg != null ? Math.round(avg * 10.0) / 10.0 : 0.0;
     }
 }

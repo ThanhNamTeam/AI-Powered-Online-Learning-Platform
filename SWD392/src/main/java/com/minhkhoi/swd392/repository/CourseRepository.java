@@ -17,9 +17,19 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
 
     Page<Course> findByEnrollments_User_Email(String enrollmentsUserEmail, Pageable pageable);
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c FROM Course c JOIN c.enrollments e WHERE e.user.email = :email AND e.status = :status")
-    Page<com.minhkhoi.swd392.entity.Course> findByEnrollments_User_EmailAndEnrollments_Status(
+    Page<Course> findByEnrollments_User_EmailAndEnrollments_Status(
             @org.springframework.data.repository.query.Param("email") String email, 
             @org.springframework.data.repository.query.Param("status") com.minhkhoi.swd392.constant.EnrollmentStatus status, 
+            org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c FROM Course c JOIN c.enrollments e " +
+            "WHERE e.user.email = :email " +
+            "AND (:status IS NULL OR e.status = :status) " +
+            "AND (:search = '' OR LOWER(c.title) LIKE LOWER(CONCAT('%', CAST(:search AS text), '%')))")
+    Page<Course> findByStudentEmailWithFilters(
+            @org.springframework.data.repository.query.Param("email") String email,
+            @org.springframework.data.repository.query.Param("status") com.minhkhoi.swd392.constant.EnrollmentStatus status,
+            @org.springframework.data.repository.query.Param("search") String search,
             org.springframework.data.domain.Pageable pageable);
 
     Page<Course> findByStatus(CourseStatus status,

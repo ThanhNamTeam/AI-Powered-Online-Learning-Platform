@@ -22,16 +22,11 @@ public class ReviewService {
     public void submitReview(User user, ReviewRequest request) {
         Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, 
                 courseRepository.findById(request.getCourseId())
-                        .orElseThrow(() -> new RuntimeException("Course not found")))
-                .orElseThrow(() -> new RuntimeException("You are not enrolled in this course"));
+                        .orElseThrow(() -> new com.minhkhoi.swd392.exception.AppException(com.minhkhoi.swd392.exception.ErrorCode.COURSE_NOT_FOUND)))
+                .orElseThrow(() -> new com.minhkhoi.swd392.exception.AppException(com.minhkhoi.swd392.exception.ErrorCode.ENROLLMENT_NOT_FOUND));
 
-        long completedLessons = enrollment.getProgressList().stream().filter(Progress::getIsCompleted).count();
-        long totalLessons = enrollment.getCourse().getModules().stream()
-                .flatMap(m -> m.getLessons().stream())
-                .count();
-
-        if (totalLessons == 0 || (completedLessons * 100 / totalLessons) < 50) {
-            throw new RuntimeException("Bạn cần hoàn thành ít nhất 50% khóa học để thực hiện đánh giá.");
+        if (enrollment.getStatus() != com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED) {
+            throw new com.minhkhoi.swd392.exception.AppException(com.minhkhoi.swd392.exception.ErrorCode.COURSE_NOT_COMPLETED);
         }
 
         moderateComment(request.getComment());

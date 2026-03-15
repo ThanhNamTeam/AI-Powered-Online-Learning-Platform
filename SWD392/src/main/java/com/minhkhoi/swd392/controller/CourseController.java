@@ -72,9 +72,11 @@ public class CourseController {
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getAllCoursesForStudent(
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "status", required = false) com.minhkhoi.swd392.constant.EnrollmentStatus status
     ) {
-        return ResponseEntity.ok(ApiResponse.success("List courses for student", courseService.getAllCoursesForStudent(page, size)));
+        return ResponseEntity.ok(ApiResponse.success("List courses for student", courseService.getAllCoursesForStudent(page, size, search, status)));
     }
 
     @GetMapping("/all-course/public")

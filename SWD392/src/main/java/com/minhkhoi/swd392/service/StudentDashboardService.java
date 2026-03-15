@@ -20,7 +20,9 @@ public class StudentDashboardService {
     private final ProgressRepository progressRepository;
     private final CourseRepository courseRepository;
     private final QuizResultRepository quizResultRepository;
+    private final ReviewRepository reviewRepository;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public StudentDashboardResponse getDashboardData(User currentUser) {
         List<Enrollment> enrollments = enrollmentRepository.findByUser_UserId(currentUser.getUserId());
 
@@ -30,10 +32,8 @@ public class StudentDashboardService {
         int quizCount = 0;
 
         for (Enrollment e : enrollments) {
-            totalLessonsCompleted += (int) e.getProgressList().stream().filter(Progress::getIsCompleted).count();
-            totalLessons += e.getCourse().getModules().stream()
-                    .flatMap(m -> m.getLessons().stream())
-                    .count();
+            totalLessonsCompleted += (int) progressRepository.countCompletedByEnrollment(e);
+            totalLessons += (int) progressRepository.countActiveLessonsByCourseId(e.getCourse().getCourseId());
         }
 
         List<QuizResult> quizResults = quizResultRepository.findByUser_UserId(currentUser.getUserId());
@@ -44,16 +44,15 @@ public class StudentDashboardService {
 
         StudentDashboardResponse.Stats stats = StudentDashboardResponse.Stats.builder()
                 .totalLearningTime(calculateTotalLearningTime(currentUser))
+                .totalCourses(enrollments.size())
                 .completionRate(totalLessons > 0 ? (totalLessonsCompleted * 100 / totalLessons) : 0)
                 .averageScore(quizCount > 0 ? (totalScore / quizCount) : 0.0)
                 .build();
         StudentDashboardResponse.RecentCourse recentCourse = null;
         Enrollment mostRecentEnrollment = findMostRecentEnrollment(enrollments);
         if (mostRecentEnrollment != null) {
-            long completedInCourse = mostRecentEnrollment.getProgressList().stream().filter(Progress::getIsCompleted).count();
-            long totalInCourse = mostRecentEnrollment.getCourse().getModules().stream()
-                    .flatMap(m -> m.getLessons().stream())
-                    .count();
+            long completedInCourse = progressRepository.countCompletedByEnrollment(mostRecentEnrollment);
+            long totalInCourse = progressRepository.countActiveLessonsByCourseId(mostRecentEnrollment.getCourse().getCourseId());
             
             Progress lastProgress = mostRecentEnrollment.getProgressList().stream()
                     .sorted((p1, p2) -> {
@@ -69,7 +68,8 @@ public class StudentDashboardService {
                     .currentLesson(lastProgress != null ? lastProgress.getLesson().getTitle() : "Chưa bắt đầu")
                     .progressPercentage(totalInCourse > 0 ? (int)(completedInCourse * 100 / totalInCourse) : 0)
                     .remainingMinutes(calculateRemainingMinutes(mostRecentEnrollment))
-                    .level(mostRecentEnrollment.getCourse().getJlptLevel().toString())
+                    .level(mostRecentEnrollment.getCourse().getJlptLevel() != null ? 
+                            mostRecentEnrollment.getCourse().getJlptLevel().toString() : "N/A")
                     .build();
         }
 
@@ -80,7 +80,7 @@ public class StudentDashboardService {
                         .title(c.getTitle())
                         .description(c.getDescription())
                         .thumbnailUrl(c.getThumbnailUrl())
-                        .rating(4.8) // Mock rating until Review system is fully integrated
+                        .rating(getAverageRating(c.getCourseId()))
                         .constructorName(c.getConstructor().getFullName())
                         .price(c.getPrice() != null ? c.getPrice().longValue() : 0L)
                         .status(c.getStatus().toString())
@@ -88,7 +88,7 @@ public class StudentDashboardService {
                 .collect(Collectors.toList());
 
         return StudentDashboardResponse.builder()
-                .studentName(currentUser.getFullName())
+                .studentName(currentUser.getFullName() != null ? currentUser.getFullName() : "Học viên")
                 .learningStreak(currentUser.getStreak() != null ? currentUser.getStreak() : 0)
                 .stats(stats)
                 .recentCourse(recentCourse)
@@ -96,11 +96,24 @@ public class StudentDashboardService {
                 .build();
     }
 
+    private double getAverageRating(java.util.UUID courseId) {
+        Double avg = reviewRepository.findAverageRatingByCourseId(courseId);
+        return avg != null ? Math.round(avg * 10.0) / 10.0 : 0.0;
+    }
+
     private String calculateTotalLearningTime(User user) {
         Long totalStudyTimeSecondsValue = progressRepository.sumStudyTimeByUserEmail(user.getEmail());
         long totalStudyTimeSeconds = totalStudyTimeSecondsValue != null ? totalStudyTimeSecondsValue : 0;
-        double hours = Math.round((totalStudyTimeSeconds / 3600.0) * 10.0) / 10.0;
-        return hours + "h";
+        
+        if (totalStudyTimeSeconds == 0) return "0h";
+        
+        double hours = totalStudyTimeSeconds / 3600.0;
+        if (hours < 0.1) {
+            return "< 0.1h";
+        }
+        
+        double roundedHours = Math.round(hours * 10.0) / 10.0;
+        return (roundedHours == (int)roundedHours ? (int)roundedHours : roundedHours) + "h";
     }
 
     private int calculateRemainingMinutes(Enrollment enrollment) {

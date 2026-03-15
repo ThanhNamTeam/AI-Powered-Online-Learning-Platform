@@ -42,6 +42,7 @@ public class CourseResponse {
     private Integer completedLessons;
     private Integer totalLessons;
     private LocalDateTime lastAccessed;
+    private Double rating;
 
     public static CourseResponse fromEntity(Course course) {
         return CourseResponse.builder()
