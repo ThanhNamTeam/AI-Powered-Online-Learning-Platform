@@ -14,9 +14,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class CreatePaymentRequest {
-    private String subscriptionPlan; // BASIC, PREMIUM, ENTERPRISE (Optional if buying course)
+    private String subscriptionPlan;
 
-    private java.util.UUID courseId; // Optional if buying subscription
+    private java.util.UUID courseId;
 
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")

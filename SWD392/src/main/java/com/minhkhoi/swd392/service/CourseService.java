@@ -8,7 +8,6 @@ import com.minhkhoi.swd392.dto.response.CourseResponse;
 import com.minhkhoi.swd392.dto.response.CourseStatsResponse;
 import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.entity.Lesson;
-import com.minhkhoi.swd392.entity.Module;
 import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.exception.AppException;
 import com.minhkhoi.swd392.exception.ErrorCode;
@@ -32,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,17 +50,14 @@ public class CourseService {
 
     @Transactional
     public CourseResponse createCourse(CreateCourseRequest request) {
-        // Get current user from Security Context
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
 
-        // Check if user has INSTRUCTOR role
         if (user.getRole() != User.Role.INSTRUCTOR) {
             throw new AppException(ErrorCode.ACCESS_DENIED);
         }
 
-        // Upload thumbnail to Cloudinary
         String thumbnailUrl;
         if (request.getThumbnailFile() != null && !request.getThumbnailFile().isEmpty()) {
             Map<String, Object> uploadResult = cloudinaryService.uploadFile(request.getThumbnailFile(), "image");
@@ -71,19 +66,15 @@ public class CourseService {
             throw new AppException(ErrorCode.INVALID_FILE);
         }
 
-        // Map request to entity
         Course course = courseMapper.toCourse(request, user);
         course.setThumbnailUrl(thumbnailUrl);
         course.setCreatedAt(LocalDateTime.now());
 
-        // Set status based on request
-        // Always set DRAFT initially
         if (request.getStatus() != null && request.getStatus() != CourseStatus.DRAFT) {
             throw new AppException(ErrorCode.INVALID_CREATE_STATUS);
         }
         course.setStatus(CourseStatus.DRAFT);
 
-        // Save to database
         Course savedCourse = courseRepository.save(course);
 
         log.info("Course created successfully: {} by Instructor: {}", savedCourse.getTitle(), user.getEmail());
@@ -91,9 +82,6 @@ public class CourseService {
         return courseMapper.toCourseResponse(savedCourse);
     }
 
-    /**
-     * Get all courses (Optionally filtered by instructorId)
-     */
     public List<CourseResponse> getAllCourses() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         List<Course> courses = courseRepository.findByConstructor_Email((email));
@@ -114,19 +102,16 @@ public class CourseService {
         Page<Course> courses = courseRepository.findByEnrollments_User_EmailAndEnrollments_Status(
                 email, com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE, pageable);
 
-        // Lấy user để tìm enrollment
         User user = userRepository.findByEmail(email).orElse(null);
 
         List<CourseResponse> result = courses.stream().map(course -> {
             CourseResponse resp = courseMapper.toCourseResponse(course);
-            resp.setEnrolled(true); // Nếu đã vào tới đây thì chắc chắn là đã enrolled ACTIVE
+            resp.setEnrolled(true);
 
-            // Tính tiến độ từ Enrollment.progressList
             if (user != null) {
                 enrollmentRepository
                         .findByUserAndCourse(user, course)
                         .ifPresent(enrollment -> {
-                            // Dùng JPQL query — không lazy-load collections
                             long totalLessons     = progressRepository.countTotalLessonsByCourseId(course.getCourseId());
                             long completedLessons = progressRepository.countCompletedByEnrollment(enrollment);
 
@@ -138,14 +123,13 @@ public class CourseService {
                             resp.setCompletedLessons((int) completedLessons);
                             resp.setProgressPercentage(progressPct);
 
-                            java.time.LocalDateTime maxUpdatedAt = progressRepository.findMaxUpdatedAtByEnrollment(enrollment).orElse(enrollment.getEnrolledAt());
+                            LocalDateTime maxUpdatedAt = progressRepository.findMaxUpdatedAtByEnrollment(enrollment).orElse(enrollment.getEnrolledAt());
                             resp.setLastAccessed(maxUpdatedAt);
                         });
             }
             return resp;
         }).collect(Collectors.toList());
 
-        // Sort by lastAccessed descending, nulls last (if any)
         result.sort((c1, c2) -> {
             if (c1.getLastAccessed() == null && c2.getLastAccessed() == null) return 0;
             if (c1.getLastAccessed() == null) return 1;
@@ -166,14 +150,11 @@ public class CourseService {
     public PageResponse<CourseResponse> getAllCoursesPublic(int page, int size, String search, String sortBy) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         String email = (auth != null) ? auth.getName() : "anonymousUser";
+        User userLogged = userRepository.findByEmail(email).orElse(null);
 
         Page<Course> courses;
         boolean hasSearch = search != null && !search.trim().isEmpty();
         String finalSearch = hasSearch ? search : null;
-
-        // Staff/Admin sees moderation view
-        User userLogged = (email != null && !email.equals("anonymousUser"))
-                ? userRepository.findByEmail(email).orElse(null) : null;
 
         if (userLogged != null && (userLogged.getRole() == User.Role.STAFF || userLogged.getRole() == User.Role.ADMIN)) {
             Pageable pageable = PageRequest.of(page - 1, size, Sort.unsorted());
@@ -183,7 +164,6 @@ public class CourseService {
                 courses = courseRepository.findForStaff(pageable);
             }
         } else {
-            // Student/Public Sorting
             if ("newest".equalsIgnoreCase(sortBy)) {
                 Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
                 courses = courseRepository.findByStatusAndTitleContainingIgnoreCase(CourseStatus.APPROVED, search != null ? search : "", pageable);
@@ -194,17 +174,15 @@ public class CourseService {
                 Pageable pageable = PageRequest.of(page - 1, size);
                 courses = courseRepository.findTopRatedCourses(finalSearch, pageable);
             } else if ("recommended".equalsIgnoreCase(sortBy) || sortBy == null) {
-                // Personalized recommendation for student
                 if (userLogged != null && userLogged.getEstimatedJlptLevel() != null) {
                     Pageable pageable = PageRequest.of(page - 1, size);
                     courses = courseRepository.findByStatusAndJlptLevelAndTitleContainingIgnoreCase(
                             CourseStatus.APPROVED, userLogged.getEstimatedJlptLevel(), search != null ? search : "", pageable);
                 } else {
-                    // Fallback to trending
                     Pageable pageable = PageRequest.of(page - 1, size);
                     courses = courseRepository.findTopTrendingCourses(finalSearch, pageable);
                 }
-            } else { // default to trending
+            } else {
                 Pageable pageable = PageRequest.of(page - 1, size);
                 courses = courseRepository.findTopTrendingCourses(finalSearch, pageable);
             }
@@ -244,13 +222,12 @@ public class CourseService {
 
         CourseResponse response = courseMapper.toCourseResponse(course);
 
-        // Kiểm tra xem user hiện tại có enrollment ACTIVE/COMPLETED không
         try {
             String email = SecurityContextHolder.getContext().getAuthentication().getName();
             if (email != null && !email.equals("anonymousUser")) {
                 boolean isEnrolled = enrollmentRepository.existsByUser_EmailAndCourseAndStatusIn(
                         email, course,
-                        java.util.List.of(
+                        List.of(
                                 com.minhkhoi.swd392.constant.EnrollmentStatus.ACTIVE,
                                 com.minhkhoi.swd392.constant.EnrollmentStatus.COMPLETED
                         )
@@ -268,30 +245,23 @@ public class CourseService {
     }
 
 
-    /**
-     * Verify course (Approve/Reject) (For STAFF)
-     */
     @Transactional
     public CourseResponse verifyCourse(UUID courseId, VerifyCourseRequest request) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-        // Get current staff user from Security Context
         String staffEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User staffUser = userRepository.findByEmail(staffEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, staffEmail));
 
-        // Validate current status logic for Staff
         if (course.getStatus() != CourseStatus.PENDING_APPROVAL) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS_FOR_APPROVAL);
         }
 
-        // Validate status request
         if (request.getStatus() == CourseStatus.APPROVED) {
             course.setStatus(CourseStatus.APPROVED);
-            course.setRejectionReason(null); // Clear rejection reason if approved
+            course.setRejectionReason(null);
         } else if (request.getStatus() == CourseStatus.REJECTED) {
-            // Require reason when rejecting
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
                 throw new AppException(ErrorCode.MISSING_REJECTION_REASON);
             }
@@ -301,7 +271,6 @@ public class CourseService {
             throw new AppException(ErrorCode.INVALID_VERIFY_STATUS);
         }
 
-        // Set staff who handled this course
         course.setHandledByStaff(staffUser);
 
         Course savedCourse = courseRepository.save(course);
@@ -311,47 +280,33 @@ public class CourseService {
         return courseMapper.toCourseResponse(savedCourse);
     }
 
-    /**
-     * Request approval for course (Instructor)
-     */
     @Transactional
     public CourseResponse requestApproval(UUID courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-        // Check if user is the instructor of this course
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         if (!course.getConstructor().getEmail().equals(email)) {
             throw new AppException(ErrorCode.ACCESS_DENIED);
         }
 
-        // Check current status
         if (course.getStatus() != CourseStatus.DRAFT && course.getStatus() != CourseStatus.REJECTED) {
-            // Can only request approval if Draft (or Rejected? requirement says MUST be DRAFT)
-            // If rejected, user should probably edit and set back to draft or allow re-request logic.
-            // Requirement: "Check trạng thái hiện tại: Phải là DRAFT mới được gửi."
-            throw new AppException(ErrorCode.INVALID_VERIFY_STATUS); // Or generic "Invalid status for request"
+            throw new AppException(ErrorCode.INVALID_VERIFY_STATUS);
         }
 
-        // Check module count
         long moduleCount = moduleRepository.countByCourse_CourseId(courseId);
         if (moduleCount < 1) {
             throw new AppException(ErrorCode.MIN_MODULES_REQUIRED);
         }
 
         course.setStatus(CourseStatus.PENDING_APPROVAL);
-        course.setRejectionReason(null); // Clear old rejection reason if any
+        course.setRejectionReason(null);
         Course savedCourse = courseRepository.save(course);
 
         log.info("Course {} requested approval by Instructor: {}", course.getCourseId(), email);
         return courseMapper.toCourseResponse(savedCourse);
     }
 
-    /**
-     * Instructor submits a request to update an APPROVED course.
-     * The course switches to PENDING_UPDATE while the existing content remains live.
-     * Staff must approve/reject changes before they become visible.
-     */
     @Transactional
     public CourseResponse submitUpdateRequest(UUID courseId, String updateNote) {
         Course course = courseRepository.findById(courseId)
@@ -362,7 +317,6 @@ public class CourseService {
             throw new AppException(ErrorCode.ACCESS_DENIED);
         }
 
-        // Must be in EDITING mode to submit update
         if (course.getStatus() != CourseStatus.EDITING) {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS_FOR_UPDATE);
         }
@@ -375,9 +329,6 @@ public class CourseService {
         return courseMapper.toCourseResponse(saved);
     }
 
-    /**
-     * Instructor requests to unlock an APPROVED course for editing.
-     */
     @Transactional
     public CourseResponse requestUnlock(UUID courseId, String reason) {
         Course course = courseRepository.findById(courseId)
@@ -387,17 +338,12 @@ public class CourseService {
             throw new AppException(ErrorCode.INVALID_COURSE_STATUS_FOR_UPDATE);
         }
 
-        course.setStatus(CourseStatus.PENDING_UPDATE); // Re-using pending update for simplicity in Staff flow
+        course.setStatus(CourseStatus.PENDING_UPDATE); 
         course.setPendingUpdateNote("REQUEST_UNLOCK: " + reason);
 
         return courseMapper.toCourseResponse(courseRepository.save(course));
     }
 
-    /**
-     * Staff reviews a PENDING_UPDATE course.
-     *  - APPROVED: new content becomes visible (status back to APPROVED).
-     *  - REJECTED: new content is rolled back and the course reverts to APPROVED with old content.
-     */
     @Transactional
     public CourseResponse reviewUpdateRequest(UUID courseId, String action, String reason) {
         Course course = courseRepository.findById(courseId)
@@ -412,7 +358,6 @@ public class CourseService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, staffEmail));
 
         if ("APPROVED".equalsIgnoreCase(action)) {
-            // ✅ COMMIT PENDING CHANGES
             processPendingChanges(course, true);
 
             course.setStatus(CourseStatus.APPROVED);
@@ -422,14 +367,12 @@ public class CourseService {
             if (reason == null || reason.trim().isEmpty()) {
                 throw new AppException(ErrorCode.MISSING_REJECTION_REASON);
             }
-            // ✅ ROLLBACK PENDING CHANGES
             processPendingChanges(course, false);
 
             course.setStatus(CourseStatus.APPROVED);
             course.setRejectionReason(reason);
             course.setPendingUpdateNote(null);
         } else if ("UNLOCK".equalsIgnoreCase(action)) {
-            // Staff approves the edit request
             course.setStatus(CourseStatus.EDITING);
             course.setPendingUpdateNote(null);
         } else {
@@ -442,21 +385,15 @@ public class CourseService {
         return courseMapper.toCourseResponse(saved);
     }
 
-    /**
-     * Process all pending changes (adds/deletions) for modules and lessons.
-     * @param commit true to apply changes, false to rollback
-     */
+
     private void processPendingChanges(Course course, boolean commit) {
-        // Explicitly use our entity Module to avoid conflict with java.lang.Module
         List<com.minhkhoi.swd392.entity.Module> modules = moduleRepository.findByCourse_CourseIdOrderByOrderIndexAsc(course.getCourseId());
 
         for (com.minhkhoi.swd392.entity.Module module : modules) {
-            // Process Lessons first
             List<Lesson> lessons = lessonRepository.findByModule_ModuleId(module.getModuleId());
             for (Lesson lesson : lessons) {
                 if (commit) {
                     if (Boolean.TRUE.equals(lesson.getIsPendingDeletion())) {
-                        // Delete permanently
                         deleteCloudinaryResources(lesson);
                         lessonRepository.delete(lesson);
                     } else {
@@ -465,7 +402,6 @@ public class CourseService {
                     }
                 } else {
                     if (Boolean.TRUE.equals(lesson.getIsPending())) {
-                        // Rollback: delete new adds
                         deleteCloudinaryResources(lesson);
                         lessonRepository.delete(lesson);
                     } else {
@@ -474,8 +410,6 @@ public class CourseService {
                     }
                 }
             }
-
-            // Process Module
             if (commit) {
                 if (Boolean.TRUE.equals(module.getIsPendingDeletion())) {
                     moduleRepository.delete(module);
@@ -518,10 +452,6 @@ public class CourseService {
         }
     }
 
-    /**
-     * Instructor requests deletion of an APPROVED course.
-     * The course moves to PENDING_DELETION — still fully accessible for enrolled students.
-     */
     @Transactional
     public CourseResponse requestDeletion(UUID courseId, String deletionNote) {
         Course course = courseRepository.findById(courseId)
@@ -544,12 +474,6 @@ public class CourseService {
         return courseMapper.toCourseResponse(saved);
     }
 
-    /**
-     * Staff reviews a PENDING_DELETION request.
-     *  - APPROVED: course is ARCHIVED — hidden from new enrollments,
-     *    but still visible/accessible to already-enrolled students.
-     *  - REJECTED: course reverts to APPROVED (stays public).
-     */
     @Transactional
     public CourseResponse reviewDeletionRequest(UUID courseId, String action, String reason) {
         Course course = courseRepository.findById(courseId)
@@ -564,7 +488,6 @@ public class CourseService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, staffEmail));
 
         if ("APPROVED".equalsIgnoreCase(action)) {
-            // Archive: hide from new enrollments but keep for existing students
             course.setStatus(CourseStatus.ARCHIVED);
             course.setDeletionRequestNote(null);
             course.setRejectionReason(null);
@@ -572,7 +495,6 @@ public class CourseService {
             if (reason == null || reason.trim().isEmpty()) {
                 throw new AppException(ErrorCode.MISSING_REJECTION_REASON);
             }
-            // Keep course live, store rejection note
             course.setStatus(CourseStatus.APPROVED);
             course.setRejectionReason(reason);
             course.setDeletionRequestNote(null);

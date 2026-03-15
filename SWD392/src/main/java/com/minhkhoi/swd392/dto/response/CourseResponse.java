@@ -37,10 +37,8 @@ public class CourseResponse {
     private String deletionRequestNote;
 
     private List<ModuleResponse> modules;
-    private Boolean enrolled; // true nếu user hiện tại đã mua/đăng ký khóa học này
-
-    // ── Progress fields (chỉ trả về khi gọi qua /all-course/students) ──────
-    private Integer progressPercentage; // 0-100
+    private Boolean enrolled;
+    private Integer progressPercentage;
     private Integer completedLessons;
     private Integer totalLessons;
     private LocalDateTime lastAccessed;

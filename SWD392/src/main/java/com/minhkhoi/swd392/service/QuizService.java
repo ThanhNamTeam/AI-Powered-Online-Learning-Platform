@@ -65,7 +65,7 @@ public class QuizService {
                     .build());
         }
 
-        double score = (double) correctAnswersCount / questions.size() * 10.0; // Thường thì tính thang điểm 10
+        double score = (double) correctAnswersCount / questions.size() * 10.0;
 
         QuizResult quizResult = QuizResult.builder()
                 .user(user)

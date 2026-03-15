@@ -24,11 +24,7 @@ public class SubscriptionController {
     private final AISubscriptionRepository aiSubscriptionRepository;
     private final UserRepository           userRepository;
 
-    /**
-     * GET /api/subscription
-     * Trả về subscription hiện tại của user đang đăng nhập.
-     * Nếu không có → trả về null data (success = true, data = null).
-     */
+
     @GetMapping
     @Operation(
             summary  = "Get current user's active AI subscription",
@@ -53,32 +49,31 @@ public class SubscriptionController {
                 .subscriptionId(sub.getSubscriptionId().toString())
                 .plan(sub.getPlan().name())
                 .status(sub.getStatus().name())
-                .active(sub.getStatus().name()) // satisfying frontend
+                .active(sub.getStatus().name())
                 .aiCredits(sub.getAiCredits())
                 .aiCreditsUsed(sub.getAiCreditsUsed())
                 .remainingCredits(sub.getRemainingCredits())
                 .startDate(sub.getStartDate() != null ? sub.getStartDate().toString() : null)
                 .endDate(sub.getEndDate() != null ? sub.getEndDate().toString() : null)
-                .expirationDate(sub.getEndDate() != null ? sub.getEndDate().toString() : null) // satisfying frontend
+                .expirationDate(sub.getEndDate() != null ? sub.getEndDate().toString() : null)
                 .autoRenew(sub.getAutoRenew())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success("Subscription retrieved", info));
     }
 
-    // ── Inner DTO ─────────────────────────────────────────────────────────────
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class SubscriptionInfo {
         private String  subscriptionId;
         private String  plan;
         private String  status;
-        private String  active;         // For frontend compatibility
+        private String  active;
         private Integer aiCredits;
         private Integer aiCreditsUsed;
         private Integer remainingCredits;
         private String  startDate;
         private String  endDate;
-        private String  expirationDate; // For frontend compatibility
+        private String  expirationDate;
         private Boolean autoRenew;
     }
 }

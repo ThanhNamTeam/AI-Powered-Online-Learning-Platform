@@ -39,21 +39,17 @@ public class LessonService {
 
     @Transactional
     public LessonResponse createLesson(CreateLessonRequest request) {
-        log.info("Creating new lesson: {}", request.getTitle());
-
         Module module = moduleRepository.findById(request.getModuleId())
                 .orElseThrow(() -> new AppException(ErrorCode.MODULE_NOT_FOUND));
 
         validateCourseMutable(module);
 
         Lesson lesson = lessonMapper.toLesson(request, module);
-        
-        // Mark as pending if course is in EDITING mode
+
         if (module.getCourse().getStatus() == CourseStatus.EDITING) {
             lesson.setIsPending(true);
         }
 
-        // 1. Upload Video to Cloudinary (Mandatory)
         if (request.getVideoFile() == null || request.getVideoFile().isEmpty()) {
             throw new AppException(ErrorCode.VIDEO_REQUIRED);
         }
@@ -62,7 +58,6 @@ public class LessonService {
         lesson.setVideoUrl((String) uploadResult.get("secure_url"));
         lesson.setDuration(mapDuration(uploadResult));
 
-        // 2. Upload Document (Optional)
         if (request.getDocumentFile() != null && !request.getDocumentFile().isEmpty()) {
             String contentType = request.getDocumentFile().getContentType();
             if (contentType == null || !contentType.equals("application/pdf")) {
@@ -72,14 +67,12 @@ public class LessonService {
             Map<String, Object> docResult = cloudinaryService.uploadFile(request.getDocumentFile(), "raw");
             lesson.setDocumentUrl((String) docResult.get("secure_url"));
             
-            // Try to extract content if it's a text file
             String content = extractTextContent(request.getDocumentFile());
             lesson.setDocumentContent(content);
         }
 
         lesson = lessonRepository.save(lesson);
 
-        // 3. Trigger Async Transcription for video AFTER transaction commits
         if (lesson.getVideoUrl() != null) {
             final UUID lessonId = lesson.getLessonId();
             if (TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -100,7 +93,6 @@ public class LessonService {
     }
 
     public List<LessonResponse> getLessonsByModule(UUID moduleId) {
-        log.info("Getting lessons for module: {}", moduleId);
         return lessonRepository.findByModule_ModuleId(moduleId).stream()
                 .map(lessonMapper::toLessonResponse)
                 .collect(Collectors.toList());
@@ -108,30 +100,23 @@ public class LessonService {
 
     @Transactional
     public void deleteLesson(UUID lessonId) {
-        log.info("Deleting lesson: {}", lessonId);
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         validateCourseMutable(lesson.getModule());
 
         if (lesson.getModule().getCourse().getStatus() == CourseStatus.EDITING) {
-            // Mark for deletion instead of removing
             lesson.setIsPendingDeletion(true);
             lessonRepository.save(lesson);
-            log.info("Lesson {} marked for deletion (pending approval)", lessonId);
         } else {
-            // Delete from Cloudinary
             deleteCloudinaryResources(lesson);
-            // Delete from DB permanently
             lessonRepository.delete(lesson);
-            log.info("Lesson {} deleted permanently", lessonId);
         }
     }
 
     @Transactional
     public LessonResponse updateLesson(UUID lessonId, String title, Integer orderIndex, 
                                      MultipartFile videoFile, MultipartFile documentFile) {
-        log.info("Updating lesson: {}", lessonId);
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
@@ -147,15 +132,12 @@ public class LessonService {
 
         boolean videoUpdated = false;
 
-        // Update video if provided
         if (videoFile != null && !videoFile.isEmpty()) {
-            // Delete old video from Cloudinary
             if (lesson.getVideoUrl() != null) {
                 String publicId = extractPublicIdFromUrl(lesson.getVideoUrl());
                 if (publicId != null) cloudinaryService.deleteFile(publicId, "video");
             }
             
-            // Upload new video
             Map<String, Object> uploadResult = cloudinaryService.uploadVideo(videoFile);
             lesson.setVideoUrl((String) uploadResult.get("secure_url"));
             lesson.setDuration(mapDuration(uploadResult));
@@ -164,9 +146,7 @@ public class LessonService {
             videoUpdated = true;
         }
 
-        // Update document if provided
         if (documentFile != null && !documentFile.isEmpty()) {
-            // Delete old document
             if (lesson.getDocumentUrl() != null) {
                 String publicId = extractPublicIdFromUrl(lesson.getDocumentUrl());
                 if (publicId != null) cloudinaryService.deleteFile(publicId, "raw");
@@ -178,7 +158,7 @@ public class LessonService {
 
         lesson = lessonRepository.save(lesson);
 
-        // If video updated, trigger transcription and other AI processes
+
         if (videoUpdated) {
             final UUID finalLessonId = lesson.getLessonId();
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -194,7 +174,6 @@ public class LessonService {
 
     @Transactional
     public void deleteVideoFromLesson(UUID lessonId) {
-        log.info("Deleting video from lesson: {}", lessonId);
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
@@ -206,10 +185,9 @@ public class LessonService {
                 cloudinaryService.deleteFile(publicId, "video");
             }
             
-            // Clear video info and TRANSCRIPT in DB
             lesson.setVideoUrl(null);
             lesson.setDuration(null);
-            lesson.setTranscript(null); // Xóa transcript trong database như yêu cầu
+            lesson.setTranscript(null);
             
             lessonRepository.save(lesson);
         }
@@ -240,9 +218,9 @@ public class LessonService {
     private String extractPublicIdFromUrl(String url) {
         if (url == null || !url.contains("/upload/")) return null;
         try {
-            // URL format: .../upload/v12345/folder/public_id.ext
+
             String postUpload = url.split("/upload/")[1];
-            // parts[0] is version (v12345), we skin it and take everything else except extension
+
             int firstSlash = postUpload.indexOf("/");
             String pathWithExtension = postUpload.substring(firstSlash + 1);
             int lastDot = pathWithExtension.lastIndexOf(".");

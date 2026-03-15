@@ -15,11 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controller xử lý bài kiểm tra trình độ tiếng Nhật.
- * TẤT CẢ endpoint là PUBLIC - không yêu cầu JWT Token.
- * Cho phép khách (guest) dùng tính năng mà không cần đăng nhập.
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/placement-test")
@@ -29,10 +24,6 @@ public class PlacementTestController {
 
     private final PlacementTestService placementTestService;
 
-    /**
-     * GET /api/placement-test/questions?count=25
-     * Lấy bộ câu hỏi ngẫu nhiên để bắt đầu bài kiểm tra.
-     */
     @GetMapping("/questions")
     @Operation(
             summary = "Lấy câu hỏi kiểm tra trình độ",
@@ -47,10 +38,6 @@ public class PlacementTestController {
         return ResponseEntity.ok(questions);
     }
 
-    /**
-     * POST /api/placement-test/submit
-     * Nộp bài và nhận kết quả phân tích từ AI + gợi ý khóa học.
-     */
     @PostMapping("/submit")
     @Operation(
             summary = "Nộp bài kiểm tra và nhận kết quả AI",

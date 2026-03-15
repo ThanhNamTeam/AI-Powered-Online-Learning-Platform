@@ -19,9 +19,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Handle AppException - custom application exceptions with ErrorCode
-     */
+
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Void>> handleAppException(AppException ex, HttpServletRequest request) {
         ErrorCode errorCode = ex.getErrorCode();
@@ -35,9 +33,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle validation errors from @Valid annotation
-     */
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -59,9 +55,7 @@ public class GlobalExceptionHandler {
     }
 
 
-    /**
-     * Handle Spring Security BadCredentialsException (401 Unauthorized)
-     */
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(
             BadCredentialsException ex, HttpServletRequest request) {
@@ -75,9 +69,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle Spring Security AccessDeniedException (403 Forbidden)
-     */
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(
             AccessDeniedException ex, HttpServletRequest request) {
@@ -91,9 +83,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle NullPointerException (500 Internal Server Error)
-     */
+
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ApiResponse<Void>> handleNullPointerException(
             NullPointerException ex, HttpServletRequest request) {
@@ -107,9 +97,6 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle IllegalArgumentException (400 Bad Request)
-     */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(
             IllegalArgumentException ex, HttpServletRequest request) {
@@ -123,9 +110,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle IllegalStateException (500 Internal Server Error)
-     */
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalStateException(
             IllegalStateException ex, HttpServletRequest request) {
@@ -139,9 +124,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle Media Type Not Supported (415)
-     */
+
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMediaTypeNotSupportedException(
             HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
@@ -155,9 +138,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle Missing Request Parameter (400)
-     */
+
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameterException(
             MissingServletRequestParameterException ex, HttpServletRequest request) {
@@ -171,10 +152,7 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    /**
-     * Handle all other uncaught exceptions (500 Internal Server Error)
-     * This should be the last exception handler as it catches all remaining exceptions
-     */
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGlobalException(
             Exception ex, HttpServletRequest request) {

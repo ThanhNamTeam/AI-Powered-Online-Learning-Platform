@@ -56,7 +56,7 @@ public class DiscussionService {
     @Transactional
     public DiscussionResponse replyDiscussion(UUID discussionId, String replyText) {
         Discussion discussion = discussionRepository.findById(discussionId)
-                .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND)); // Or create DISCUSSION_NOT_FOUND
+                .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
 
         discussion.setAdminReply(replyText);
         if (discussion.getType() == Discussion.DiscussionType.QUESTION) {

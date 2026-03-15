@@ -2,11 +2,7 @@ package com.minhkhoi.swd392.mapper;
 
 import com.minhkhoi.swd392.dto.request.CreateCourseRequest;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
-import com.minhkhoi.swd392.dto.response.LessonResponse;
-import com.minhkhoi.swd392.dto.response.ModuleResponse;
 import com.minhkhoi.swd392.entity.Course;
-import com.minhkhoi.swd392.entity.Lesson;
-import com.minhkhoi.swd392.entity.Module;
 import com.minhkhoi.swd392.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

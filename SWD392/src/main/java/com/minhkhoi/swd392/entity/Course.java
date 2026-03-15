@@ -22,7 +22,6 @@ public class Course {
     @Column(name = "course_id")
     private UUID courseId;
 
-    // FK trỏ về User (người tạo khóa học)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_constructor_id", nullable = false)
     private User constructor;
@@ -50,18 +49,12 @@ public class Course {
     @Column(name = "course_rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
 
-    /** Ghi chú của Instructor khi yêu cầu cập nhật nội dung khóa học đã APPROVED */
     @Column(name = "course_pending_update_note", columnDefinition = "TEXT")
     private String pendingUpdateNote;
 
-    /** Ghi chú của Instructor khi yêu cầu xóa khóa học */
     @Column(name = "course_deletion_request_note", columnDefinition = "TEXT")
     private String deletionRequestNote;
 
-    /**
-     * Cấp độ JLPT của khóa học (N5, N4, N3, N2, N1).
-     * Dùng để gợi ý khóa học phù hợp từ kết quả Placement Test.
-     */
     @Enumerated(EnumType.STRING)
     @Column(name = "course_jlpt_level")
     private JlptLevel jlptLevel;

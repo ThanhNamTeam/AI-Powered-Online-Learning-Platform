@@ -4,7 +4,6 @@ import com.minhkhoi.swd392.constant.QuizStatus;
 import com.minhkhoi.swd392.dto.request.CreateLessonRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.dto.response.LessonResponse;
-import com.minhkhoi.swd392.dto.response.QuestionResponse;
 import com.minhkhoi.swd392.dto.response.QuizResponse;
 import com.minhkhoi.swd392.entity.Enrollment;
 import com.minhkhoi.swd392.entity.Lesson;
@@ -112,7 +111,6 @@ public class LessonController {
             throw new AppException(ErrorCode.QUIZ_GENERATION_IN_PROGRESS);
         }
 
-        // Kiểm tra Premium ĐỒNG BỘ trước khi chạy Async
         lessonAsyncService.validatePremiumInstructor(lesson);
 
         lessonAsyncService.generateQuizByInstructor(lessonId);
@@ -127,7 +125,6 @@ public class LessonController {
 
         QuizResponse response = quizMapper.toQuizResponse(quiz);
 
-        // Hide answers for students so they can't cheat
         String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email).orElse(null);
         if (currentUser != null && currentUser.getRole() == User.Role.STUDENT) {
@@ -140,7 +137,6 @@ public class LessonController {
     @GetMapping("/{lessonId}/quizzes")
     @Operation(summary = "Get All Quizzes", description = "Retrieve all quizzes for a specific lesson (ordered by created date)")
     public ResponseEntity<ApiResponse<List<QuizResponse>>> getAllLessonQuizzes(@PathVariable UUID lessonId) {
-        // Verify lesson exists
         lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
@@ -150,7 +146,6 @@ public class LessonController {
                 .map(quizMapper::toQuizResponse)
                 .collect(Collectors.toList());
 
-        // Hide answers for students
         String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(email).orElse(null);
         if (currentUser != null && currentUser.getRole() == User.Role.STUDENT) {
@@ -198,10 +193,6 @@ public class LessonController {
         return ResponseEntity.ok(ApiResponse.success("Video and transcript removed successfully", null));
     }
 
-    /**
-     * ✅ Student đánh dấu bài học là đã hoàn thành
-     * Tạo/cập nhật bản ghi Progress trong DB
-     */
     @PostMapping("/{lessonId}/complete")
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "Mark Lesson as Completed (Student)",
@@ -212,17 +203,14 @@ public class LessonController {
         String email = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication().getName();
 
-        // Tìm lesson
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        // Tìm enrollment của student trong khóa học này
         UUID courseId = lesson.getModule().getCourse().getCourseId();
         Enrollment enrollment = enrollmentRepository
                 .findByUser_EmailAndCourse_CourseId(email, courseId)
                 .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_FOUND));
 
-        // Tạo hoặc cập nhật Progress
         Progress progress = progressRepository
                 .findByEnrollmentAndLesson(enrollment, lesson)
                 .orElse(Progress.builder()
@@ -234,7 +222,6 @@ public class LessonController {
         progress.setLastWatchedTime(0);
         progressRepository.save(progress);
 
-        // Tính % hoàn thành
         long totalLessons = enrollment.getCourse().getModules().stream()
                 .flatMap(m -> m.getLessons().stream())
                 .count();

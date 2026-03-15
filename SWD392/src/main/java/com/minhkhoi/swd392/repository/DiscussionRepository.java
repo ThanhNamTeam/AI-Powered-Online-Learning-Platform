@@ -13,13 +13,6 @@ import java.util.UUID;
 
 @Repository
 public interface DiscussionRepository extends JpaRepository<Discussion, UUID> {
-    
-    Page<Discussion> findByTypeAndStatus(Discussion.DiscussionType type, Discussion.DiscussionStatus status, Pageable pageable);
-
-    Page<Discussion> findByStatus(Discussion.DiscussionStatus status, Pageable pageable);
-    
-    Page<Discussion> findByType(Discussion.DiscussionType type, Pageable pageable);
-
     @Query("SELECT d FROM Discussion d WHERE " +
            "(:type IS NULL OR d.type = :type) AND " +
            "(:status IS NULL OR d.status = :status) AND " +
@@ -27,5 +20,4 @@ public interface DiscussionRepository extends JpaRepository<Discussion, UUID> {
     Page<Discussion> findWithFilters(@Param("type") Discussion.DiscussionType type, @Param("status") Discussion.DiscussionStatus status, @Param("search") String search, Pageable pageable);
 
 
-    long countByStatus(Discussion.DiscussionStatus status);
 }

@@ -18,5 +18,5 @@ public class RedisToken {
     private String jwtId;
 
     @TimeToLive(unit = TimeUnit.MILLISECONDS)
-    private Long expiration; // in milliseconds
+    private Long expiration;
 }

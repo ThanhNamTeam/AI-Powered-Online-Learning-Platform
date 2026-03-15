@@ -12,7 +12,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
     properties:
@@ -24,7 +24,6 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
-  # File upload configuration
   servlet:
     multipart:
       enabled: true
@@ -61,7 +60,6 @@ cloudinary:
   api-secret: ${CLOUDINARY_API_SECRET}
   folder: swd392-videos
 
-# AssemblyAI Configuration for Real Transcription
 assembly:
   api-key: ${ASSEMBLY_API_KEY}
 
@@ -70,9 +68,6 @@ gemini:
 
 app:
   frontend-url: ${FRONTEND_URL}
-
-# MOMO Payment Configuration
-# Các cấu hình database, server... giữ nguyên hoặc dùng ${...} nếu đã cấu hình sẵn
 
 momo:
   partnerCode: ${MOMO_PARTNER_CODE}
@@ -87,3 +82,17 @@ vnpay:
   hash-secret: ${VNPAY_HASH_SECRET}
   payment-url: ${VNPAY_PAYMENT_URL}
   return-url: ${VNPAY_RETURN_URL}
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          repository:
+            config: ERROR
+      hibernate:
+        SQL: ERROR
+        type:
+          descriptor:
+            sql:
+              BasicBinder: ERROR

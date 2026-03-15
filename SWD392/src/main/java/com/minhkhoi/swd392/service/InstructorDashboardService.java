@@ -30,7 +30,6 @@ public class InstructorDashboardService {
     private final EnrollmentRepository enrollmentRepository;
     private final PaymentRepository    paymentRepository;
 
-    // ── Inner DTOs (shared với controller) ──────────────────────────────────
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class CourseItem {
@@ -57,8 +56,6 @@ public class InstructorDashboardService {
         private String       lastEnrolledAt;
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
     private String currentEmail() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
@@ -81,18 +78,11 @@ public class InstructorDashboardService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    // ── getMyCourses ─────────────────────────────────────────────────────────
-
-    /**
-     * Trả về danh sách khóa học của GV đang login, tuỳ chọn filter theo status.
-     * @Transactional bắt buộc vì cần access lazy collection enrollment count.
-     */
     @Transactional(readOnly = true)
     public List<CourseItem> getMyCourses(String status) {
         String email = currentEmail();
         List<Course> courses = courseRepository.findByConstructor_Email(email);
 
-        // Map courseId → enrollment count
         List<UUID> courseIds = courses.stream()
                 .map(Course::getCourseId).collect(Collectors.toList());
 
@@ -122,8 +112,6 @@ public class InstructorDashboardService {
                 .collect(Collectors.toList());
     }
 
-    // ── getMyStudents ────────────────────────────────────────────────────────
-
     @Transactional(readOnly = true)
     public List<StudentItem> getMyStudents() {
         String email = currentEmail();
@@ -137,7 +125,6 @@ public class InstructorDashboardService {
                         && e.getUser() != null)
                 .collect(Collectors.toList());
 
-        // Group by userId
         Map<String, List<Enrollment>> byStudent = enrollments.stream()
                 .collect(Collectors.groupingBy(e -> e.getUser().getUserId()));
 
@@ -166,8 +153,6 @@ public class InstructorDashboardService {
                 .sorted(Comparator.comparing(s -> s.getFullName() != null ? s.getFullName() : ""))
                 .collect(Collectors.toList());
     }
-
-    // ── getDashboard ─────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public InstructorDashboardResponse getDashboard() {
@@ -277,8 +262,6 @@ public class InstructorDashboardService {
                 .myCourses(courseInfoList)
                 .build();
     }
-
-    // ── Chart builders ───────────────────────────────────────────────────────
 
     private List<InstructorDashboardResponse.MonthlyRevenueStat> buildMonthlyRevenue(
             List<Payment> payments, LocalDateTime now) {

@@ -10,8 +10,8 @@ import java.util.UUID;
 @Builder
 public class ReportResponse {
     private UUID id;
-    private String targetType; // Translating ReportType to a friendly String for FE or matching FE's targetType
-    private String targetContent; // We'll just set it to course name or title
+    private String targetType;
+    private String targetContent;
     private String targetLink;
     private String reason;
     private String reporter;
@@ -44,7 +44,7 @@ public class ReportResponse {
                 .reason(report.getDescription())
                 .reporter(report.getReporter() != null ? report.getReporter().getFullName() : "System")
                 .reportedUser(report.getReportedUser() != null ? report.getReportedUser().getFullName() : "N/A")
-                .timestamp(report.getCreatedAt().toString()) // better formatting in FE or service
+                .timestamp(report.getCreatedAt().toString())
                 .status(report.getStatus().name())
                 .priority(priority)
                 .build();

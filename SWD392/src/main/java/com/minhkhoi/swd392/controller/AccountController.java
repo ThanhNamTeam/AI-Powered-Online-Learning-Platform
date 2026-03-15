@@ -33,9 +33,6 @@ public class AccountController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
-        // Spring Security sẽ tự động validate token qua JwtAuthenticationFilter
-        // Nếu đến đây nghĩa là token đã hợp lệ
-        // Lấy email từ SecurityContext (đã được set trong JwtAuthenticationFilter)
         org.springframework.security.core.Authentication authentication =
                 org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
 
@@ -44,9 +41,7 @@ public class AccountController {
                     .body(ApiResponse.error("User is not authenticated"));
         }
 
-        String email = authentication.getName(); // username chính là email
-
-        // Get user by email
+        String email = authentication.getName();
         UserResponse userResponse = userService.getUserByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("User info retrieved successfully", userResponse));
     }

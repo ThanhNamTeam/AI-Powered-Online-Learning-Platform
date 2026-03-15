@@ -65,10 +65,6 @@ public class LessonAsyncService {
         }
     }
 
-    /**
-     * Tạo Quiz cho bài học (được gọi từ Controller khi Instructor nhấn nút).
-     * Kiểm tra bản quyền Premium của Instructor.
-     */
     public void validatePremiumInstructor(Lesson lesson) {
         User instructor = lesson.getModule().getCourse().getConstructor();
         List<AISubscription> validSubscriptions = aiSubscriptionRepository.findValidSubscriptions(instructor);
@@ -91,12 +87,11 @@ public class LessonAsyncService {
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
         try {
-            // 1. Chuyển trạng thái sang PROCESSING ngay lập tức để lock nút
+
             lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.PROCESSING);
             lesson.setLastQuizError(null);
             lessonRepository.saveAndFlush(lesson);
 
-            // 2. Kiểm tra tài liệu đã sẵn sàng chưa (transcript)
             String transcript = lesson.getTranscript();
             String documentContent = lesson.getDocumentContent();
 
@@ -104,7 +99,6 @@ public class LessonAsyncService {
                 throw new RuntimeException("Chưa có nội dung (video transcript hoặc tài liệu) để tạo Quiz.");
             }
 
-            // 4. Mix nội dung và gọi Gemini
             StringBuilder combinedContent = new StringBuilder();
             if (transcript != null) combinedContent.append("Video Transcript:\n").append(transcript).append("\n\n");
             if (documentContent != null) combinedContent.append("Document Content:\n").append(documentContent);
@@ -127,15 +121,13 @@ public class LessonAsyncService {
                     question.setQuiz(quiz);
                     questionRepository.save(question);
                 }
-                
-                // 5. Hoàn tất -> Chuyển sang COMPLETED
+
                 lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.COMPLETED);
                 lessonRepository.save(lesson);
                 log.info("Hoàn tất tạo Quiz cho Lesson {}", lessonId);
             }
         } catch (Exception e) {
             log.error("Lỗi tạo Quiz cho Lesson {}: {}", lessonId, e.getMessage());
-            // 6. Lỗi -> Chuyển sang FAILED và lưu message
             lesson.setQuizStatus(com.minhkhoi.swd392.constant.QuizStatus.FAILED);
             lesson.setLastQuizError(e.getMessage());
             lessonRepository.save(lesson);

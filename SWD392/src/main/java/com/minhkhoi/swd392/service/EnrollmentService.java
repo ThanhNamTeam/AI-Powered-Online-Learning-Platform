@@ -47,14 +47,13 @@ public class EnrollmentService {
 
         enrollment = enrollmentRepository.save(enrollment);
 
-        // Add mock payment to simulate revenue for the instructor
         if (course.getPrice() != null && course.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
             var payment = com.minhkhoi.swd392.entity.Payment.builder()
                     .user(user)
                     .enrollment(enrollment)
                     .amount(course.getPrice())
                     .status(com.minhkhoi.swd392.entity.Payment.PaymentStatus.COMPLETED)
-                    .method(com.minhkhoi.swd392.entity.Payment.PaymentMethod.VNPAY) // Mocking as VNPAY
+                    .method(com.minhkhoi.swd392.entity.Payment.PaymentMethod.VNPAY) 
                     .transactionId("MOCK-" + UUID.randomUUID().toString())
                     .completedAt(java.time.LocalDateTime.now())
                     .build();

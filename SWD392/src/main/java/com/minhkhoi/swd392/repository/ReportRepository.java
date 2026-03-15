@@ -11,8 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface ReportRepository extends JpaRepository<Report, UUID> {
-    
-    // Using JPQL to fetch with lazy relations correctly if needed, or simple queries
+
     Page<Report> findByStatus(Report.ReportStatus status, Pageable pageable);
 
     @Query("SELECT r FROM Report r WHERE r.status = :status AND (r.reportId = :id OR LOWER(r.reporter.fullName) LIKE LOWER(CONCAT('%', :search, '%')))")
@@ -21,5 +20,4 @@ public interface ReportRepository extends JpaRepository<Report, UUID> {
     @Query("SELECT r FROM Report r WHERE r.status = :status AND LOWER(r.reporter.fullName) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<Report> findByStatusAndSearchByReporter(Report.ReportStatus status, String search, Pageable pageable);
 
-    long countByStatus(Report.ReportStatus status);
 }

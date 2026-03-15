@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -24,7 +23,6 @@ import java.io.IOException;
 public class UserController {
     private final CloudinaryService cloudinaryService;
     private final UserService userService;
-    private final CourseService courseService;
 
     @PostMapping("/upload-avatar")
     public ResponseEntity<ApiResponse<String>> uploadAvatar(@RequestParam("file") MultipartFile file){

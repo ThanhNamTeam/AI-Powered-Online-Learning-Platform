@@ -24,7 +24,6 @@ public class StudentDashboardService {
     public StudentDashboardResponse getDashboardData(User currentUser) {
         List<Enrollment> enrollments = enrollmentRepository.findByUser_UserId(currentUser.getUserId());
 
-        // 1. Stats
         int totalLessonsCompleted = 0;
         int totalLessons = 0;
         double totalScore = 0;
@@ -32,7 +31,6 @@ public class StudentDashboardService {
 
         for (Enrollment e : enrollments) {
             totalLessonsCompleted += (int) e.getProgressList().stream().filter(Progress::getIsCompleted).count();
-            // Assuming we can get total lessons from modules
             totalLessons += e.getCourse().getModules().stream()
                     .flatMap(m -> m.getLessons().stream())
                     .count();
@@ -49,8 +47,6 @@ public class StudentDashboardService {
                 .completionRate(totalLessons > 0 ? (totalLessonsCompleted * 100 / totalLessons) : 0)
                 .averageScore(quizCount > 0 ? (totalScore / quizCount) : 0.0)
                 .build();
-
-        // 2. Recent Course
         StudentDashboardResponse.RecentCourse recentCourse = null;
         Enrollment mostRecentEnrollment = findMostRecentEnrollment(enrollments);
         if (mostRecentEnrollment != null) {
@@ -77,7 +73,6 @@ public class StudentDashboardService {
                     .build();
         }
 
-        // 3. Recommended Courses (Simplified: Trending or high rated)
         List<StudentDashboardResponse.RecommendedCourse> recommended = courseRepository.findTopTrendingCourses("", PageRequest.of(0, 6))
                 .getContent().stream()
                 .map(c -> StudentDashboardResponse.RecommendedCourse.builder()
@@ -109,7 +104,7 @@ public class StudentDashboardService {
     }
 
     private int calculateRemainingMinutes(Enrollment enrollment) {
-        // Simplified
+
         return 15;
     }
 

@@ -17,7 +17,7 @@ public class StaffDashboardResponse {
     private long newStudentsToday;
     private BigDecimal revenueToday;
     private long pendingRequests;
-    private double averageRating; // Placeholder for now
+    private double averageRating;
 
     private List<WeeklyStat> weeklyPerformance;
     private List<TopCourseInfo> topTrendingCourses;
@@ -27,7 +27,7 @@ public class StaffDashboardResponse {
     @AllArgsConstructor
     @Builder
     public static class WeeklyStat {
-        private String day; // "Thứ 2", "Thứ 3", ...
+        private String day;
         private long registrations;
         private BigDecimal revenue;
     }
