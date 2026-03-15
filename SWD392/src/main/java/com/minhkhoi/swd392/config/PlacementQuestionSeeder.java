@@ -12,38 +12,30 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Seed dữ liệu câu hỏi kiểm tra trình độ tiếng Nhật.
- * Chạy MỘT LẦN khi khởi động server, bỏ qua nếu DB đã có dữ liệu.
- * Câu hỏi theo chuẩn giáo trình Dekiru Nihongo, phân bổ đều N5→N2.
- */
+
 @Slf4j
 @Component
-@Order(2) // Chạy sau DataInitializer
+@Order(2)
 @RequiredArgsConstructor
 public class PlacementQuestionSeeder implements CommandLineRunner {
 
     private final PlacementQuestionRepository repository;
 
-    /** Số câu hỏi mục tiêu. Nếu DB có ít hơn con số này → xóa và seed lại. */
+
     private static final int TARGET_COUNT = 40;
 
     @Override
     public void run(String... args) {
         long currentCount = repository.count();
         if (currentCount >= TARGET_COUNT) {
-            log.info("[PlacementSeeder] DB đã có {} câu hỏi (>= {}), bỏ qua seeding.", currentCount, TARGET_COUNT);
             return;
         }
 
         if (currentCount > 0) {
-            log.info("[PlacementSeeder] DB có {} câu hỏi (< {}), xóa và seed lại...", currentCount, TARGET_COUNT);
             repository.deleteAll();
         }
 
-        log.info("[PlacementSeeder] Bắt đầu seed {} câu hỏi kiểm tra trình độ...", TARGET_COUNT);
         repository.saveAll(buildQuestions());
-        log.info("[PlacementSeeder] Đã seed {} câu hỏi thành công.", repository.count());
     }
 
     private List<PlacementQuestion> buildQuestions() {
@@ -111,7 +103,7 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo - Unit 6")
                         .build(),
 
-                // ── N4 – Sơ cấp nâng cao ─────────────────────────────────────────────────
+
 
                 PlacementQuestion.builder()
                         .content("「___ために」と「___ように」の違いについて、意志動詞（ý chí động từ）を使うのはどちらですか？")
@@ -173,7 +165,6 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo - Unit 15")
                         .build(),
 
-                // ── N3 – Trung cấp ────────────────────────────────────────────────────────
 
                 PlacementQuestion.builder()
                         .content("「彼が来るにもかかわらず、パーティーは中止になった」の「にもかかわらず」の意味はどれですか？")
@@ -235,7 +226,6 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo N3 - Unit 4")
                         .build(),
 
-                // ── N2 – Cao cấp ──────────────────────────────────────────────────────────
 
                 PlacementQuestion.builder()
                         .content("「彼の話は信憑性に欠ける」の「信憑性」の意味はどれですか？")
@@ -307,7 +297,6 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo N2 - Unit 16")
                         .build(),
 
-                // ── N5 bổ sung ──────────────────────────────────────────────────────────
 
                 PlacementQuestion.builder()
                         .content("数字「7」の読み方として正しいのはどれですか？")
@@ -339,7 +328,6 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo - Unit 5")
                         .build(),
 
-                // ── N4 bổ sung ───────────────────────────────────────────────────────────
 
                 PlacementQuestion.builder()
                         .content("「〜ながら」を使った正しい文はどれですか？")
@@ -381,7 +369,6 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo - Unit 11")
                         .build(),
 
-                // ── N3 bổ sung ───────────────────────────────────────────────────────────
 
                 PlacementQuestion.builder()
                         .content("「〜わけにはいかない」の意味として正しいのはどれですか？")
@@ -423,7 +410,6 @@ public class PlacementQuestionSeeder implements CommandLineRunner {
                         .source("Dekiru Nihongo N3 - Unit 10")
                         .build(),
 
-                // ── N2 bổ sung ───────────────────────────────────────────────────────────
 
                 PlacementQuestion.builder()
                         .content("「〜に先立ち」の正しい使い方はどれですか？")

@@ -15,20 +15,19 @@ import java.util.UUID;
 @Repository
 public interface ProgressRepository extends JpaRepository<Progress, UUID> {
 
-    // Tìm progress của 1 enrollment + 1 lesson cụ thể
+
     Optional<Progress> findByEnrollmentAndLesson(Enrollment enrollment, Lesson lesson);
 
-    // Lấy tất cả progress của 1 enrollment
-    List<Progress> findByEnrollment(Enrollment enrollment);
+    Optional<Progress> findByEnrollmentAndLesson_LessonId(Enrollment enrollment, UUID lessonId);
 
-    // Đếm số lesson đã hoàn thành trong 1 enrollment
-    long countByEnrollmentAndIsCompleted(Enrollment enrollment, Boolean isCompleted);
 
-    // Đếm tổng số lesson trong khóa học (qua course→modules→lessons) bằng courseId
-    @Query("SELECT COUNT(l) FROM Lesson l WHERE l.module.course.courseId = :courseId")
-    long countTotalLessonsByCourseId(@Param("courseId") java.util.UUID courseId);
 
-    // Đếm số lesson completed theo enrollment
+    @Query("SELECT COUNT(l) FROM Lesson l " +
+           "WHERE l.module.course.courseId = :courseId " +
+           "AND (l.isPendingDeletion = false OR l.isPendingDeletion IS NULL) " +
+           "AND (l.module.isPendingDeletion = false OR l.module.isPendingDeletion IS NULL)")
+    long countActiveLessonsByCourseId(@Param("courseId") java.util.UUID courseId);
+
     @Query("SELECT COUNT(p) FROM Progress p WHERE p.enrollment = :enrollment AND p.isCompleted = true")
     long countCompletedByEnrollment(@Param("enrollment") Enrollment enrollment);
 
@@ -38,6 +37,6 @@ public interface ProgressRepository extends JpaRepository<Progress, UUID> {
     @Query("SELECT COUNT(p) FROM Progress p WHERE p.enrollment.user.email = :email AND p.isCompleted = true")
     long countCompletedLessonsByUserEmail(@Param("email") String email);
 
-    @Query("SELECT SUM(p.lesson.duration) FROM Progress p WHERE p.enrollment.user.email = :email AND p.isCompleted = true")
+    @Query("SELECT COALESCE(SUM(p.lesson.duration), 0) FROM Progress p WHERE p.enrollment.user.email = :email AND p.isCompleted = true")
     Long sumStudyTimeByUserEmail(@Param("email") String email);
 }

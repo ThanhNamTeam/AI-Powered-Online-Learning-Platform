@@ -15,12 +15,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByTransactionId(String transactionId);
     
     List<Payment> findByUser_UserId(String userId);
-    
-    List<Payment> findByUser_UserIdAndStatus(String userId, Payment.PaymentStatus status);
-    
-    List<Payment> findByStatus(Payment.PaymentStatus status);
-
-
     @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND p.createdAt >= :date")
     java.math.BigDecimal sumCompletedAmountAfter(java.time.LocalDateTime date);
 
@@ -28,9 +22,5 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     @org.springframework.data.jpa.repository.Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND p.enrollment.course.constructor.email = :email")
     java.math.BigDecimal sumRevenueByInstructorEmail(@org.springframework.data.repository.query.Param("email") String email);
-
-    boolean existsByUser_EmailAndEnrollment_CourseAndStatus(String email, Course enrollmentCourse, Payment.PaymentStatus status);
-
-    Payment findByPaymentId(UUID paymentId);
 
 }

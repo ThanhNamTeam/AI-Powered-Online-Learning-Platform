@@ -34,40 +34,21 @@ public class PlacementTestService {
     private final GeminiService geminiService;
     private final com.minhkhoi.swd392.repository.UserRepository userRepository;
 
-    // ── 1. Lấy bộ câu hỏi ngẫu nhiên (có tỷ lệ câu nghe) ───────────────────
-
-    /**
-     * Trả về N câu hỏi ngẫu nhiên từ database, trong đó:
-     *  - Một phần câu là LISTENING (nghe) theo tỷ lệ động:
-     *      25 câu  → 3  câu nghe (12%)
-     *      30 câu  → 4  câu nghe (13%)
-     *      35 câu  → 5  câu nghe (~14%)
-     *      40 câu  → 6  câu nghe (15%)
-     *      50 câu  → 8  câu nghe (16%)
-     *  - Phần còn lại là READING (text thông thường)
-     * Nếu DB không đủ câu nghe → bù bằng câu READING.
-     * Không yêu cầu authentication.
-     */
     public List<PlacementQuestionResponse> getRandomQuestions(int count) {
         int limit = (count > 0 && count <= 50) ? count : DEFAULT_QUESTION_COUNT;
 
         int listeningCount = calculateListeningCount(limit);
         int readingCount   = limit - listeningCount;
 
-        log.info("[PlacementTest] Lấy {} câu READING + {} câu LISTENING", readingCount, listeningCount);
-
-        // Lấy câu LISTENING
         List<PlacementQuestion> listening = placementQuestionRepository
                 .findRandomByQuestionType(QuestionType.LISTENING.name(), listeningCount);
 
-        // Nếu không đủ câu nghe → bù thêm câu READING
         int actualListening  = listening.size();
         int actualReadingNeed = limit - actualListening;
 
         List<PlacementQuestion> reading = placementQuestionRepository
                 .findRandomByQuestionType(QuestionType.READING.name(), actualReadingNeed);
 
-        // Trộn và shuffle
         List<PlacementQuestion> mixed = new ArrayList<>();
         mixed.addAll(reading);
         mixed.addAll(listening);
@@ -87,61 +68,32 @@ public class PlacementTestService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Tính số câu LISTENING cần lấy dựa trên tổng số câu.
-     * Công thức: floor(total * listeningRatio)
-     * Tối thiểu 3 câu khi total >= 25, tỷ lệ tăng dần theo total.
-     *
-     *  total | ratio  | count
-     *  ------+--------+------
-     *   25   | 12.0%  |  3
-     *   30   | 13.3%  |  4
-     *   35   | 14.3%  |  5
-     *   40   | 15.0%  |  6
-     *   45   | 15.6%  |  7
-     *   50   | 16.0%  |  8
-     */
     private int calculateListeningCount(int total) {
         if (total <= 0) return 0;
         if (total < 25) {
-            // Dưới 25 câu: 10% nhưng ít nhất 1 câu nếu total >= 10
             return total >= 10 ? 1 : 0;
         }
-        // Tỷ lệ tăng tuyến tính: 12% khi total=25, tăng ~0.16% mỗi câu thêm
         double ratio = 0.12 + (total - 25) * 0.0016;
-        ratio = Math.min(ratio, 0.20); // Tối đa 20%
+        ratio = Math.min(ratio, 0.20);
         int count = (int) Math.floor(total * ratio);
-        return Math.max(count, 3); // Tối thiểu 3 câu khi total >= 25
+        return Math.max(count, 3);
     }
 
-    // ── 2. Nộp bài và xử lý kết quả ─────────────────────────────────────────
-
-    /**
-     * Xử lý toàn bộ luồng sau khi nộp bài:
-     * 1. Chấm điểm
-     * 2. Tổng hợp danh sách câu sai
-     * 3. Gửi Gemini AI phân tích
-     * 4. Tìm khóa học phù hợp
-     */
     public PlacementTestResultResponse submitTest(SubmitPlacementTestRequest request) {
-
         List<PlacementAnswerItem> answers = request.getAnswers();
         if (answers == null || answers.isEmpty()) {
             throw new IllegalArgumentException("Danh sách đáp án không được rỗng.");
         }
 
-        // -- Step A: Lấy ID các câu hỏi từ request --
         List<UUID> questionIds = answers.stream()
                 .map(PlacementAnswerItem::getQuestionId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // -- Step B: Fetch toàn bộ câu hỏi từ DB --
         Map<UUID, PlacementQuestion> questionMap = placementQuestionRepository.findAllById(questionIds)
                 .stream()
                 .collect(Collectors.toMap(PlacementQuestion::getId, q -> q));
 
-        // -- Step C: Chấm điểm --
         int correctCount = 0;
         List<WrongAnswerDetail> wrongAnswers = new ArrayList<>();
         int questionNumber = 1;
@@ -149,7 +101,6 @@ public class PlacementTestService {
         for (PlacementAnswerItem answer : answers) {
             PlacementQuestion question = questionMap.get(answer.getQuestionId());
             if (question == null) {
-                log.warn("Câu hỏi không tìm thấy: {}", answer.getQuestionId());
                 questionNumber++;
                 continue;
             }
@@ -158,7 +109,6 @@ public class PlacementTestService {
             if (isCorrect) {
                 correctCount++;
             } else {
-                // Ghi lại câu sai để gửi AI phân tích
                 wrongAnswers.add(WrongAnswerDetail.builder()
                         .questionNumber(questionNumber)
                         .questionContent(question.getContent())
@@ -177,24 +127,19 @@ public class PlacementTestService {
                 ? Math.round((double) correctCount / totalQuestions * 100.0 * 10) / 10.0
                 : 0.0;
 
-        // -- Step D: Gọi Gemini AI phân tích --
         PlacementAiAnalysis aiAnalysis = analyzeWithGemini(correctCount, totalQuestions, scorePercent, wrongAnswers);
 
-        // -- Step E: Cập nhật trình độ cho user nếu đã đăng nhập --
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             String email = auth.getName();
             userRepository.findByEmail(email).ifPresent(user -> {
-                log.info("[PlacementTest] Lưu level {} cho user {}", aiAnalysis.estimatedLevel(), email);
                 user.setEstimatedJlptLevel(aiAnalysis.estimatedLevel());
                 userRepository.save(user);
             });
         }
 
-        // -- Step F: Tìm khóa học phù hợp --
         List<SuggestedCourseCard> suggestedCourses = findSuggestedCourses(aiAnalysis.estimatedLevel());
 
-        // -- Step F: Tổng hợp kết quả --
         return PlacementTestResultResponse.builder()
                 .correctCount(correctCount)
                 .totalQuestions(totalQuestions)
@@ -209,19 +154,15 @@ public class PlacementTestService {
                 .build();
     }
 
-    // ── 3. Gọi Gemini AI phân tích ─────────────────────────────────────────
-
     private PlacementAiAnalysis analyzeWithGemini(
             int correctCount,
             int totalQuestions,
             double scorePercent,
             List<WrongAnswerDetail> wrongAnswers) {
 
-        // Tổng hợp thông tin câu sai theo chủ đề
         Map<String, Long> wrongTopics = wrongAnswers.stream()
                 .collect(Collectors.groupingBy(WrongAnswerDetail::getTopic, Collectors.counting()));
 
-        // Build prompt chi tiết cho Gemini
         StringBuilder wrongSummary = new StringBuilder();
         for (WrongAnswerDetail w : wrongAnswers) {
             wrongSummary.append(String.format(
@@ -285,7 +226,6 @@ public class PlacementTestService {
 
     private PlacementAiAnalysis parseAiAnalysis(String rawJson, double scorePercent) {
         try {
-            // Làm sạch markdown block nếu có
             String cleanJson = rawJson
                     .replace("```json", "")
                     .replace("```", "")
@@ -321,7 +261,7 @@ public class PlacementTestService {
                     obj.optString("studyRecommendation", "Tiếp tục ôn luyện đều đặn.")
             );
         } catch (Exception e) {
-            log.warn("Không parse được JSON từ Gemini, dùng fallback. Raw: {}", rawJson);
+            log.warn("Không parse được JSON từ Gemini, dùng fallback.");
             return buildFallbackAnalysis(scorePercent, Collections.emptyMap());
         }
     }
@@ -350,13 +290,6 @@ public class PlacementTestService {
         return JlptLevel.N5;
     }
 
-    // ── 4. Tìm khóa học phù hợp ────────────────────────────────────────────
-
-    /**
-     * Gợi ý khóa học dựa trên level AI đánh giá.
-     * Gợi ý chính: level hiện tại.
-     * Gợi ý thêm: level kế tiếp (để đặt mục tiêu).
-     */
     private List<SuggestedCourseCard> findSuggestedCourses(JlptLevel estimatedLevel) {
         List<JlptLevel> targetLevels = buildTargetLevels(estimatedLevel);
 
@@ -364,7 +297,7 @@ public class PlacementTestService {
                 CourseStatus.APPROVED, targetLevels);
 
         return courses.stream()
-                .limit(6) // Tối đa 6 khóa học gợi ý
+                .limit(6)
                 .map(c -> SuggestedCourseCard.builder()
                         .courseId(c.getCourseId())
                         .title(c.getTitle())
@@ -376,15 +309,10 @@ public class PlacementTestService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Xây dựng danh sách level mục tiêu: level hiện tại + level kế tiếp.
-     * Ví dụ: N4 → [N4, N3] (vừa củng cố N4, vừa tiến tới N3)
-     */
     private List<JlptLevel> buildTargetLevels(JlptLevel currentLevel) {
         List<JlptLevel> levels = new ArrayList<>();
-        levels.add(currentLevel); // Level hiện tại (củng cố)
+        levels.add(currentLevel);
 
-        // Thêm level kế tiếp nếu có (mục tiêu phát triển)
         JlptLevel[] all = JlptLevel.values();
         int idx = currentLevel.ordinal();
         if (idx + 1 < all.length) {
@@ -393,7 +321,6 @@ public class PlacementTestService {
         return levels;
     }
 
-    // ── Inner record ────────────────────────────────────────────────────────
     private record PlacementAiAnalysis(
             JlptLevel estimatedLevel,
             String overallComment,

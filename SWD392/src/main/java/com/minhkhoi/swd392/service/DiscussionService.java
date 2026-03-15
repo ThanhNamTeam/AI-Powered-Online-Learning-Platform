@@ -56,7 +56,7 @@ public class DiscussionService {
     @Transactional
     public DiscussionResponse replyDiscussion(UUID discussionId, String replyText) {
         Discussion discussion = discussionRepository.findById(discussionId)
-                .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND)); // Or create DISCUSSION_NOT_FOUND
+                .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
 
         discussion.setAdminReply(replyText);
         if (discussion.getType() == Discussion.DiscussionType.QUESTION) {
@@ -74,5 +74,14 @@ public class DiscussionService {
             throw new AppException(ErrorCode.REVIEW_NOT_FOUND);
         }
         discussionRepository.deleteById(discussionId);
+    }
+
+    @Transactional
+    public DiscussionResponse likeDiscussion(UUID discussionId) {
+        Discussion discussion = discussionRepository.findById(discussionId)
+                .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
+        
+        discussion.setLikes(discussion.getLikes() + 1);
+        return DiscussionResponse.fromEntity(discussionRepository.save(discussion));
     }
 }

@@ -14,7 +14,6 @@ import java.util.List;
 @Builder
 public class AdminDashboardResponse {
 
-    // ── Thống kê tổng quan ──────────────────────────────────────
     private long totalUsers;
     private long totalStudents;
     private long totalInstructors;
@@ -22,22 +21,17 @@ public class AdminDashboardResponse {
     private long totalApprovedCourses;
     private long totalPendingCourses;
     private long totalRejectedCourses;
-    private BigDecimal totalRevenue;          // Tổng doanh thu (COMPLETED payments)
+    private BigDecimal totalRevenue;
     private long totalEnrollments;
 
-    // ── Biểu đồ tăng trưởng người dùng (6 tháng gần nhất) ───────
+
     private List<MonthlyUserStat> userGrowth;
 
-    // ── Biểu đồ doanh thu (6 tháng gần nhất) ───────────────────
     private List<MonthlyRevenueStat> revenueGrowth;
 
-    // ── Phân bố khóa học theo JLPT Level ────────────────────────
     private List<CourseLevelStat> courseByLevel;
 
-    // ── Danh sách khóa học chờ duyệt ────────────────────────────
     private List<PendingCourseInfo> pendingCourses;
-
-    // ─── Inner DTOs ─────────────────────────────────────────────
 
     @Data
     @NoArgsConstructor

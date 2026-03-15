@@ -23,10 +23,6 @@ public class ChatService {
     private final LessonRepository lessonRepository;
     private final CourseRepository courseRepository;
 
-    /**
-     * RAG Chat: Lấy context từ DB (catalogue + transcript + tài liệu của TẤT CẢ khóa học)
-     * rồi gửi kèm câu hỏi lên Gemini để trả lời chính xác.
-     */
     public String chat(String email, String question, UUID lessonId) {
         User user = userRepository.findByEmail(email).orElse(null);
         String studentName = user != null ? user.getFullName() : "bạn";
@@ -34,28 +30,17 @@ public class ChatService {
         String context = buildRagContext(email, lessonId, user);
         String prompt = buildPrompt(question, context, studentName);
 
-        log.info("[ChatRAG] User={} | Question length={} | ContextLength={}", email, question.length(), context.length());
-
         try {
             return geminiService.callGeminiWithPrompt(prompt);
         } catch (Exception e) {
-            log.error("[ChatRAG] Gemini error: {}", e.getMessage());
+            log.error("Gemini error: {}", e.getMessage());
             return "Xin lỗi, Sensei AI đang gặp sự cố. Vui lòng thử lại sau nhé! 🙏";
         }
     }
 
-    /**
-     * Build RAG context theo 3 tầng ưu tiên:
-     *  1. Bài học đang xem (lesson transcript + document)
-     *  2. Catalogue TẤT CẢ khóa học APPROVED (title, description, level, price, modules)
-     *  3. Transcript/tài liệu của các khóa học student đã enroll (nếu có)
-     */
     private String buildRagContext(String email, UUID priorityLessonId, User user) {
         List<String> contextParts = new ArrayList<>();
 
-        // ─────────────────────────────────────────────────────
-        // TẦNG 1: Bài học đang xem (nếu có lessonId)
-        // ─────────────────────────────────────────────────────
         if (priorityLessonId != null) {
             lessonRepository.findById(priorityLessonId).ifPresent(lesson -> {
                 String lessonCtx = extractLessonContent(lesson);
@@ -65,10 +50,6 @@ public class ChatService {
             });
         }
 
-        // ─────────────────────────────────────────────────────
-        // TẦNG 2: Catalogue TẤT CẢ khóa học APPROVED trên platform
-        // (đây là nguồn chính để AI biết về tất cả các khóa)
-        // ─────────────────────────────────────────────────────
         List<Course> allCourses = courseRepository.findByStatus(CourseStatus.APPROVED,
                 org.springframework.data.domain.PageRequest.of(0, 50)).getContent();
 
@@ -86,7 +67,6 @@ public class ChatService {
                             course.getDescription().substring(0, Math.min(course.getDescription().length(), 200))
                     ).append("\n");
                 }
-                // Liệt kê tên modules
                 if (course.getModules() != null && !course.getModules().isEmpty()) {
                     catalogue.append("   - Nội dung gồm: ");
                     List<String> moduleNames = course.getModules().stream()
@@ -104,9 +84,6 @@ public class ChatService {
             contextParts.add(catalogue.toString());
         }
 
-        // ─────────────────────────────────────────────────────
-        // TẦNG 3: Transcript/tài liệu từ các bài học đã enroll (nếu có nội dung)
-        // ─────────────────────────────────────────────────────
         if (user != null) {
             List<Enrollment> enrollments = enrollmentRepository.findByUser_UserId(user.getUserId());
             StringBuilder enrolledContent = new StringBuilder();
@@ -142,7 +119,6 @@ public class ChatService {
             return "Hiện tại chưa có nội dung khóa học trong hệ thống.";
         }
 
-        // Giới hạn context ~10000 chars để tránh vượt token limit
         String fullContext = String.join("\n\n", contextParts);
         if (fullContext.length() > 10000) {
             fullContext = fullContext.substring(0, 10000) + "\n... [nội dung bị rút gọn]";

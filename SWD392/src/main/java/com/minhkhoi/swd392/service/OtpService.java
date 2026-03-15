@@ -23,18 +23,11 @@ public class OtpService {
     private static final int OTP_LENGTH = 6;
     private static final int OTP_EXPIRATION_MINUTES = 5;
 
-    /**
-     * Generate and send OTP to email
-     */
+
     @Transactional
     public void generateAndSendOtp(String email) {
-        // Generate 6-digit OTP
         String otpCode = generateOtpCode();
-
-        // Calculate expiration time
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(OTP_EXPIRATION_MINUTES);
-
-        // Save OTP to database
         OtpVerification otp = OtpVerification.builder()
                 .email(email)
                 .otpCode(otpCode)
@@ -43,16 +36,10 @@ public class OtpService {
                 .build();
 
         otpRepository.save(otp);
-
-        // Send OTP via email
         emailService.sendOtpEmail(email, otpCode);
 
         log.info("OTP generated and sent to email: {}", email);
     }
-
-    /**
-     * Verify OTP code
-     */
     @Transactional
     public boolean verifyOtp(String email, String otpCode) {
         OtpVerification otp = otpRepository
@@ -60,7 +47,7 @@ public class OtpService {
                         email, otpCode, LocalDateTime.now())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_INPUT, "Invalid or expired OTP"));
 
-        // Mark OTP as verified
+
         otp.setIsVerified(true);
         otp.setVerifiedAt(LocalDateTime.now());
         otpRepository.save(otp);
@@ -69,27 +56,18 @@ public class OtpService {
         return true;
     }
 
-    /**
-     * Check if email has been verified
-     */
     public boolean isEmailVerified(String email) {
         return otpRepository.findTopByEmailOrderByCreatedAtDesc(email)
                 .map(OtpVerification::getIsVerified)
                 .orElse(false);
     }
 
-    /**
-     * Generate random 6-digit OTP code
-     */
     private String generateOtpCode() {
         Random random = new Random();
         int otp = 100000 + random.nextInt(900000); // Generate 6-digit number
         return String.valueOf(otp);
     }
 
-    /**
-     * Clean up expired OTPs (scheduled task)
-     */
     @Transactional
     public void cleanupExpiredOtps() {
         otpRepository.deleteByExpiresAtBefore(LocalDateTime.now());

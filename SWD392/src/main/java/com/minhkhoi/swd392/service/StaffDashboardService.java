@@ -48,7 +48,7 @@ public class StaffDashboardService {
                 .newStudentsToday(newStudentsToday)
                 .revenueToday(revenueToday)
                 .pendingRequests(pendingRequests)
-                .averageRating(4.8) // Mocked for now
+                .averageRating(4.8)
                 .weeklyPerformance(weeklyPerformance)
                 .topTrendingCourses(topCourses)
                 .build();
@@ -64,9 +64,6 @@ public class StaffDashboardService {
             LocalDateTime endOfDay = LocalDateTime.of(date, LocalTime.MAX);
 
             long registrations = userRepository.countByRoleAndCreatedAtAfter(User.Role.STUDENT, startOfDay);
-            // This is actually "total joined AFTER startOfDay". To get exactly that day:
-            // I should add a between query, but for dashboard "since start of day" is often okay if we iterate carefully.
-            // Let's refine the query in repository if needed, but for now I'll use a simplified version.
             
             BigDecimal revenue = paymentRepository.findByStatusAndCreatedAtAfter(Payment.PaymentStatus.COMPLETED, startOfDay)
                     .stream()
@@ -79,7 +76,7 @@ public class StaffDashboardService {
             
             stats.add(StaffDashboardResponse.WeeklyStat.builder()
                     .day(dayLabel)
-                    .registrations(registrations) // Note: this is actually 'total joined since this day's start'
+                    .registrations(registrations)
                     .revenue(revenue)
                     .build());
         }
@@ -95,7 +92,7 @@ public class StaffDashboardService {
                         .title(c.getTitle())
                         .code(c.getCourseId().toString().substring(0, 5).toUpperCase())
                         .students(c.getEnrollments() != null ? c.getEnrollments().size() : 0)
-                        .rating(4.5 + (Math.random() * 0.5)) // Random rating 4.5 - 5.0
+                        .rating(4.5 + (Math.random() * 0.5))
                         .build())
                 .collect(Collectors.toList());
     }

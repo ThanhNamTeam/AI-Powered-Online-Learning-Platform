@@ -76,15 +76,13 @@ public class ReportService {
 
         switch (action.toUpperCase()) {
             case "IGNORE":
-                report.setStatus(Report.ReportStatus.REJECTED); // or CLOSED
+                report.setStatus(Report.ReportStatus.REJECTED);
                 break;
             case "WARN":
                 report.setStatus(Report.ReportStatus.RESOLVED);
-                // System could send warning email here
                 break;
             case "DELETE":
                 report.setStatus(Report.ReportStatus.RESOLVED);
-                // System could delete target content here
                 break;
             default:
                 report.setStatus(Report.ReportStatus.RESOLVED);

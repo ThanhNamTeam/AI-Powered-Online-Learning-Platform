@@ -49,29 +49,22 @@ public class MomoPaymentService {
     private final CourseRepository courseRepository;
     private final PaymentMapper paymentMapper;
 
-    /**
-     * Create MOMO payment for PREMIUM subscription
-     */
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request) {
-        // Get current authenticated user
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        // Validate user role (only INSTRUCTOR or STUDENT can purchase)
         if (user.getRole() != User.Role.INSTRUCTOR && user.getRole() != User.Role.STUDENT) {
             throw new AppException(ErrorCode.ONLY_STUDENT_OR_INSTRUCTOR_CAN_PURCHASE);
         }
 
-        // --- COURSE PAYMENT ---
         if (request.getCourseId() != null) {
             Course course = courseRepository.findById(request.getCourseId())
                     .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
-            // Check if enrollment exists
             Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, course)
                     .orElseGet(() -> Enrollment.builder()
                             .user(user)
@@ -81,18 +74,15 @@ public class MomoPaymentService {
                             .build());
 
             if (enrollment.getStatus() == EnrollmentStatus.ACTIVE || enrollment.getStatus() == EnrollmentStatus.COMPLETED) {
-                // If user is already active, we shouldn't charge them again.
-                // But for testing purposes or strict logic, throw error.
                 throw new RuntimeException("User already owns this course");
             }
 
-            // Ensure status is PENDING if it was null or CANCELLED or PENDING
             enrollment.setStatus(EnrollmentStatus.PENDING);
             enrollment = enrollmentRepository.save(enrollment);
 
             String orderId = UUID.randomUUID().toString();
             String requestId = UUID.randomUUID().toString();
-            long amount = course.getPrice().longValue(); // Trust params from DB
+            long amount = course.getPrice().longValue();
             String orderInfo = "Buy Course: " + course.getTitle();
 
             try {
@@ -107,7 +97,7 @@ public class MomoPaymentService {
                         .type(Payment.PaymentType.COURSE)
                         .course(course)
                         .transactionId(orderId)
-                        .notes("Course: " + course.getTitle()) // Pattern to identify course payment
+                        .notes("Course: " + course.getTitle())
                         .build();
 
                 payment = paymentRepository.save(payment);
@@ -123,12 +113,10 @@ public class MomoPaymentService {
             }
         }
 
-        // --- SUBSCRIPTION PAYMENT (Existing Logic) ---
         if (request.getSubscriptionPlan() == null) {
             throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
         }
 
-        // Validate subscription plan
         AISubscription.SubscriptionPlan plan;
         try {
             plan = AISubscription.SubscriptionPlan.valueOf(request.getSubscriptionPlan().toUpperCase());
@@ -136,11 +124,8 @@ public class MomoPaymentService {
             throw new AppException(ErrorCode.INVALID_SUBSCRIPTION_PLAN);
         }
 
-        // Generate unique IDs
         String orderId = UUID.randomUUID().toString();
         String requestId = UUID.randomUUID().toString();
-
-        // Convert amount to long (MOMO requires amount in VND, no decimals)
         long amount = request.getAmount().longValue();
 
         String orderInfo = request.getOrderInfo() != null
@@ -148,8 +133,6 @@ public class MomoPaymentService {
                 : "Premium Subscription - " + plan.name();
 
         try {
-            // Start Fix: Handle Enrollment for Subscription
-            // Check if placeholder course exists for this user
             List<Course> existingCourses = courseRepository.findByConstructor_Email(user.getEmail());
             Course placeholderCourse = existingCourses.stream()
                     .filter(c -> "SUBSCRIPTION_PLACEHOLDER".equals(c.getTitle()))
@@ -169,7 +152,6 @@ public class MomoPaymentService {
 
             final Course finalCourse = placeholderCourse;
 
-            // Create or reuse enrollment linked to placeholder course
             Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, finalCourse)
                     .orElseGet(() -> {
                         Enrollment newEnroll = Enrollment.builder()
@@ -179,15 +161,12 @@ public class MomoPaymentService {
                                 .build();
                         return enrollmentRepository.save(newEnroll);
                     });
-            // End Fix
 
-            // Create MOMO payment request
             MomoPaymentResponse momoResponse = createMomoPayment(orderId, requestId, amount, orderInfo);
 
-            // Create payment record
             Payment payment = Payment.builder()
                     .user(user)
-                    .enrollment(enrollment) // Subscription doesn't have enrollment
+                    .enrollment(enrollment)
                     .amount(request.getAmount())
                     .status(Payment.PaymentStatus.PENDING)
                     .method(Payment.PaymentMethod.MOMO)
@@ -199,14 +178,12 @@ public class MomoPaymentService {
 
             payment = paymentRepository.save(payment);
 
-            // Build response using mapper
             PaymentResponse response = paymentMapper.toPaymentResponse(payment);
             response.setPaymentUrl(momoResponse.getPayUrl());
             return response;
 
         } catch (Exception e) {
             log.error("Error creating MOMO payment: ", e);
-            // Check if it's already an AppException
             if (e instanceof AppException) {
                 throw (AppException) e;
             }
@@ -214,9 +191,6 @@ public class MomoPaymentService {
         }
     }
 
-    /**
-     * Create MOMO payment request
-     */
     private MomoPaymentResponse createMomoPayment(String orderId, String requestId, long amount, String orderInfo) throws Exception {
         String partnerCode = momoConfig.getPartnerCode();
         String accessKey = momoConfig.getAccessKey();
@@ -238,13 +212,8 @@ public class MomoPaymentService {
                 "&requestId=" + requestId +
                 "&requestType=" + requestType;
 
-        log.info("Raw signature: {}", rawSignature);
-
-        // Generate signature
         String signature = hmacSHA256(rawSignature, secretKey);
-        log.info("Signature: {}", signature);
 
-        // Build request body
         JSONObject requestBody = new JSONObject();
         requestBody.put("partnerCode", partnerCode);
         requestBody.put("accessKey", accessKey);
@@ -259,9 +228,6 @@ public class MomoPaymentService {
         requestBody.put("signature", signature);
         requestBody.put("lang", "en");
 
-        log.info("Request body: {}", requestBody.toString());
-
-        // Send request to MOMO
         okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
         okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
         okhttp3.RequestBody body = okhttp3.RequestBody.create(mediaType, requestBody.toString());
@@ -274,11 +240,8 @@ public class MomoPaymentService {
         okhttp3.Response response = client.newCall(request).execute();
         String responseBody = response.body().string();
 
-        log.info("MOMO Response: {}", responseBody);
-
         JSONObject jsonResponse = new JSONObject(responseBody);
 
-        // Parse response
         return MomoPaymentResponse.builder()
                 .partnerCode(jsonResponse.optString("partnerCode"))
                 .orderId(jsonResponse.optString("orderId"))
@@ -294,12 +257,10 @@ public class MomoPaymentService {
                 .build();
     }
 
-    /**
-     * Handle MOMO IPN callback
-     */
+
     @Transactional
     public void handleMomoCallback(Map<String, Object> params) {
-        // Convert Map<String, Object> to Map<String, String>
+
         Map<String, String> stringParams = new HashMap<>();
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             stringParams.put(entry.getKey(), String.valueOf(entry.getValue()));
@@ -312,26 +273,20 @@ public class MomoPaymentService {
 
         log.info("MOMO Callback - OrderId: {}, ResultCode: {}, Message: {}", orderId, resultCode, message);
 
-        // Verify signature
+
         if (!verifyMomoSignature(stringParams, signature)) {
             log.error("Invalid MOMO signature for orderId: {}", orderId);
-            // check signature disabled for local testing
-            // throw new AppException(ErrorCode.INVALID_MOMO_SIGNATURE);
         }
 
-        // Find payment by transaction ID
+
         Payment payment = paymentRepository.findByTransactionId(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
 
-        // Update payment status based on result code
+
         if ("0".equals(resultCode)) {
-            // Payment successful
             payment.setStatus(Payment.PaymentStatus.COMPLETED);
             payment.setCompletedAt(LocalDateTime.now());
-
-            // Check if it's a Course Payment or Subscription
             if (payment.getType() == Payment.PaymentType.COURSE) {
-                // Activate Enrollment
                 Enrollment enrollment = payment.getEnrollment();
                 if (enrollment != null) {
                     enrollment.setStatus(EnrollmentStatus.ACTIVE);
@@ -339,13 +294,11 @@ public class MomoPaymentService {
                     log.info("Activated enrollment for user {} course {}", payment.getUser().getEmail(), enrollment.getCourse().getTitle());
                 }
             } else {
-                // Create or update AI subscription
                 createOrUpdateSubscription(payment);
             }
 
             log.info("Payment completed successfully for orderId: {}", orderId);
         } else {
-            // Payment failed
             payment.setStatus(Payment.PaymentStatus.FAILED);
             payment.setNotes(payment.getNotes() + " | Failed: " + message);
             log.error("Payment failed for orderId: {}. Message: {}", orderId, message);
@@ -354,30 +307,22 @@ public class MomoPaymentService {
         paymentRepository.save(payment);
     }
 
-    /**
-     * Create or update AI subscription after successful payment
-     */
     private void createOrUpdateSubscription(Payment payment) {
         User user = payment.getUser();
-
-        // Extract subscription plan from payment notes
         String notes = payment.getNotes();
         String planName = extractSubscriptionPlan(notes);
         AISubscription.SubscriptionPlan plan = AISubscription.SubscriptionPlan.valueOf(planName);
 
-        // Calculate subscription period (1 month)
         LocalDateTime startDate = LocalDateTime.now();
         LocalDateTime endDate = startDate.plusMonths(1);
 
-        // Set AI credits based on plan
         Integer aiCredits = switch (plan) {
             case BASIC -> 100;
             case PREMIUM -> 500;
-            case ENTERPRISE -> null; // Unlimited
+            case ENTERPRISE -> null;
             case FREE -> 0;
         };
 
-        // Create new subscription
         AISubscription subscription = AISubscription.builder()
                 .instructor(user)
                 .plan(plan)
@@ -395,9 +340,6 @@ public class MomoPaymentService {
         log.info("Created subscription for user: {} with plan: {}", user.getEmail(), plan);
     }
 
-    /**
-     * Extract subscription plan from payment notes
-     */
     private String extractSubscriptionPlan(String notes) {
         if (notes.contains("BASIC")) return "BASIC";
         if (notes.contains("PREMIUM")) return "PREMIUM";
@@ -406,9 +348,6 @@ public class MomoPaymentService {
         return "BASIC"; // Default
     }
 
-    /**
-     * Verify MOMO signature
-     */
     private boolean verifyMomoSignature(Map<String, String> params, String signature) {
         try {
             String rawSignature = "accessKey=" + momoConfig.getAccessKey() +
@@ -433,9 +372,6 @@ public class MomoPaymentService {
         }
     }
 
-    /**
-     * Generate HMAC SHA256 signature
-     */
     private String hmacSHA256(String data, String secretKey) throws Exception {
         Mac hmacSHA256 = Mac.getInstance("HmacSHA256");
         SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
@@ -444,9 +380,6 @@ public class MomoPaymentService {
         return bytesToHex(hash);
     }
 
-    /**
-     * Convert bytes to hex string
-     */
     private String bytesToHex(byte[] bytes) {
         StringBuilder result = new StringBuilder();
         for (byte b : bytes) {
@@ -455,9 +388,6 @@ public class MomoPaymentService {
         return result.toString();
     }
 
-    /**
-     * Get payment by ID
-     */
     public PaymentResponse getPaymentById(UUID paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
@@ -465,9 +395,6 @@ public class MomoPaymentService {
         return paymentMapper.toPaymentResponse(payment);
     }
 
-    /**
-     * Get user's payment history
-     */
     public List<PaymentResponse> getUserPayments() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();

@@ -19,6 +19,7 @@ public class LessonResponse {
     private String documentUrl;
     private String transcript;
     private Integer duration;
+    private Boolean isCompleted;
 
     public static LessonResponse fromEntity(Lesson lesson) {
         return LessonResponse.builder()

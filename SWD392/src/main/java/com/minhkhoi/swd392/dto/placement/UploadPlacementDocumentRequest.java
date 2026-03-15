@@ -7,10 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Request để Staff tạo mới 1 tài liệu placement test (metadata).
- * File sẽ được upload riêng qua multipart.
- */
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -22,12 +19,7 @@ public class UploadPlacementDocumentRequest {
 
     private String description;
 
-    /**
-     * Loại tài liệu: READING (PDF/DOC) hoặc LISTENING (MP3/Audio).
-     * Mặc định READING nếu không truyền.
-     */
     private PlacementDocument.DocumentType documentType;
 
-    /** Level JLPT mục tiêu (N5, N4, N3, N2, N1) - tuỳ chọn */
     private String targetLevel;
 }

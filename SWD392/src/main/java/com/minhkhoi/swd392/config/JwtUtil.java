@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -35,7 +33,6 @@ public class JwtUtil {
     }
 
 
-    //put claims để cho hệ thống decoder đọc token vs trả ra nhanh hơn
     public String generateToken(User user) {
 
         String jti = UUID.randomUUID().toString();

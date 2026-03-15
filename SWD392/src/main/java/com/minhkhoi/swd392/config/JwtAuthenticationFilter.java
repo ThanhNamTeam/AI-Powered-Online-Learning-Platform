@@ -13,7 +13,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
-        // Skip JWT validation for public endpoints
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -56,7 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             JwtInfo info = jwtService.parseJwtInfo(jwt);
             String jti = info.getJwtId();
 
-            // Check if the token is revoked
             boolean revoked = redisTokenRepository.existsById(jti);
             if (revoked) {
                 handleException(response, "Token has been revoked", HttpServletResponse.SC_UNAUTHORIZED);

@@ -36,17 +36,6 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service quản lý tài liệu placement test.
- *
- * Tự động đọc nội dung thật từ file:
- *   PDF  → Apache PDFBox extract text
- *   DOC  → Apache POI extract text
- *   DOCX → Apache POI extract text
- *   MP3  → AssemblyAI transcribe → lấy transcript tiếng Nhật
- *
- * Staff KHÔNG cần nhập description - hệ thống tự đọc file!
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -71,17 +60,8 @@ public class PlacementDocumentService {
 
     private static final long MAX_DOCUMENT_SIZE = 20L * 1024 * 1024;  // 20MB
     private static final long MAX_AUDIO_SIZE    = 50L * 1024 * 1024;  // 50MB
-    /** Giới hạn độ dài text gửi Gemini (token limit) */
     private static final int  MAX_TEXT_CHARS    = 6000;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 1. UPLOAD PDF/DOC → TỰ ĐỘNG EXTRACT TEXT → AI SINH CÂU HỎI
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Upload PDF/DOC lên Cloudinary VÀ tự động extract text ngay lập tức.
-     * Text được lưu vào `extractedContent` trong DB để dùng nhiều lần.
-     */
     @Transactional
     public PlacementDocumentResponse uploadReadingDocument(
             MultipartFile file,
@@ -89,17 +69,14 @@ public class PlacementDocumentService {
 
         validateDocumentFile(file);
 
-        // 1. Extract text thật từ file TRƯỚC khi upload
         String extractedText = extractTextFromDocument(file);
         log.info("[PlacementDoc] Extracted {} chars from '{}'", extractedText.length(), file.getOriginalFilename());
 
-        // 2. Upload file lên Cloudinary (để lưu trữ gốc)
         Map<String, Object> uploadResult = cloudinaryService.uploadFile(file, "raw");
         String fileUrl      = (String) uploadResult.get("secure_url");
         String cloudinaryId = (String) uploadResult.get("public_id");
         String extension    = getExtension(Objects.requireNonNull(file.getOriginalFilename())).toUpperCase();
 
-        // 3. Lưu metadata + extracted content vào DB
         PlacementDocument doc = PlacementDocument.builder()
                 .title(request.getTitle() != null ? request.getTitle() : file.getOriginalFilename())
                 .description(request.getDescription())
@@ -118,15 +95,6 @@ public class PlacementDocumentService {
         return toResponse(doc);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 2. UPLOAD MP3 → ASSEMBLYAI TRANSCRIBE → AI SINH CÂU HỎI NGHE
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Upload MP3/Audio lên Cloudinary.
-     * Transcript sẽ được sinh khi Staff trigger generate-listening.
-     * (Transcription mất thời gian nên làm async khi generate, không làm lúc upload)
-     */
     @Transactional
     public PlacementDocumentResponse uploadListeningDocument(
             MultipartFile audioFile,
@@ -137,7 +105,6 @@ public class PlacementDocumentService {
         String originalName = Objects.requireNonNull(audioFile.getOriginalFilename());
         String extension    = getExtension(originalName).toUpperCase();
 
-        // Upload lên Cloudinary (resource_type=video để Cloudinary chấp nhận audio)
         Map<String, Object> uploadResult = cloudinaryService.uploadFile(audioFile, "video");
         String fileUrl      = (String) uploadResult.get("secure_url");
         String cloudinaryId = (String) uploadResult.get("public_id");
@@ -161,14 +128,6 @@ public class PlacementDocumentService {
         return toResponse(doc);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 3. AI GENERATE CÂU HỎI READING (dùng text thật từ file)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * AI sinh câu hỏi READING từ TEXT THẬT đã extract từ PDF/DOC.
-     * Không cần Staff mô tả gì thêm.
-     */
     @Transactional
     public GenerateQuestionsResponse generateQuestionsFromDocument(UUID documentId, int questionCount) {
         PlacementDocument doc = documentRepository.findById(documentId)
@@ -182,7 +141,6 @@ public class PlacementDocumentService {
         documentRepository.save(doc);
 
         try {
-            // Lấy content: ưu tiên extracted text đã lưu, fallback dùng title+description
             String contentForAI = buildReadingContentForAI(doc);
             String prompt       = buildReadingPrompt(doc, contentForAI, questionCount);
             String rawResponse  = geminiService.callGeminiWithPrompt(prompt);
@@ -210,15 +168,6 @@ public class PlacementDocumentService {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 4. AI SINH CÂU HỎI NGHE (dùng transcript thật từ AssemblyAI)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Bước 1: AssemblyAI transcribe audio URL → lấy transcript tiếng Nhật.
-     * Bước 2: Gemini AI đọc transcript → sinh câu hỏi LISTENING.
-     * Câu hỏi sẽ được gắn audioUrl để Guest nghe file gốc.
-     */
     @Transactional
     public GenerateQuestionsResponse createListeningQuestionsFromAudio(UUID documentId, int questionCount) {
         PlacementDocument doc = documentRepository.findById(documentId)
@@ -232,15 +181,13 @@ public class PlacementDocumentService {
         documentRepository.save(doc);
 
         try {
-            // BƯỚC 1: Transcribe audio → lấy nội dung thật của file nghe
+
             String transcript = getOrCreateTranscript(doc);
             log.info("[PlacementDoc] Transcript length: {} chars for doc id={}", transcript.length(), documentId);
 
-            // BƯỚC 2: AI đọc transcript → sinh câu hỏi nghe
             String prompt = buildListeningPrompt(doc, transcript, questionCount);
             String rawResponse = geminiService.callGeminiWithPrompt(prompt);
 
-            // BƯỚC 3: Parse câu hỏi, gắn audio URL
             List<PlacementQuestion> questions = parseListeningQuestions(rawResponse, doc);
 
             if (questions.isEmpty()) {
@@ -264,14 +211,6 @@ public class PlacementDocumentService {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 5. AI TRỘN NHIỀU TÀI LIỆU
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Lấy ngẫu nhiên tối đa 5 tài liệu READING, trộn extracted text thật
-     * của nhiều tài liệu lại → AI sinh câu hỏi đa dạng từ nhiều nguồn.
-     */
     @Transactional
     public GenerateQuestionsResponse generateMixedQuestionsFromAllDocuments(int totalQuestions) {
         List<PlacementDocument> docs = documentRepository.findRandomDocumentsByType("READING", 5);
@@ -282,7 +221,6 @@ public class PlacementDocumentService {
 
         log.info("[PlacementDoc] Trộn {} tài liệu để generate {} câu", docs.size(), totalQuestions);
 
-        // Ghép extracted text của nhiều tài liệu lại
         StringBuilder combinedContent = new StringBuilder();
         for (PlacementDocument d : docs) {
             String content = buildReadingContentForAI(d);
@@ -308,10 +246,6 @@ public class PlacementDocumentService {
                 .build();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 6. LIST & DELETE
-    // ─────────────────────────────────────────────────────────────────────────
-
     public List<PlacementDocumentResponse> getAllDocuments() {
         return documentRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
     }
@@ -336,14 +270,6 @@ public class PlacementDocumentService {
         log.info("[PlacementDoc] Deleted doc id={}", documentId);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE: TỰ ĐỘNG ĐỌC NỘI DUNG FILE
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Tự động đọc text từ file PDF, DOC, hoặc DOCX.
-     * Không cần Staff nhập gì thêm.
-     */
     private String extractTextFromDocument(MultipartFile file) {
         String filename = Objects.requireNonNull(file.getOriginalFilename()).toLowerCase();
         try (InputStream is = file.getInputStream()) {
@@ -354,7 +280,7 @@ public class PlacementDocumentService {
             } else if (filename.endsWith(".doc")) {
                 return extractFromDoc(is);
             } else {
-                // Fallback: thử PDF parser
+
                 return extractFromPdf(file.getBytes());
             }
         } catch (Exception e) {
@@ -363,7 +289,6 @@ public class PlacementDocumentService {
         }
     }
 
-    /** Extract text từ PDF bằng PDFBox */
     private String extractFromPdf(byte[] bytes) throws IOException {
         try (PDDocument pdf = Loader.loadPDF(bytes)) {
             PDFTextStripper stripper = new PDFTextStripper();
@@ -374,7 +299,6 @@ public class PlacementDocumentService {
         }
     }
 
-    /** Extract text từ DOCX bằng Apache POI */
     private String extractFromDocx(InputStream is) throws IOException {
         try (XWPFDocument docx = new XWPFDocument(is);
              XWPFWordExtractor extractor = new XWPFWordExtractor(docx)) {
@@ -384,7 +308,6 @@ public class PlacementDocumentService {
         }
     }
 
-    /** Extract text từ DOC (legacy) bằng Apache POI */
     private String extractFromDoc(InputStream is) throws IOException {
         try (HWPFDocument doc = new HWPFDocument(is);
              WordExtractor extractor = new WordExtractor(doc)) {
@@ -394,24 +317,16 @@ public class PlacementDocumentService {
         }
     }
 
-    /**
-     * Lấy transcript của audio:
-     * - Nếu đã cache trong DB → dùng luôn (tránh gọi AssemblyAI nhiều lần)
-     * - Nếu chưa có → gọi AssemblyAI transcribe từ Cloudinary URL → cache lại
-     */
     private String getOrCreateTranscript(PlacementDocument doc) {
-        // Cache hit: đã có transcript trong DB
         if (doc.getExtractedContent() != null && !doc.getExtractedContent().isBlank()) {
             log.info("[PlacementDoc] Dùng transcript đã cache cho doc id={}", doc.getId());
             return doc.getExtractedContent();
         }
 
-        // Cache miss: gọi AssemblyAI transcribe audio (tiếng Nhật)
         log.info("[PlacementDoc] Transcribing audio via AssemblyAI: {}", doc.getFileUrl());
         try {
             String transcript = assemblyAIService.transcribeVideo(doc.getFileUrl(), "ja");
             if (transcript != null && !transcript.isBlank()) {
-                // Cache transcript vào DB để lần sau không gọi lại
                 doc.setExtractedContent(truncate(transcript, MAX_TEXT_CHARS));
                 documentRepository.save(doc);
                 log.info("[PlacementDoc] AssemblyAI transcript cached ({} chars)", transcript.length());
@@ -420,16 +335,9 @@ public class PlacementDocumentService {
         } catch (Exception e) {
             log.warn("[PlacementDoc] AssemblyAI transcription failed: {}", e.getMessage());
         }
-
-        // Fallback: dùng title + description nếu transcription thất bại
         return buildFallbackContent(doc);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE: BUILD CONTENT CHO AI
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /** Lấy nội dung để gửi AI: ưu tiên extracted text, fallback dùng title+description */
     private String buildReadingContentForAI(PlacementDocument doc) {
         if (doc.getExtractedContent() != null && !doc.getExtractedContent().isBlank()) {
             return doc.getExtractedContent();
@@ -448,10 +356,6 @@ public class PlacementDocumentService {
         }
         return sb.toString();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE: PROMPT BUILDERS
-    // ─────────────────────────────────────────────────────────────────────────
 
     private String buildReadingPrompt(PlacementDocument doc, String content, int count) {
         String levelInfo = doc.getTargetLevel() != null ? doc.getTargetLevel().name() : "N3-N4";
@@ -564,10 +468,6 @@ public class PlacementDocumentService {
         );
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE: PARSERS
-    // ─────────────────────────────────────────────────────────────────────────
-
     private List<PlacementQuestion> parseGeneratedQuestions(String rawJson, PlacementDocument sourceDoc) {
         List<PlacementQuestion> result = new ArrayList<>();
         try {
@@ -613,10 +513,6 @@ public class PlacementDocumentService {
         });
         return result;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PRIVATE: VALIDATORS & UTILS
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void validateDocumentFile(MultipartFile file) {
         if (file == null || file.isEmpty())

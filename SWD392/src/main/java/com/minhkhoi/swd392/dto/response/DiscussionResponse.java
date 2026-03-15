@@ -17,8 +17,8 @@ public class DiscussionResponse {
     private String lesson;
     private String content;
     private String timestamp;
-    private String type; // QUESTION, DISCUSSION
-    private String status; // UNANSWERED, ANSWERED, READ
+    private String type;
+    private String status;
     private Integer likes;
     private String adminReply;
 

@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Response sau khi AI generate câu hỏi từ tài liệu.
- */
 @Data
 @Builder
 @NoArgsConstructor

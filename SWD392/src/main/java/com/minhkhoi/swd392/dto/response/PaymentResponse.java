@@ -26,5 +26,5 @@ public class PaymentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private String notes;
-    private String paymentUrl; // For pending payments
+    private String paymentUrl;
 }

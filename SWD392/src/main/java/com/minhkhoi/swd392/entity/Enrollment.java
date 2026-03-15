@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "enrollments", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "course_id"}) // ✅ FIX: Ngăn user đăng ký trùng khóa học
+        @UniqueConstraint(columnNames = {"user_id", "course_id"})
 })
 @Getter
 @Setter
@@ -44,7 +44,10 @@ public class Enrollment {
     @Column(name = "status")
     private EnrollmentStatus status;
 
-    // Các quan hệ OneToMany giữ nguyên
+    @Column(name = "enrollments_completed_at")
+    private LocalDateTime completedAt;
+
+
     @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Progress> progressList;
 
@@ -52,8 +55,8 @@ public class Enrollment {
     private List<Payment> payments;
 
     public enum EnrollmentType {
-        SUBSCRIPTION,  // đăng ký bằng gói
-        SINGLE_PURCHASE // mua lẻ khóa
+        SUBSCRIPTION,
+        SINGLE_PURCHASE
     }
 }
 

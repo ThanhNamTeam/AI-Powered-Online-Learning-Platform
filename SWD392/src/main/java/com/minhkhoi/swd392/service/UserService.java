@@ -62,22 +62,14 @@ public class UserService {
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
-    /**
-     * Send OTP to email for registration
-     */
     public void sendOtpForRegistration(String email) {
-        // Check if email already exists
         if (userRepository.existsByEmail(email)) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS, email);
         }
 
-        // Generate 6-digit OTP
         String otpCode = generateOtpCode();
-
-        // Calculate expiration time (5 minutes)
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(5);
 
-        // Save OTP to database
         OtpVerification otp = OtpVerification.builder()
                 .email(email)
                 .otpCode(otpCode)
@@ -86,46 +78,33 @@ public class UserService {
                 .build();
 
         otpRepository.save(otp);
-
-        // Send OTP via email
         sendOtpEmail(email, otpCode);
-
-        log.info("OTP generated and sent to email: {}", email);
     }
 
-    /**
-     * Create a new user with OTP verification
-     */
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
-        // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS, request.getEmail());
         }
 
-        // Validate role - only allow STUDENT or INSTRUCTOR for registration
         if (request.getRole() != User.Role.STUDENT && request.getRole() != User.Role.INSTRUCTOR) {
             throw new AppException(ErrorCode.INVALID_INPUT, 
                 "Only STUDENT and INSTRUCTOR roles are allowed for registration");
         }
 
-        // Verify OTP
         OtpVerification otp = otpRepository
                 .findByEmailAndOtpCodeAndIsVerifiedFalseAndExpiresAtAfter(
                         request.getEmail(), request.getOtpCode(), LocalDateTime.now())
                 .orElseThrow(() -> new AppException(ErrorCode.OTP_INVALID));
 
-        // Mark OTP as verified
         otp.setIsVerified(true);
         otp.setVerifiedAt(LocalDateTime.now());
         otpRepository.save(otp);
 
-        // Create user entity with role from request (mapped automatically)
         User user = userMapper.toUser(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
 
-        // Save user
         User savedUser = userRepository.save(user);
 
         AISubscription freeSub = AISubscription.builder()
@@ -140,27 +119,16 @@ public class UserService {
 
         aiSubscriptionRepository.save(freeSub);
 
-        // Send welcome email
         sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
-
-        log.info("User created successfully with email: {} and role: {}", 
-            savedUser.getEmail(), savedUser.getRole());
-
         return userMapper.toUserResponse(savedUser);
     }
 
-    /**
-     * Generate random 6-digit OTP code
-     */
     private String generateOtpCode() {
         Random random = new Random();
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);
     }
 
-    /**
-     * Send OTP email
-     */
     private void sendOtpEmail(String toEmail, String otpCode) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -180,16 +148,12 @@ public class UserService {
                 """, otpCode));
 
             mailSender.send(message);
-            log.info("OTP email sent successfully to: {}", toEmail);
         } catch (Exception e) {
             log.error("Failed to send OTP email to: {}", toEmail, e);
             throw new AppException(ErrorCode.OTP_SEND_FAILED);
         }
     }
 
-    /**
-     * Send welcome email
-     */
     private void sendWelcomeEmail(String toEmail, String fullName) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -208,15 +172,11 @@ public class UserService {
                 """, fullName));
 
             mailSender.send(message);
-            log.info("Welcome email sent successfully to: {}", toEmail);
         } catch (Exception e) {
             log.error("Failed to send welcome email to: {}", toEmail, e);
         }
     }
 
-    /**
-     * Get user by ID
-     */
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, userId));
@@ -225,9 +185,6 @@ public class UserService {
         return response;
     }
 
-    /**
-     * Get user by email
-     */
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
@@ -236,29 +193,22 @@ public class UserService {
         return response;
     }
 
-    /**
-     * Get all users
-     */
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Update nhưng mà mới làm cho admin
-     */
     @Transactional
     public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, userId));
 
-        // Update fields using Mapper
+
         userMapper.updateUserFromRequest(request, user);
 
-        // Handle special fields
+
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            // Check if new email already exists for another user
             if (!user.getEmail().equals(request.getEmail()) &&
                 userRepository.existsByEmail(request.getEmail())) {
                 throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS, request.getEmail());
@@ -269,15 +219,10 @@ public class UserService {
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
-
-        // Save and return
         User updatedUser = userRepository.save(user);
         return userMapper.toUserResponse(updatedUser);
     }
 
-    /**
-     * Delete user
-     */
     @Transactional
     public void deleteUser(UUID userId) {
         if (!userRepository.existsById(userId)) {
@@ -286,16 +231,10 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
-    /**
-     * Check if user exists by email
-     */
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
-    /**
-     * Authenticate user and generate JWT token
-     */
     @Transactional
     public AuthTokenPair login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -305,19 +244,15 @@ public class UserService {
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        // Generate access token and refresh token
         String accessToken = jwtUtil.generateToken(user);
         TokenPayload refreshPayload = jwtUtil.generateRefreshToken(user);
 
-        // Save refresh token to database
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(refreshPayload.getToken())
                 .user(user)
-                .expiresAt(LocalDateTime.now().plusDays(7)) // 7 days expiration
+                .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
         refreshTokenRepository.save(refreshToken);
-
-        log.info("User logged in successfully: {}", user.getEmail());
 
         return AuthTokenPair.builder()
                 .accessToken(accessToken)
@@ -325,20 +260,12 @@ public class UserService {
                 .build();
     }
 
-    /**
-     * Refresh access token using refresh token
-     * Uses Rotating Refresh Token pattern for better security
-     */
     @Transactional
     public AuthTokenPair refreshToken(String refreshToken) {
-
-        //  Validate JWT trước
         if (!jwtUtil.isTokenValid(refreshToken)) {
             throw new AppException(ErrorCode.REFRESH_TOKEN_INVALID);
         }
 
-
-        // Lookup DB bằng jti
         RefreshToken oldRefreshToken = refreshTokenRepository
                 .findByTokenAndRevokedFalseAndExpiresAtAfter(
                         refreshToken,
@@ -347,16 +274,12 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_INVALID));
 
         User user = oldRefreshToken.getUser();
-
-        // Revoke refresh token cũ
         oldRefreshToken.setRevoked(true);
         refreshTokenRepository.save(oldRefreshToken);
 
-        //  Generate token mới
         String newAccessToken = jwtUtil.generateToken(user);
         TokenPayload newRefreshPayload = jwtUtil.generateRefreshToken(user);
 
-        // Save refresh token mới
         RefreshToken newRefreshToken = RefreshToken.builder()
                 .token(newRefreshPayload.getToken())
                 .user(user)
@@ -373,15 +296,10 @@ public class UserService {
     }
 
 
-    /**
-     * Validate access token
-     */
     public ValidateTokenResponse validateToken(String token) {
         try {
-            // Extract username (email) from token
             String username = jwtUtil.extractUsername(token);
 
-            // Check if token is expired
             if (jwtUtil.isTokenExpired(token)) {
                 return ValidateTokenResponse.builder()
                         .valid(false)
@@ -392,11 +310,9 @@ public class UserService {
                         .build();
             }
 
-            // Find user by email
             User user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, username));
 
-            // Validate token with user details
             if (jwtUtil.isTokenValid(token, user)) {
                 return ValidateTokenResponse.builder()
                         .valid(true)
@@ -438,12 +354,10 @@ public class UserService {
                 .expiration(expiration.getTime() - System.currentTimeMillis())
                 .build();
 
-        log.info("SAVE REDIS JTI = {}", jwtInfo.getJwtId());
         redisTokenRepository.save(redisToken);
     }
 
     public void processForgotPassword(String email) {
-        // Check if user exists
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
         String token = UUID.randomUUID().toString();
@@ -451,24 +365,17 @@ public class UserService {
         user.setResetPasswordToken(token);
         user.setTokenExpirationTime(LocalDateTime.now().plusMinutes(5));
         userRepository.save(user);
-
-        // Send reset password email
         String resetPasswordUrl = frontendUrl + "/reset-password?token=" + token;
         emailService.sendResetPasswordEmail(email, resetPasswordUrl);
 
     }
 
     public void processResetPassword(String token, String newPassword) {
-        // Find user by reset password token
         User user = userRepository.findByResetPasswordToken(token)
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_INPUT, "Invalid reset password token"));
-
-        // Check if token is expired
         if (user.getTokenExpirationTime() == null || user.getTokenExpirationTime().isBefore(LocalDateTime.now())) {
             throw new AppException(ErrorCode.INVALID_INPUT, "Reset password token has expired");
         }
-
-        // Update user's password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setResetPasswordToken(null);
         user.setTokenExpirationTime(null);
@@ -476,55 +383,38 @@ public class UserService {
     }
 
     public void updateAvatarUrl(String url) {
-
-        // lấy userid từ token
         var context = SecurityContextHolder.getContext();
         String email = Objects.requireNonNull(context.getAuthentication()).getName();
 
-        // tìm user
         User user = userRepository.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
-
-        // cập nhật avatar
         user.setImageUrl(url);
-
-        // lưu lại
         userRepository.save(user);
     }
 
-    // NGƯỜI DÙNG TỰ UPDATE CHÍNH MÌNH
     public void updateUserInfo(UpdateUserInfoRequest request) {
-
-        // lấy userid từ token
         var context = SecurityContextHolder.getContext();
         String email = Objects.requireNonNull(context.getAuthentication()).getName();
 
-        // tìm user
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
 
-        // cập nhật thông tin vào ENTITY
         user.setFullName(request.getFullName());
-        user.setBirthOfDate(request.getBirthOfDate()); // LocalDate
+        user.setBirthOfDate(request.getBirthOfDate());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setAddress(request.getAddress());
         user.setNotes(request.getNotes());
         user.setGender(request.getGender());
 
-        // lưu lại
         userRepository.save(user);
     }
 
     public void changePassword(ChangePasswordRequest request) {
-
-        // lấy userid từ token
         var context = SecurityContextHolder.getContext();
         String email = Objects.requireNonNull(context.getAuthentication()).getName();
 
-        // tìm user
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
 
-        // kiểm tra mật khẩu cũ có đúng không
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.WRONG_OLD_PASSWORD);
         }
@@ -537,14 +427,10 @@ public class UserService {
             throw new AppException(ErrorCode.CONFIRM_PASSWORD_MISMATCH);
         }
 
-        // cập nhật mật khẩu mới
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-
-        // lưu lại
         userRepository.save(user);
     }
 
-    /** Lấy thông tin user đang đăng nhập (từ SecurityContext) */
     public UserResponse getCurrentUser() {
         var context = SecurityContextHolder.getContext();
         String email = Objects.requireNonNull(context.getAuthentication()).getName();
@@ -562,14 +448,12 @@ public class UserService {
             Long totalDurationSeconds = progressRepository.sumStudyTimeByUserEmail(email);
 
             response.setCompletedLessonsCount((int) completedLessons);
-            // Làm tròn 1 chữ số thập phân cho đẹp như template (24.5h)
             double hours = (totalDurationSeconds != null) ? totalDurationSeconds / 3600.0 : 0.0;
             response.setStudyTimeHours(Math.round(hours * 10.0) / 10.0);
         } else if (response.getRole() == User.Role.STAFF) {
             response.setHandledCoursesCount(courseRepository.countByHandledByStaff_Email(email));
             
-            // For pendingModerationCount, it's global for now
-            response.setPendingModerationCount(courseRepository.countByStatusIn(java.util.List.of(
+            response.setPendingModerationCount(courseRepository.countByStatusIn(List.of(
                 CourseStatus.PENDING_APPROVAL,
                 CourseStatus.PENDING_UPDATE,
                 CourseStatus.PENDING_DELETION
@@ -578,15 +462,11 @@ public class UserService {
             response.setCreatedCoursesCount(courseRepository.countByConstructor_Email(email));
             response.setTotalStudentsCount(enrollmentRepository.countByCourse_Constructor_Email(email));
             
-            java.math.BigDecimal revenue = paymentRepository.sumRevenueByInstructorEmail(email);
+            BigDecimal revenue = paymentRepository.sumRevenueByInstructorEmail(email);
             response.setTotalRevenue(revenue != null ? revenue.doubleValue() : 0.0);
         }
     }
 
-    /**
-     * Cập nhật điểm XP, streak và số badge của user.
-     * Tự động tính level mới dựa theo công thức: nextLevelXp = 1000 + (level-1)*500
-     */
     @Transactional
     public UserResponse updateUserStats(UpdateUserStatsRequest request) {
         var context = SecurityContextHolder.getContext();
@@ -594,12 +474,10 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, email));
 
-        // Cộng XP delta
         if (request.getXpDelta() != null && request.getXpDelta() > 0) {
             int newXp = (user.getCurrentXp() != null ? user.getCurrentXp() : 0) + request.getXpDelta();
             int level  = user.getLevel() != null ? user.getLevel() : 1;
 
-            // Auto level-up loop
             while (true) {
                 int nextLevelXp = 1000 + (level - 1) * 500;
                 if (newXp >= nextLevelXp) {
@@ -613,19 +491,15 @@ public class UserService {
             user.setLevel(level);
         }
 
-        // Cập nhật streak
         if (request.getStreak() != null) {
             user.setStreak(request.getStreak());
         }
 
-        // Cập nhật total badges
         if (request.getTotalBadges() != null) {
             user.setTotalBadges(request.getTotalBadges());
         }
 
         userRepository.save(user);
-        log.info("Stats updated for user: {} | level={} xp={} streak={}",
-                email, user.getLevel(), user.getCurrentXp(), user.getStreak());
 
         UserResponse response = UserResponse.fromEntity(user);
         populateUserStats(response, email);
