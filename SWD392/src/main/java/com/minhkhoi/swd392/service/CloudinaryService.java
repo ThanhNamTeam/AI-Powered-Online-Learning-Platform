@@ -24,29 +24,22 @@ public class CloudinaryService {
     @Value("${cloudinary.folder}")
     private String folder;
 
-    /**
-     * Upload any file to Cloudinary
-     * @param file File to upload
-     * @param resourceType "image", "video", or "raw"
-     * @return Map containing upload result
-     */
+
     public Map<String, Object> uploadFile(MultipartFile file, String resourceType) {
-        log.info("Starting {} upload to Cloudinary: {}", resourceType, file.getOriginalFilename());
         try {
-            String originalFilename = file.getOriginalFilename(); // vd: tailieu.pdf
+            String originalFilename = file.getOriginalFilename();
 
             Map<String, Object> uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
-                            "resource_type", resourceType,     // raw
-                            "folder", folder,                  // swd392-videos/
-                            "use_filename", true,              // giữ tên file gốc
-                            "unique_filename", false,          // ✅ TẮT random tên
-                            "public_id", folder + "/" + originalFilename // ✅ giữ luôn .pdf
+                            "resource_type", resourceType,
+                            "folder", folder,
+                            "use_filename", true,
+                            "unique_filename", false,
+                            "public_id", folder + "/" + originalFilename
                     )
             );
 
-            log.info("{} uploaded successfully. Public ID: {}", resourceType, uploadResult.get("public_id"));
             return uploadResult;
         } catch (IOException e) {
             log.error("Cloudinary upload failed", e);
@@ -55,19 +48,12 @@ public class CloudinaryService {
     }
 
 
-    /**
-     * Upload video specifically (with validation)
-     */
     public Map<String, Object> uploadVideo(MultipartFile file) {
         validateVideoFile(file);
         return uploadFile(file, "video");
     }
 
-    /**
-     * Delete file from Cloudinary
-     * @param publicId Public ID of the file to delete
-     * @param resourceType "image", "video", or "raw"
-     */
+
     public void deleteFile(String publicId, String resourceType) {
         log.info("Deleting {} from Cloudinary: {}", resourceType, publicId);
         try {
@@ -100,11 +86,6 @@ public class CloudinaryService {
         }
     }
 
-    public String getUrl(String publicId, String resourceType) {
-        return cloudinary.url()
-            .resourceType(resourceType)
-            .generate(publicId);
-    }
 
     public String uploadImage(MultipartFile file) {
         if (file.isEmpty()) {

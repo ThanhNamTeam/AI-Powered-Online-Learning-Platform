@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * DTO response thông tin tài liệu placement test.
- */
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,7 +28,5 @@ public class PlacementDocumentResponse {
     private Integer generatedQuestionCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    /** Tên Staff upload */
     private String uploadedByName;
 }

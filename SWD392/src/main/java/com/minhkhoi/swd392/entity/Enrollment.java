@@ -44,7 +44,7 @@ public class Enrollment {
     @Column(name = "status")
     private EnrollmentStatus status;
 
-    // Các quan hệ OneToMany giữ nguyên
+
     @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Progress> progressList;
 
@@ -52,8 +52,8 @@ public class Enrollment {
     private List<Payment> payments;
 
     public enum EnrollmentType {
-        SUBSCRIPTION,  // đăng ký bằng gói
-        SINGLE_PURCHASE // mua lẻ khóa
+        SUBSCRIPTION,
+        SINGLE_PURCHASE
     }
 }
 

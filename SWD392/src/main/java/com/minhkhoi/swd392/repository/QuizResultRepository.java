@@ -11,7 +11,5 @@ import java.util.UUID;
 
 @Repository
 public interface QuizResultRepository extends JpaRepository<QuizResult, UUID> {
-    List<QuizResult> findByUserAndQuizOrderByCompletedAtDesc(User user, Quiz quiz);
-    List<QuizResult> findByUser(User user);
     List<QuizResult> findByUser_UserId(String userId);
 }

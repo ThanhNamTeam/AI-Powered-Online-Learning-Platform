@@ -10,6 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
-    List<Review> findByCourseCourseId(UUID courseId);
     Optional<Review> findByUserUserIdAndCourseCourseId(String userId, UUID courseId);
 }

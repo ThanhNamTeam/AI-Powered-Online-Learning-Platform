@@ -30,7 +30,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints - Authentication not required
                         .requestMatchers(
                                 "/api/auth/send-otp",
                                 "/api/auth/login",
@@ -38,32 +37,29 @@ public class SecurityConfig {
                                 "/api/auth/validate-token",
                                 "/api/accounts",
                                 "/api/accounts/exists/**",
-                                "/api/videos/**",  // Video upload endpoints (for testing)
+                                "/api/videos/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api/accounts/forgot-password",
                                 "/api/accounts/forgot-password",
                                 "/api/accounts/reset-password",
-                                "/momo-test.html",               // Payment Test Page
-                                "/payment-result.html",          // Payment Result Page
-                                "/api/identity/payment/momo/callback", // MOMO IPN Callback
-                                "/api/identity/payment/momo/return",    // MOMO Return URL (redirect)
-                                "/api/identity/payment/vnpay/callback", // VNPAY Callback
-                                "/api/courses/all-course/public",        // Public Course List
-                                "/api/placement-test/**"                  // Placement Test (Guest access)
+                                "/momo-test.html",
+                                "/payment-result.html",
+                                "/api/identity/payment/momo/callback",
+                                "/api/identity/payment/momo/return",
+                                "/api/identity/payment/vnpay/callback",
+                                "/api/courses/all-course/public",
+                                "/api/placement-test/**"
                         ).permitAll()
-                        // Staff endpoints - yêu cầu STAFF hoặc ADMIN role
                         .requestMatchers(
-                                "/api/placement-documents/**"             // Quản lý tài liệu Placement Test
+                                "/api/placement-documents/**"
                         ).authenticated()
-                        // Protected endpoints - Authentication required (use Authorize button in Swagger)
                         .requestMatchers(
                                 "/api/accounts/me",
                                 "/api/accounts/{userId}",
                                 "/api/accounts/email/**"
                         ).authenticated()
-                        // All other requests need authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

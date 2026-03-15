@@ -19,8 +19,7 @@ public class QuizSubmissionResponse {
     private Integer totalQuestions;
     private Integer correctAnswersCount;
     private Double score;
-    
-    /** Detailed review for each question */
+
     private List<QuestionReviewDetail> questionDetails;
 
     @Data

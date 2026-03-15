@@ -30,8 +30,6 @@ public class ModuleService {
 
     @Transactional
     public ModuleResponse createModule(CreateModuleRequest request) {
-        log.info("Creating new module: {} for course: {}", request.getTitle(), request.getCourseId());
-
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
@@ -39,7 +37,6 @@ public class ModuleService {
 
         Module module = moduleMapper.toModule(request, course);
         
-        // If course is in EDITING mode, mark new module as pending
         if (course.getStatus() == CourseStatus.EDITING) {
             module.setIsPending(true);
         }
@@ -81,13 +78,10 @@ public class ModuleService {
         validateCourseMutable(module.getCourse());
 
         if (module.getCourse().getStatus() == CourseStatus.EDITING) {
-            // Instead of deleting, mark for deletion to allow rollback
             module.setIsPendingDeletion(true);
             moduleRepository.save(module);
-            log.info("Module {} marked for deletion (pending approval)", moduleId);
         } else {
             moduleRepository.delete(module);
-            log.info("Module {} deleted permanently", moduleId);
         }
     }
 

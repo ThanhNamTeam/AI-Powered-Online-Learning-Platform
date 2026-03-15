@@ -33,7 +33,7 @@ public class Payment {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_type", nullable = true) // COURSE hoặc SUBSCRIPTION
+    @Column(name = "payment_type", nullable = false)
     @Builder.Default
     private PaymentType type = PaymentType.COURSE;
 
@@ -75,9 +75,9 @@ public class Payment {
         VNPAY,
         MOMO
     }
-    // Thêm Enum mới cho Type
+
     public enum PaymentType {
-        COURSE,         // Mua lẻ
-        SUBSCRIPTION    // Mua gói
+        COURSE,
+        SUBSCRIPTION
     }
 }

@@ -20,13 +20,11 @@ public class ReviewService {
     private final GeminiService geminiService;
 
     public void submitReview(User user, ReviewRequest request) {
-        // 1. Check enrollment
         Enrollment enrollment = enrollmentRepository.findByUserAndCourse(user, 
                 courseRepository.findById(request.getCourseId())
                         .orElseThrow(() -> new RuntimeException("Course not found")))
                 .orElseThrow(() -> new RuntimeException("You are not enrolled in this course"));
 
-        // 2. Check progress > 50%
         long completedLessons = enrollment.getProgressList().stream().filter(Progress::getIsCompleted).count();
         long totalLessons = enrollment.getCourse().getModules().stream()
                 .flatMap(m -> m.getLessons().stream())
@@ -36,10 +34,8 @@ public class ReviewService {
             throw new RuntimeException("Bạn cần hoàn thành ít nhất 50% khóa học để thực hiện đánh giá.");
         }
 
-        // 3. AI Content Moderation
         moderateComment(request.getComment());
 
-        // 4. Save review
         Review review = reviewRepository.findByUserUserIdAndCourseCourseId(user.getUserId(), request.getCourseId())
                 .orElse(new Review());
         
@@ -58,15 +54,12 @@ public class ReviewService {
         
         try {
             String result = geminiService.callGeminiWithPrompt(prompt).trim().toUpperCase();
-            log.info("AI Moderation result for comment: {}", result);
             if (result.contains("REJECTED")) {
                 throw new RuntimeException("Bình luận của bạn chứa nội dung không phù hợp và bị từ chối bởi hệ thống kiểm duyệt AI.");
             }
         } catch (Exception e) {
             log.error("AI Moderation failed: {}", e.getMessage());
-            // Fallback: If AI fails, we can either allow or use a basic keyword filter. 
-            // For safety, let's just log and allow if it's a technical error, or throw error if we want strictness.
-            if (e.getMessage().contains("Bình luận của bạn chứa nội dung không phù hợp")) {
+            if (e.getMessage() != null && e.getMessage().contains("Bình luận của bạn chứa nội dung không phù hợp")) {
                 throw (RuntimeException) e;
             }
         }

@@ -4,7 +4,6 @@ import com.minhkhoi.swd392.constant.CourseStatus;
 import com.minhkhoi.swd392.dto.response.AdminDashboardResponse;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
 import com.minhkhoi.swd392.dto.response.CourseResponse;
-import com.minhkhoi.swd392.dto.response.UserResponse;
 import com.minhkhoi.swd392.entity.Course;
 import com.minhkhoi.swd392.entity.User;
 import com.minhkhoi.swd392.repository.CourseRepository;
@@ -35,9 +34,7 @@ public class AdminDashboardController {
     private final CourseRepository      courseRepository;
     private final EnrollmentRepository  enrollmentRepository;
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/admin/dashboard  — tổng hợp stats + charts
-    // ────────────────────────────────────────────────────────────────────────
+
     @GetMapping("/dashboard")
     @Operation(summary = "Admin Dashboard Statistics",
                description = "Overview, user growth, revenue, course distribution, pending courses.",
@@ -48,9 +45,7 @@ public class AdminDashboardController {
         );
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/admin/users  — Danh sách tất cả người dùng (kèm số khóa học)
-    // ────────────────────────────────────────────────────────────────────────
+
     @GetMapping("/users")
     @Operation(summary = "Get all users (Admin)",
                description = "Returns all users with enrollment count per user.",
@@ -58,7 +53,7 @@ public class AdminDashboardController {
     public ResponseEntity<ApiResponse<List<AdminUserItem>>> getAllUsers() {
         List<User> users = userRepository.findAll();
         List<AdminUserItem> result = users.stream()
-                .filter(u -> u.getRole() != User.Role.ADMIN) // ẩn ADMIN account
+                .filter(u -> u.getRole() != User.Role.ADMIN)
                 .map(u -> {
                     long courseCount = u.getRole() == User.Role.STUDENT
                             ? (u.getEnrollments() != null ? u.getEnrollments().size() : 0)
@@ -78,9 +73,6 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success("Users retrieved", result));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/admin/users/{userId}/toggle-status  — bật/tắt tài khoản
-    // ────────────────────────────────────────────────────────────────────────
     @PutMapping("/users/{userId}/toggle-status")
     @Operation(summary = "Toggle user account status",
                description = "Enable or disable a user account.",
@@ -94,9 +86,6 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success("Đã " + msg + " tài khoản thành công", null));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // DELETE /api/admin/users/{userId}  — xóa người dùng
-    // ────────────────────────────────────────────────────────────────────────
     @DeleteMapping("/users/{userId}")
     @Operation(summary = "Delete user (Admin)",
                security = @SecurityRequirement(name = "bearerAuth"))
@@ -107,9 +96,6 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success("Đã xóa người dùng thành công", null));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/admin/courses  — Danh sách tất cả khóa học
-    // ────────────────────────────────────────────────────────────────────────
     @GetMapping("/courses")
     @Operation(summary = "Get all courses (Admin)",
                description = "Returns all courses with status. Optional filter by status.",
@@ -137,9 +123,6 @@ public class AdminDashboardController {
         return ResponseEntity.ok(ApiResponse.success("Courses retrieved", result));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/admin/courses/{courseId}/verify  — Duyệt / Từ chối khóa học
-    // ────────────────────────────────────────────────────────────────────────
     @PutMapping("/courses/{courseId}/verify")
     @Operation(summary = "Approve or reject a course (Admin)",
                description = "Change course status to APPROVED or REJECTED.",
@@ -170,9 +153,6 @@ public class AdminDashboardController {
         ));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Inner DTO: AdminUserItem
-    // ────────────────────────────────────────────────────────────────────────
     @lombok.Data
     @lombok.Builder
     @lombok.NoArgsConstructor

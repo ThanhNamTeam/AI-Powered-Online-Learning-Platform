@@ -2,7 +2,6 @@ package com.minhkhoi.swd392.controller;
 
 import com.minhkhoi.swd392.dto.AuthTokenPair;
 import com.minhkhoi.swd392.dto.request.LoginRequest;
-import com.minhkhoi.swd392.dto.request.RefreshTokenRequest;
 import com.minhkhoi.swd392.dto.request.SendOtpRequest;
 import com.minhkhoi.swd392.dto.request.ValidateTokenRequest;
 import com.minhkhoi.swd392.dto.response.ApiResponse;
@@ -47,7 +46,7 @@ public class AuthenticationController {
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
-                .maxAge(7 * 24 * 60 * 60) // 7 days
+                .maxAge(7 * 24 * 60 * 60)
                 .sameSite("Lax")
                 .build();
 
@@ -115,7 +114,6 @@ public class AuthenticationController {
     public ResponseEntity<ApiResponse<ValidateTokenResponse>> validateToken(@Valid @RequestBody ValidateTokenRequest request) {
         ValidateTokenResponse response = userService.validateToken(request.getToken());
 
-        // Nếu token xàm, trả về status 401 Unauthorized
         if (!response.isValid()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.<ValidateTokenResponse>builder()

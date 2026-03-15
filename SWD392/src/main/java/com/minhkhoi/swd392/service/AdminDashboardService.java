@@ -35,7 +35,6 @@ public class AdminDashboardService {
         List<Course>  allCourses  = courseRepository.findAll();
         List<Payment> allPayments = paymentRepository.findAll();
 
-        // ── Tổng quan ───────────────────────────────────────────────────────
         long totalStudents    = allUsers.stream().filter(u -> u.getRole() == User.Role.STUDENT).count();
         long totalInstructors = allUsers.stream().filter(u -> u.getRole() == User.Role.INSTRUCTOR).count();
 
@@ -51,19 +50,15 @@ public class AdminDashboardService {
 
         long totalEnrollments = enrollmentRepository.count();
 
-        // ── Tăng trưởng người dùng — 6 tháng gần nhất ──────────────────────
         List<AdminDashboardResponse.MonthlyUserStat> userGrowth =
                 buildUserGrowth(allUsers);
 
-        // ── Doanh thu theo tháng — 6 tháng gần nhất ─────────────────────────
         List<AdminDashboardResponse.MonthlyRevenueStat> revenueGrowth =
                 buildRevenueGrowth(allPayments);
 
-        // ── Phân bố khóa học theo JLPT Level ────────────────────────────────
         List<AdminDashboardResponse.CourseLevelStat> courseByLevel =
                 buildCourseLevelStats(allCourses);
 
-        // ── Khóa học đang chờ duyệt ──────────────────────────────────────────
         List<AdminDashboardResponse.PendingCourseInfo> pendingCourses = allCourses.stream()
                 .filter(c -> c.getStatus() == CourseStatus.PENDING_APPROVAL)
                 .sorted(Comparator.comparing(
@@ -98,9 +93,7 @@ public class AdminDashboardService {
                 .build();
     }
 
-    // ── Helper: User growth theo tháng ──────────────────────────────────────
     private List<AdminDashboardResponse.MonthlyUserStat> buildUserGrowth(List<User> users) {
-        // Lấy 6 tháng gần nhất
         LocalDateTime now = LocalDateTime.now();
         List<AdminDashboardResponse.MonthlyUserStat> result = new ArrayList<>();
 
@@ -132,7 +125,6 @@ public class AdminDashboardService {
         return result;
     }
 
-    // ── Helper: Revenue theo tháng ──────────────────────────────────────────
     private List<AdminDashboardResponse.MonthlyRevenueStat> buildRevenueGrowth(List<Payment> payments) {
         LocalDateTime now = LocalDateTime.now();
         List<AdminDashboardResponse.MonthlyRevenueStat> result = new ArrayList<>();
@@ -159,7 +151,6 @@ public class AdminDashboardService {
         return result;
     }
 
-    // ── Helper: Course by JLPT Level ────────────────────────────────────────
     private List<AdminDashboardResponse.CourseLevelStat> buildCourseLevelStats(List<Course> courses) {
         Map<String, Long> countMap = courses.stream()
                 .collect(Collectors.groupingBy(
@@ -167,7 +158,6 @@ public class AdminDashboardService {
                         Collectors.counting()
                 ));
 
-        // Đảm bảo thứ tự hiển thị đẹp
         List<String> order = List.of("N5", "N4", "N3", "N2", "N1", "NONE");
         return order.stream()
                 .filter(countMap::containsKey)
@@ -178,8 +168,8 @@ public class AdminDashboardService {
                 .collect(Collectors.toList());
     }
 
-    // ── Helper: Format "T10/25", "T1/26" ────────────────────────────────────
     private String formatMonthLabel(LocalDateTime dt) {
         return "T" + dt.getMonthValue() + "/" + String.valueOf(dt.getYear()).substring(2);
     }
 }
+

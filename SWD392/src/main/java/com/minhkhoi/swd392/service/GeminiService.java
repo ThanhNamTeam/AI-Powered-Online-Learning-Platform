@@ -22,32 +22,22 @@ public class GeminiService {
     private static final String GEMINI_API_URL =
             "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
 
-    // 1️⃣ Giới hạn request song song: Chỉ cho phép 1 request chạy tại 1 thời điểm
     private final java.util.concurrent.Semaphore semaphore = new java.util.concurrent.Semaphore(1);
 
-    /**
-     * Generate quiz questions from content using Google Gemini.
-     *
-     * @param content The video transcript or document content.
-     * @return JSON string containing the generated questions
-     */
+
     public String generateQuizQuestions(String content) {
-        // 3️⃣ Fallback sớm nếu không có API key
         if (apiKey == null || apiKey.isEmpty() || apiKey.length() < 10) {
             log.warn("API Key is missing or invalid. Returning Mock Data immediately.");
             return getMockJapaneseQuizData();
         }
 
-        // 2️⃣ Cắt ngắn content (giới hạn token)
         String finalContent = content;
         if (finalContent.length() > 4000) {
             log.info("Content too long ({}), truncating to 4000 chars.", finalContent.length());
             finalContent = finalContent.substring(0, 4000) + "... [truncated]";
         }
 
-        log.info("Acquiring semaphore... (Waiting for slot)");
         try {
-            // Chặn tại đây nếu đang có request khác chạy
             semaphore.acquire();
         } catch (InterruptedException e) {
             log.error("Semaphore acquire interrupted", e);
@@ -55,17 +45,13 @@ public class GeminiService {
             return getMockJapaneseQuizData();
         }
 
-        log.info("Semaphore acquired. Calling Google Gemini AI with content size: {}", finalContent.length());
-        log.info("Using Gemini API Key: {}******", apiKey.substring(0, 5));
-
         try {
             int maxRetries = 3;
             int retryCount = 0;
-            long backoff = 2000; // 2 seconds
+            long backoff = 2000;
 
             while (true) {
                 try {
-                    // Build the prompt
                     String prompt = """
 You are an expert educational AI.
 Based on the provided context, generate 10 multiple-choice quiz questions.
@@ -99,7 +85,6 @@ REQUIREMENTS:
                     JSONObject requestBody = new JSONObject();
                     requestBody.put("contents", new JSONArray().put(contentObj));
 
-                    // Config local client with timeouts
                     okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
                             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                             .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
@@ -138,7 +123,6 @@ REQUIREMENTS:
                             return "[]"; 
                         }
 
-                        // Handle 429 Rate Limit
                         if (response.code() == 429) {
                             if (retryCount < maxRetries) {
                                 log.warn("Gemini API Rate Limit (429). Retrying {}/{} in {}ms...", retryCount + 1, maxRetries, backoff);
@@ -176,17 +160,6 @@ REQUIREMENTS:
         }
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    //  Generic Gemini caller – dùng cho bất kỳ prompt nào (Placement Test, ...)
-    // ────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Gọi Gemini AI với một prompt bất kỳ.
-     * Tái sử dụng semaphore và retry logic chống rate-limit.
-     *
-     * @param prompt Nội dung prompt cần gửi
-     * @return Phản hồi raw text từ Gemini (đã strip markdown fence)
-     */
     public String callGeminiWithPrompt(String prompt) {
         if (apiKey == null || apiKey.isEmpty() || apiKey.length() < 10) {
             log.warn("[Gemini] API Key không hợp lệ.");
@@ -407,7 +380,6 @@ REQUIREMENTS:
 
         if (raw == null) return "[]";
 
-// Remove markdown code blocks if present
 
         return raw.replace("```json", "")
 
@@ -421,7 +393,6 @@ REQUIREMENTS:
 
     private String extractTextFromGeminiResponse(String responseBody) {
 
-// Deprecated
 
         return "[]";
 

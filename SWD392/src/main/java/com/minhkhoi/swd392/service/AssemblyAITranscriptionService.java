@@ -10,10 +10,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Real transcription service using AssemblyAI
- * This service supports direct video URLs from Cloudinary
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -30,27 +26,19 @@ public class AssemblyAITranscriptionService {
             .writeTimeout(60, TimeUnit.SECONDS)
             .build();
 
-    /**
-     * Transcribe video from URL
-     * @param videoUrl URL of the video (supports Cloudinary URLs)
-     * @param language Language code (vi, en, ja, etc.)
-     * @return Transcript text
-     */
     public String transcribeVideo(String videoUrl, String language) throws IOException {
         log.info("Starting AssemblyAI transcription for URL: {}, language: {}", videoUrl, language);
 
-        // Check if API key is configured
         if (apiKey == null || apiKey.isEmpty() || apiKey.equals("your-assemblyai-api-key")) {
             log.warn("AssemblyAI API key not configured. Returning mock transcript.");
             return generateMockTranscript(language);
         }
 
         try {
-            // Step 1: Submit transcription job
+
             String transcriptId = submitTranscriptionJob(videoUrl, language);
             log.info("Transcription job submitted. ID: {}", transcriptId);
 
-            // Step 2: Poll for result
             String transcript = pollForTranscript(transcriptId);
             log.info("Transcription completed. Length: {} characters", transcript.length());
 
@@ -63,14 +51,12 @@ public class AssemblyAITranscriptionService {
         }
     }
 
-    /**
-     * Submit transcription job to AssemblyAI
-     */
+
     private String submitTranscriptionJob(String videoUrl, String language) throws IOException {
         JSONObject requestBody = new JSONObject();
         requestBody.put("audio_url", videoUrl);
         
-        // Map language code
+
         String languageCode = mapLanguageCode(language);
         if (languageCode != null) {
             requestBody.put("language_code", languageCode);
@@ -98,11 +84,9 @@ public class AssemblyAITranscriptionService {
         }
     }
 
-    /**
-     * Poll for transcription result
-     */
+
     private String pollForTranscript(String transcriptId) throws IOException, InterruptedException {
-        int maxAttempts = 60; // 5 minutes max (60 * 5 seconds)
+        int maxAttempts = 60;
         int attempt = 0;
 
         while (attempt < maxAttempts) {
@@ -130,8 +114,7 @@ public class AssemblyAITranscriptionService {
                         throw new IOException("Transcription failed: " + error);
                     case "queued":
                     case "processing":
-                        // Wait and retry
-                        Thread.sleep(5000); // Wait 5 seconds
+                        Thread.sleep(5000);
                         attempt++;
                         break;
                     default:
@@ -143,12 +126,9 @@ public class AssemblyAITranscriptionService {
         throw new IOException("Transcription timeout after " + maxAttempts + " attempts");
     }
 
-    /**
-     * Map language code to AssemblyAI format
-     */
     private String mapLanguageCode(String code) {
         if (code == null || code.equalsIgnoreCase("auto")) {
-            return null; // Auto-detect
+            return null;
         }
 
         return switch (code.toLowerCase()) {
@@ -167,13 +147,10 @@ public class AssemblyAITranscriptionService {
             case "ru" -> "ru";
             case "tr" -> "tr";
             case "uk" -> "uk";
-            default -> "en"; // Default to English
+            default -> "en";
         };
     }
 
-    /**
-     * Generate mock transcript for demonstration when API key is not configured
-     */
     private String generateMockTranscript(String language) {
         return switch (language != null ? language.toLowerCase() : "auto") {
             case "vi" -> """

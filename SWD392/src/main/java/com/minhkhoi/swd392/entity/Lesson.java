@@ -40,7 +40,7 @@ public class Lesson {
     private String videoUrl;
 
     @Column(name = "lessons_video_duration")
-    private Integer duration; // tính bằng giây
+    private Integer duration;
 
     @Column(name = "lessons_transcript", columnDefinition = "TEXT")
     private String transcript;

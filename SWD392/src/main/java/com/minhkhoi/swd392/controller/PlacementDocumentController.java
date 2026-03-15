@@ -19,19 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Controller cho Staff quản lý tài liệu ngân hàng câu hỏi placement test.
- * Yêu cầu quyền STAFF hoặc ADMIN.
- *
- * Endpoints:
- *  POST /api/placement-documents/reading   → Upload PDF/DOC
- *  POST /api/placement-documents/listening → Upload MP3/Audio
- *  POST /api/placement-documents/{id}/generate-reading   → AI sinh câu text từ tài liệu
- *  POST /api/placement-documents/{id}/generate-listening → Tạo câu nghe từ audio
- *  POST /api/placement-documents/generate-mixed           → AI trộn nhiều tài liệu
- *  GET  /api/placement-documents           → Lấy danh sách tài liệu
- *  DELETE /api/placement-documents/{id}   → Xóa tài liệu
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/api/placement-documents")
@@ -44,14 +32,6 @@ import java.util.UUID;
 public class PlacementDocumentController {
 
     private final PlacementDocumentService placementDocumentService;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // UPLOAD TÀI LIỆU
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Upload file PDF/DOC làm tài liệu text cho ngân hàng câu hỏi.
-     */
     @PostMapping(value = "/reading", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     @Operation(
@@ -88,9 +68,6 @@ public class PlacementDocumentController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Upload file MP3/Audio làm tài liệu câu hỏi nghe.
-     */
     @PostMapping(value = "/listening", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     @Operation(
@@ -130,13 +107,7 @@ public class PlacementDocumentController {
         return ResponseEntity.ok(response);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // AI GENERATE CÂU HỎI
-    // ─────────────────────────────────────────────────────────────────────────
 
-    /**
-     * AI sinh câu hỏi READING từ 1 tài liệu PDF/DOC cụ thể.
-     */
     @PostMapping("/{documentId}/generate-reading")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     @Operation(
@@ -159,9 +130,6 @@ public class PlacementDocumentController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Tạo câu hỏi LISTENING từ 1 audio document.
-     */
     @PostMapping("/{documentId}/generate-listening")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     @Operation(
@@ -185,9 +153,6 @@ public class PlacementDocumentController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * AI trộn nhiều tài liệu → sinh bộ câu hỏi tổng hợp phong phú.
-     */
     @PostMapping("/generate-mixed")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     @Operation(
@@ -210,9 +175,6 @@ public class PlacementDocumentController {
         return ResponseEntity.ok(response);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // LIST & DELETE
-    // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")

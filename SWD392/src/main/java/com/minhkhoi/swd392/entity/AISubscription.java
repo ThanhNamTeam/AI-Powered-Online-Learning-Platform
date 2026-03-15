@@ -66,9 +66,9 @@ public class AISubscription {
 
     public enum SubscriptionPlan {
         FREE,
-        BASIC,      // 100 AI credits/month
-        PREMIUM,    // 500 AI credits/month
-        ENTERPRISE  // Unlimited AI credits
+        BASIC,
+        PREMIUM,
+        ENTERPRISE
     }
 
     public enum SubscriptionStatus {
@@ -79,30 +79,16 @@ public class AISubscription {
         PENDING
     }
 
-    /**
-     * Check if subscription is still valid
-     */
+
     public boolean isValid() {
         return status == SubscriptionStatus.ACTIVE 
             && LocalDateTime.now().isBefore(endDate);
     }
 
-    /**
-     * Check if user has remaining AI credits
-     */
-    public boolean hasCreditsRemaining() {
-        if (plan == SubscriptionPlan.ENTERPRISE) {
-            return true; // Unlimited
-        }
-        return aiCredits != null && aiCreditsUsed < aiCredits;
-    }
 
-    /**
-     * Get remaining AI credits
-     */
     public Integer getRemainingCredits() {
         if (plan == SubscriptionPlan.ENTERPRISE) {
-            return Integer.MAX_VALUE; // Unlimited
+            return Integer.MAX_VALUE;
         }
         if (aiCredits == null) {
             return 0;

@@ -112,16 +112,10 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success("Approval requested successfully", courseService.requestApproval(courseId)));
     }
 
-    // ===================== UPDATE REQUEST FLOW =====================
 
-    /**
-     * Instructor: Gửi yêu cầu cập nhật khóa học đã APPROVED.
-     * Instructor cần thêm module/lesson mới TRƯỚC KHI gọi endpoint này.
-     * Sau khi gọi, khóa học chuyển sang PENDING_UPDATE.
-     */
     @PostMapping("/{courseId}/submit-update")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @Operation(summary = "Submit update request for APPROVED course (Instructor)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Submit update request for APPROVED course (Instructor)", security = @SecurityRequirement(name = "bearerAuth") )
     public ResponseEntity<ApiResponse<CourseResponse>> submitUpdateRequest(
             @PathVariable UUID courseId,
             @RequestBody(required = false) Map<String, String> body) {
@@ -129,13 +123,9 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success("Update request submitted", courseService.submitUpdateRequest(courseId, note)));
     }
 
-    /**
-     * Instructor: Gửi yêu cầu mở khóa để chỉnh sửa nội dung.
-     * Khóa học chuyển sang trạng thái chờ duyệt mở khóa.
-     */
     @PostMapping("/{courseId}/request-unlock")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @Operation(summary = "Request to unlock course for editing (Instructor)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Request to unlock course for editing (Instructor)", security = @SecurityRequirement(name = "bearerAuth") )
     public ResponseEntity<ApiResponse<CourseResponse>> requestUnlock(
             @PathVariable UUID courseId,
             @RequestBody(required = false) Map<String, String> body) {
@@ -143,13 +133,9 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success("Unlock request submitted", courseService.requestUnlock(courseId, reason)));
     }
 
-    /**
-     * Staff: Duyệt hoặc từ chối yêu cầu cập nhật nội dung (PENDING_UPDATE).
-     * action: "APPROVED" | "REJECTED"
-     */
     @PutMapping("/{courseId}/review-update")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    @Operation(summary = "Staff reviews update request (PENDING_UPDATE)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Staff reviews update request (PENDING_UPDATE)", security = @SecurityRequirement(name = "bearerAuth") )
     public ResponseEntity<ApiResponse<CourseResponse>> reviewUpdateRequest(
             @PathVariable UUID courseId,
             @RequestBody java.util.Map<String, String> body) {
@@ -158,15 +144,10 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success("Update request reviewed", courseService.reviewUpdateRequest(courseId, action, reason)));
     }
 
-    // ===================== DELETION REQUEST FLOW =====================
 
-    /**
-     * Instructor: Gửi yêu cầu xóa khóa học đã được duyệt.
-     * Khóa học chuyển sang PENDING_DELETION. Học sinh đang học vẫn truy cập bình thường.
-     */
     @PostMapping("/{courseId}/request-deletion")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @Operation(summary = "Request course deletion (Instructor)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Request course deletion (Instructor)", security = @SecurityRequirement(name = "bearerAuth") )
     public ResponseEntity<ApiResponse<CourseResponse>> requestDeletion(
             @PathVariable UUID courseId,
             @RequestBody(required = false) java.util.Map<String, String> body) {
@@ -174,14 +155,9 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success("Deletion request submitted", courseService.requestDeletion(courseId, note)));
     }
 
-    /**
-     * Staff: Duyệt hoặc từ chối yêu cầu xóa (PENDING_DELETION).
-     * - APPROVED → khóa học chuyển ARCHIVED (ẩn khỏi danh sách public, student đã đăng kí vẫn học được).
-     * - REJECTED → khóa học quay về APPROVED.
-     */
     @PutMapping("/{courseId}/review-deletion")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    @Operation(summary = "Staff reviews deletion request (PENDING_DELETION)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Staff reviews deletion request (PENDING_DELETION)", security = @SecurityRequirement(name = "bearerAuth") )
     public ResponseEntity<ApiResponse<CourseResponse>> reviewDeletionRequest(
             @PathVariable UUID courseId,
             @RequestBody java.util.Map<String, String> body) {

@@ -17,7 +17,6 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI(
             @Value("${spring.application.name}") String appName) {
 
-        // 1. Định nghĩa Security Scheme (Cấu hình nút Authorize)
         String securitySchemeName = "bearerAuth";
         SecurityScheme securityScheme = new SecurityScheme()
                 .name(securitySchemeName)
@@ -25,7 +24,6 @@ public class OpenApiConfig {
                 .scheme("bearer")
                 .bearerFormat("JWT");
 
-        // 2. Tạo thông tin Info
         Info info = new Info()
                 .title(appName.toUpperCase() + " API")
                 .version("1.0")

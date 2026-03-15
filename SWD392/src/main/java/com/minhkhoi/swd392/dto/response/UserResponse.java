@@ -34,10 +34,8 @@ public class UserResponse {
     private Integer totalBadges;
     private Double studyTimeHours;
     private Integer completedLessonsCount;
-    // Staff stats
     private Long handledCoursesCount;
     private Long pendingModerationCount;
-    // Instructor stats
     private Long createdCoursesCount;
     private Long totalStudentsCount;
     private Double totalRevenue;
@@ -64,7 +62,6 @@ public class UserResponse {
                 .build();
     }
 
-    // XP cần để lên level tiếp theo: 1000 + (level-1)*500
     private static int computeNextLevelXp(int level) {
         return 1000 + (level - 1) * 500;
     }

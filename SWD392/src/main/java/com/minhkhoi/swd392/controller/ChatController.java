@@ -23,10 +23,6 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    /**
-     * POST /api/chat/ask
-     * Body: { "question": "...", "lessonId": "uuid (optional)" }
-     */
     @PostMapping("/ask")
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "Hỏi Sensei AI (RAG)",

@@ -9,5 +9,4 @@ import java.util.UUID;
 
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, UUID> {
-    List<Question> findByQuiz_QuizId(UUID quizId);
 }
