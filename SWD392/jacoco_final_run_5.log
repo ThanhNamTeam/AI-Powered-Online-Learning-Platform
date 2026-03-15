@@ -1,0 +1,359 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.minhkhoi:SWD392 >-------------------------
+[INFO] Building SWD392 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.11:prepare-agent (default) @ SWD392 ---
+[INFO] argLine set to "-javaagent:C:\\Users\\Thanh Nam\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.11\\org.jacoco.agent-0.8.11-runtime.jar=destfile=D:\\FPT\\Kì7_FPT\\SWD392\\AI Platform Onl Cousrse BE\\SWD392\\target\\jacoco.exec"
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ SWD392 ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ SWD392 ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 162 source files with javac [debug parameters release 21] to target\classes
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/GeminiService.java: Some input files use or override a deprecated API.
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/GeminiService.java: Recompile with -Xlint:deprecation for details.
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/CloudinaryService.java: D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392\src\main\java\com\minhkhoi\swd392\service\CloudinaryService.java uses unchecked or unsafe operations.
+[INFO] /D:/FPT/Kì7_FPT/SWD392/AI Platform Onl Cousrse BE/SWD392/src/main/java/com/minhkhoi/swd392/service/CloudinaryService.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ SWD392 ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ SWD392 ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 6 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ SWD392 ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.minhkhoi.swd392.controller.PlacementDocumentControllerTest
+12:17:12.567 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.minhkhoi.swd392.controller.PlacementDocumentControllerTest]: PlacementDocumentControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+12:17:12.892 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.minhkhoi.swd392.Swd392Application for test class com.minhkhoi.swd392.controller.PlacementDocumentControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-03-15T12:17:13.572+07:00  WARN 16140 --- [SWD392-Test] [           main] ory$DuplicateJsonObjectContextCustomizer : 
+
+Found multiple occurrences of org.json.JSONObject on the class path:
+
+	jar:file:/C:/Users/Thanh%20Nam/.m2/repository/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar!/org/json/JSONObject.class
+	jar:file:/C:/Users/Thanh%20Nam/.m2/repository/org/json/json/20240303/json-20240303.jar!/org/json/JSONObject.class
+
+You may wish to exclude one of them to ensure predictable runtime behavior
+
+2026-03-15T12:17:13.597+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementDocumentControllerTest  : Starting PlacementDocumentControllerTest using Java 21.0.7 with PID 16140 (started by Thanh Nam in D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392)
+2026-03-15T12:17:13.599+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementDocumentControllerTest  : The following 1 profile is active: "test"
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\Thanh Nam\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.13\byte-buddy-agent-1.14.13.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-03-15T12:17:17.885+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@4424285, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@65a022e6, org.springframework.security.web.context.SecurityContextHolderFilter@2bcfdefe, org.springframework.security.web.header.HeaderWriterFilter@2004e611, org.springframework.web.filter.CorsFilter@3d731475, org.springframework.security.web.csrf.CsrfFilter@131c4ffe, org.springframework.security.web.authentication.logout.LogoutFilter@502f9271, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@2992d955, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@325e1229, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@7bad8257, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@181f2388, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3a1c65ac, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@5ff24b0f, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@6deda1cd, org.springframework.security.web.access.ExceptionTranslationFilter@4733c7f0, org.springframework.security.web.access.intercept.AuthorizationFilter@7546be68]
+2026-03-15T12:17:18.002+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-03-15T12:17:18.003+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-15T12:17:18.005+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-03-15T12:17:18.042+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementDocumentControllerTest  : Started PlacementDocumentControllerTest in 5.011 seconds (process running for 6.634)
+✅ Dropped courses_course_status_check constraint
+✅ Fixed payments.payment_type: populated NULLs and set NOT NULL
+2026-03-15T12:17:18.578+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementDocumentController      : [PlacementDoc] Staff upload reading document: test.pdf
+2026-03-15T12:17:18.606+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementDocumentController      : [PlacementDoc] Trigger AI generate 10 reading questions from doc c9c10258-d2f9-4ead-ad8d-1b6a9aa86703
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.387 s -- in com.minhkhoi.swd392.controller.PlacementDocumentControllerTest
+[INFO] Running com.minhkhoi.swd392.controller.PlacementTestControllerTest
+2026-03-15T12:17:18.634+07:00  INFO 16140 --- [SWD392-Test] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.minhkhoi.swd392.controller.PlacementTestControllerTest]: PlacementTestControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-03-15T12:17:18.647+07:00  INFO 16140 --- [SWD392-Test] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.minhkhoi.swd392.Swd392Application for test class com.minhkhoi.swd392.controller.PlacementTestControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-03-15T12:17:18.682+07:00  WARN 16140 --- [SWD392-Test] [           main] ory$DuplicateJsonObjectContextCustomizer : 
+
+Found multiple occurrences of org.json.JSONObject on the class path:
+
+	jar:file:/C:/Users/Thanh%20Nam/.m2/repository/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar!/org/json/JSONObject.class
+	jar:file:/C:/Users/Thanh%20Nam/.m2/repository/org/json/json/20240303/json-20240303.jar!/org/json/JSONObject.class
+
+You may wish to exclude one of them to ensure predictable runtime behavior
+
+2026-03-15T12:17:18.684+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementTestControllerTest      : Starting PlacementTestControllerTest using Java 21.0.7 with PID 16140 (started by Thanh Nam in D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392)
+2026-03-15T12:17:18.684+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementTestControllerTest      : The following 1 profile is active: "test"
+2026-03-15T12:17:19.099+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@27564996, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@18870976, org.springframework.security.web.context.SecurityContextHolderFilter@268206aa, org.springframework.security.web.header.HeaderWriterFilter@7826c5ef, org.springframework.web.filter.CorsFilter@48313ada, org.springframework.security.web.csrf.CsrfFilter@47f4d61, org.springframework.security.web.authentication.logout.LogoutFilter@155ae856, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@7855167a, org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter@39b3de87, org.springframework.security.web.authentication.ui.DefaultLogoutPageGeneratingFilter@8b5de1b, org.springframework.security.web.authentication.www.BasicAuthenticationFilter@3a0f497e, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@58e8535e, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@77f4742b, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1dba3c62, org.springframework.security.web.access.ExceptionTranslationFilter@4e8c27f7, org.springframework.security.web.access.intercept.AuthorizationFilter@663b3ab0]
+2026-03-15T12:17:19.112+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-03-15T12:17:19.112+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-03-15T12:17:19.113+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-03-15T12:17:19.119+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementTestControllerTest      : Started PlacementTestControllerTest in 0.467 seconds (process running for 7.711)
+✅ Dropped courses_course_status_check constraint
+✅ Fixed payments.payment_type: populated NULLs and set NOT NULL
+2026-03-15T12:17:19.133+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementTestController          : [PlacementTest] Lấy 10 câu hỏi ngẫu nhiên
+2026-03-15T12:17:19.368+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementTestController          : [PlacementTest] Nhận bài nộp với 1 câu
+2026-03-15T12:17:19.369+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.c.PlacementTestController          : [PlacementTest] Kết quả: 5/10 đúng, level ước tính: N3
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.748 s -- in com.minhkhoi.swd392.controller.PlacementTestControllerTest
+[INFO] Running com.minhkhoi.swd392.service.PlacementDocumentServiceTest
+2026-03-15T12:17:19.831+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Uploaded audio: audio.mp3 → http://cloudinary.com/audio.mp3
+2026-03-15T12:17:19.834+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Saved listening doc id=null
+2026-03-15T12:17:19.862+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Transcribing audio via AssemblyAI: http://cloudinary.com/audio.mp3
+2026-03-15T12:17:19.862+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] AssemblyAI transcript cached (16 chars)
+2026-03-15T12:17:19.862+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Transcript length: 16 chars for doc id=ab27dfb1-a4bd-4041-8e07-f2dd2ebe3eca
+2026-03-15T12:17:19.872+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Generated 1 listening questions from audio doc id=ab27dfb1-a4bd-4041-8e07-f2dd2ebe3eca
+2026-03-15T12:17:19.954+07:00  WARN 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Cannot extract text from 'test.pdf': Error: End-of-File, expected line at offset 13
+2026-03-15T12:17:19.954+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Extracted 0 chars from 'test.pdf'
+2026-03-15T12:17:19.955+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Saved reading doc id=null, status=FAILED
+2026-03-15T12:17:19.962+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.service.PlacementDocumentService   : [PlacementDoc] Generated 1 reading questions from doc id=02619aec-dd5f-4e4b-94f6-5720842deebf
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.575 s -- in com.minhkhoi.swd392.service.PlacementDocumentServiceTest
+[INFO] Running com.minhkhoi.swd392.service.PlacementTestServiceTest
+2026-03-15T12:17:20.029+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.swd392.service.PlacementTestService  : [PlacementTest] Lấy 9 câu READING + 1 câu LISTENING
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.076 s -- in com.minhkhoi.swd392.service.PlacementTestServiceTest
+[INFO] Running com.minhkhoi.swd392.Swd392ApplicationTests
+2026-03-15T12:17:20.049+07:00  INFO 16140 --- [SWD392-Test] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.minhkhoi.swd392.Swd392ApplicationTests]: Swd392ApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-03-15T12:17:20.055+07:00  INFO 16140 --- [SWD392-Test] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.minhkhoi.swd392.Swd392Application for test class com.minhkhoi.swd392.Swd392ApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-03-15T12:17:20.079+07:00  WARN 16140 --- [SWD392-Test] [           main] ory$DuplicateJsonObjectContextCustomizer : 
+
+Found multiple occurrences of org.json.JSONObject on the class path:
+
+	jar:file:/C:/Users/Thanh%20Nam/.m2/repository/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar!/org/json/JSONObject.class
+	jar:file:/C:/Users/Thanh%20Nam/.m2/repository/org/json/json/20240303/json-20240303.jar!/org/json/JSONObject.class
+
+You may wish to exclude one of them to ensure predictable runtime behavior
+
+2026-03-15T12:17:20.081+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.swd392.Swd392ApplicationTests        : Starting Swd392ApplicationTests using Java 21.0.7 with PID 16140 (started by Thanh Nam in D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392)
+2026-03-15T12:17:20.081+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.swd392.Swd392ApplicationTests        : The following 1 profile is active: "test"
+2026-03-15T12:17:20.922+07:00  INFO 16140 --- [SWD392-Test] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-15T12:17:20.925+07:00  INFO 16140 --- [SWD392-Test] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-15T12:17:21.018+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data JPA - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.RedisTokenRepository; If you want this repository to be a JPA repository, consider annotating your entities with one of these annotations: jakarta.persistence.Entity, jakarta.persistence.MappedSuperclass (preferred), or consider extending one of the following types with your repository: org.springframework.data.jpa.repository.JpaRepository
+2026-03-15T12:17:21.114+07:00  INFO 16140 --- [SWD392-Test] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 174 ms. Found 18 JPA repository interfaces.
+2026-03-15T12:17:21.153+07:00  INFO 16140 --- [SWD392-Test] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-03-15T12:17:21.156+07:00  INFO 16140 --- [SWD392-Test] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-03-15T12:17:21.195+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.AISubscriptionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.196+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.CourseRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.197+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.DiscussionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.199+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.EnrollmentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.199+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.LessonRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.199+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.ModuleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.199+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.OtpVerificationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.PaymentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.PlacementDocumentRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.PlacementQuestionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.ProgressRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.QuestionRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.QuizRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.200+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.QuizResultRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.201+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.RefreshTokenRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.201+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.ReportRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.201+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.ReviewRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.202+07:00  INFO 16140 --- [SWD392-Test] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.minhkhoi.swd392.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-03-15T12:17:21.207+07:00  INFO 16140 --- [SWD392-Test] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 24 ms. Found 1 Redis repository interface.
+2026-03-15T12:17:21.868+07:00  INFO 16140 --- [SWD392-Test] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-15T12:17:21.978+07:00  INFO 16140 --- [SWD392-Test] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.4.Final
+2026-03-15T12:17:22.057+07:00  INFO 16140 --- [SWD392-Test] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-03-15T12:17:22.268+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-15T12:17:22.328+07:00  INFO 16140 --- [SWD392-Test] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-15T12:17:22.619+07:00  INFO 16140 --- [SWD392-Test] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:testdb user=SA
+2026-03-15T12:17:22.622+07:00  INFO 16140 --- [SWD392-Test] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-15T12:17:22.651+07:00  WARN 16140 --- [SWD392-Test] [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-15T12:17:23.928+07:00  INFO 16140 --- [SWD392-Test] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-15T12:17:24.010+07:00  WARN 16140 --- [SWD392-Test] [           main] o.h.t.s.i.ExceptionHandlerLoggedImpl     : GenerationTarget encountered exception accepting command : Error executing DDL "create table vector_store (lessons_id uuid not null, vector_embedding_id uuid not null, vector_context_chunk TEXT, vector_embedding vector(384), primary key (vector_embedding_id))" via JDBC [Unknown data type: "VECTOR";]
+
+org.hibernate.tool.schema.spi.CommandAcceptanceException: Error executing DDL "create table vector_store (lessons_id uuid not null, vector_embedding_id uuid not null, vector_context_chunk TEXT, vector_embedding vector(384), primary key (vector_embedding_id))" via JDBC [Unknown data type: "VECTOR";]
+	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:94) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.Helper.applySqlString(Helper.java:233) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.Helper.applySqlStrings(Helper.java:217) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.createTables(SchemaCreatorImpl.java:420) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.createSequencesTablesConstraints(SchemaCreatorImpl.java:340) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.createFromMetadata(SchemaCreatorImpl.java:239) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.performCreation(SchemaCreatorImpl.java:172) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.doCreation(SchemaCreatorImpl.java:142) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.internal.SchemaCreatorImpl.doCreation(SchemaCreatorImpl.java:118) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.performDatabaseAction(SchemaManagementToolCoordinator.java:256) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.lambda$process$5(SchemaManagementToolCoordinator.java:145) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at java.base/java.util.HashMap.forEach(HashMap.java:1429) ~[na:na]
+	at org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.process(SchemaManagementToolCoordinator.java:142) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.boot.internal.SessionFactoryObserverForSchemaExport.sessionFactoryCreated(SessionFactoryObserverForSchemaExport.java:37) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.internal.SessionFactoryObserverChain.sessionFactoryCreated(SessionFactoryObserverChain.java:35) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.internal.SessionFactoryImpl.<init>(SessionFactoryImpl.java:315) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.boot.internal.SessionFactoryBuilderImpl.build(SessionFactoryBuilderImpl.java:450) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.jpa.boot.internal.EntityManagerFactoryBuilderImpl.build(EntityManagerFactoryBuilderImpl.java:1507) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.springframework.orm.jpa.vendor.SpringHibernateJpaPersistenceProvider.createContainerEntityManagerFactory(SpringHibernateJpaPersistenceProvider.java:75) ~[spring-orm-6.1.6.jar:6.1.6]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.createNativeEntityManagerFactory(LocalContainerEntityManagerFactoryBean.java:390) ~[spring-orm-6.1.6.jar:6.1.6]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.buildNativeEntityManagerFactory(AbstractEntityManagerFactoryBean.java:409) ~[spring-orm-6.1.6.jar:6.1.6]
+	at org.springframework.orm.jpa.AbstractEntityManagerFactoryBean.afterPropertiesSet(AbstractEntityManagerFactoryBean.java:396) ~[spring-orm-6.1.6.jar:6.1.6]
+	at org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.afterPropertiesSet(LocalContainerEntityManagerFactoryBean.java:366) ~[spring-orm-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1833) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1782) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:600) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:326) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:324) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200) ~[spring-beans-6.1.6.jar:6.1.6]
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1234) ~[spring-context-6.1.6.jar:6.1.6]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:952) ~[spring-context-6.1.6.jar:6.1.6]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:624) ~[spring-context-6.1.6.jar:6.1.6]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754) ~[spring-boot-3.2.5.jar:3.2.5]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456) ~[spring-boot-3.2.5.jar:3.2.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:334) ~[spring-boot-3.2.5.jar:3.2.5]
+	at org.springframework.boot.test.context.SpringBootContextLoader.lambda$loadContext$3(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.5.jar:3.2.5]
+	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:58) ~[spring-core-6.1.6.jar:6.1.6]
+	at org.springframework.util.function.ThrowingSupplier.get(ThrowingSupplier.java:46) ~[spring-core-6.1.6.jar:6.1.6]
+	at org.springframework.boot.SpringApplication.withHook(SpringApplication.java:1454) ~[spring-boot-3.2.5.jar:3.2.5]
+	at org.springframework.boot.test.context.SpringBootContextLoader$ContextLoaderHook.run(SpringBootContextLoader.java:553) ~[spring-boot-test-3.2.5.jar:3.2.5]
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:137) ~[spring-boot-test-3.2.5.jar:3.2.5]
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:108) ~[spring-boot-test-3.2.5.jar:3.2.5]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:225) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:152) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:130) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:191) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:130) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:260) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:163) ~[spring-test-6.1.6.jar:6.1.6]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$10(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:383) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$11(ClassBasedTestDescriptor.java:378) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1708) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310) ~[na:na]
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735) ~[na:na]
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762) ~[na:na]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:377) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$6(ClassBasedTestDescriptor.java:290) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:289) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$4(ClassBasedTestDescriptor.java:279) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:278) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$0(TestMethodTestDescriptor.java:106) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:105) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:123) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:123) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:90) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.1.2.jar:3.1.2]
+Caused by: org.h2.jdbc.JdbcSQLNonTransientException: Unknown data type: "VECTOR"; SQL statement:
+create table vector_store (lessons_id uuid not null, vector_embedding_id uuid not null, vector_context_chunk TEXT, vector_embedding vector(384), primary key (vector_embedding_id)) [50004-224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:566) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.message.DbException.get(DbException.java:223) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.message.DbException.get(DbException.java:199) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.readIfDataType1(Parser.java:5866) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.readIfDataType(Parser.java:5704) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parseColumnWithType(Parser.java:5686) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parseColumnForTable(Parser.java:5565) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parseTableColumnDefinition(Parser.java:8999) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parseCreateTable(Parser.java:8939) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parseCreate(Parser.java:6404) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parsePrepared(Parser.java:666) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parse(Parser.java:592) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.parse(Parser.java:564) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.command.Parser.prepareCommand(Parser.java:483) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.engine.SessionLocal.prepareLocal(SessionLocal.java:639) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.engine.SessionLocal.prepareCommand(SessionLocal.java:559) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.jdbc.JdbcConnection.prepareCommand(JdbcConnection.java:1166) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.jdbc.JdbcStatement.executeInternal(JdbcStatement.java:245) ~[h2-2.2.224.jar:2.2.224]
+	at org.h2.jdbc.JdbcStatement.execute(JdbcStatement.java:231) ~[h2-2.2.224.jar:2.2.224]
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:94) ~[HikariCP-5.0.1.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-5.0.1.jar:na]
+	at org.hibernate.tool.schema.internal.exec.GenerationTargetToDatabase.accept(GenerationTargetToDatabase.java:80) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	... 118 common frames omitted
+
+2026-03-15T12:17:24.068+07:00  INFO 16140 --- [SWD392-Test] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-15T12:17:24.759+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-15T12:17:26.516+07:00  WARN 16140 --- [SWD392-Test] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-15T12:17:26.619+07:00  INFO 16140 --- [SWD392-Test] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@50dec5d5, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@7ca2d8e4, org.springframework.security.web.context.SecurityContextHolderFilter@36a31741, org.springframework.security.web.header.HeaderWriterFilter@796018d, org.springframework.web.filter.CorsFilter@7d71dfe9, org.springframework.security.web.authentication.logout.LogoutFilter@51afafed, com.minhkhoi.swd392.config.JwtAuthenticationFilter@598ff95a, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@18ef271, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@366f7514, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@6104bd29, org.springframework.security.web.session.SessionManagementFilter@66e5fb62, org.springframework.security.web.access.ExceptionTranslationFilter@41623e89, org.springframework.security.web.access.intercept.AuthorizationFilter@6a4ed4ea]
+2026-03-15T12:17:26.885+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.swd392.Swd392ApplicationTests        : Started Swd392ApplicationTests in 6.822 seconds (process running for 15.476)
+2026-03-15T12:17:26.985+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.config.PlacementQuestionSeeder     : [PlacementSeeder] Bắt đầu seed 40 câu hỏi kiểm tra trình độ...
+2026-03-15T12:17:27.076+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.s.config.PlacementQuestionSeeder     : [PlacementSeeder] Đã seed 40 câu hỏi thành công.
+✅ Dropped courses_course_status_check constraint
+✅ Fixed payments.payment_type: populated NULLs and set NOT NULL
+2026-03-15T12:17:27.087+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.swd392.config.DataInitializer        : No users found in database. Creating default admin account...
+2026-03-15T12:17:27.268+07:00  INFO 16140 --- [SWD392-Test] [           main] c.m.swd392.config.DataInitializer        : ✅ Default admin and staff accounts created successfully!
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.228 s -- in com.minhkhoi.swd392.Swd392ApplicationTests
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.11:report (report) @ SWD392 ---
+[INFO] Loading execution data file D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392\target\jacoco.exec
+[INFO] Analyzed bundle 'SWD392' with 98 classes
+[INFO] 
+[INFO] --- jacoco:0.8.11:report (default-cli) @ SWD392 ---
+[INFO] Loading execution data file D:\FPT\Kì7_FPT\SWD392\AI Platform Onl Cousrse BE\SWD392\target\jacoco.exec
+[INFO] Analyzed bundle 'SWD392' with 98 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  27.977 s
+[INFO] Finished at: 2026-03-15T12:17:28+07:00
+[INFO] ------------------------------------------------------------------------

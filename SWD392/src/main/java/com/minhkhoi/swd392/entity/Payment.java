@@ -34,6 +34,7 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_type", nullable = true) // COURSE hoặc SUBSCRIPTION
+    @Builder.Default
     private PaymentType type = PaymentType.COURSE;
 
     @Enumerated(EnumType.STRING)
