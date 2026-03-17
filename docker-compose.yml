@@ -37,7 +37,7 @@ services:
 
   # ---- Spring Boot App ----
   app:
-    build: ./SWD392
+    build: .
     container_name: swd392_app
     restart: unless-stopped
     ports:
