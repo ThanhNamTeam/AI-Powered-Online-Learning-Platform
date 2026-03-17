@@ -37,9 +37,7 @@ services:
 
   # ---- Spring Boot App ----
   app:
-    build:
-      context: ./SWD392       # source code nằm trong SWD392/
-      dockerfile: ../Dockerfile  # Dockerfile nằm ở root
+    build: ./SWD392
     container_name: swd392_app
     restart: unless-stopped
     ports:
