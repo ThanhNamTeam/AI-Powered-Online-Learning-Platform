@@ -1,5 +1,11 @@
 server:
   port: ${PORT:8080}
+  # Tối ưu Tomcat cho Render (giới hạn thread tránh OOM)
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 5
+    connection-timeout: 20000
 
 spring:
   application:
@@ -9,24 +15,49 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    # HikariCP connection pool — tối ưu cho Render free tier
+    hikari:
+      maximum-pool-size: 5          # Render free DB giới hạn connections
+      minimum-idle: 2
+      idle-timeout: 300000          # 5 phút
+      connection-timeout: 20000     # 20 giây
+      max-lifetime: 1200000         # 20 phút (dưới PostgreSQL timeout)
+      keepalive-time: 60000         # Giữ connection sống
+      pool-name: SWD392HikariPool
+
   jpa:
     show-sql: false
     hibernate:
+      # Dùng update để tự động tạo schema lần đầu, validate sau khi stable
       ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        format_sql: false
+        # Tắt open-in-view để tránh lazy loading vô ý
+        enable_lazy_load_no_trans: false
+        # Batch insert/update để tăng performance
+        jdbc:
+          batch_size: 20
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+
   data:
     redis:
       host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      port: ${REDIS_PORT:6379}
+      # Upstash Redis yêu cầu password — để trống nếu dùng local
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
 
   servlet:
     multipart:
       enabled: true
-      max-file-size: 100MB
-      max-request-size: 100MB
+      # Giảm từ 100MB → 50MB để tránh OOM trên Render free (512MB RAM)
+      max-file-size: 50MB
+      max-request-size: 50MB
 
   mail:
     host: smtp.gmail.com
@@ -40,12 +71,16 @@ spring:
           starttls:
             enable: true
             required: true
+        # Tránh timeout khi gửi mail
+        transport:
+          protocol: smtp
 
+# Swagger/OpenAPI chỉ bật khi có SWAGGER_ENABLED=true (mặc định tắt trên production)
 springdoc:
   api-docs:
-    enabled: true
+    enabled: ${SWAGGER_ENABLED:false}
   swagger-ui:
-    enabled: true
+    enabled: ${SWAGGER_ENABLED:false}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -83,11 +118,14 @@ vnpay:
 
 logging:
   level:
+    root: WARN
+    com.minhkhoi.swd392: INFO
     org:
       springframework:
         data:
           repository:
             config: ERROR
+        web: WARN
       hibernate:
         SQL: ERROR
         type:

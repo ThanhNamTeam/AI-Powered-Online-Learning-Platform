@@ -16,6 +16,6 @@ public interface OtpVerificationRepository extends JpaRepository<OtpVerification
 
     Optional<OtpVerification> findTopByEmailOrderByCreatedAtDesc(String email);
 
-    void deleteByExpiresAtBefore(LocalDateTime currentTime);
+    int deleteByExpiresAtBefore(LocalDateTime currentTime);
 }
 
