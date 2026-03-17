@@ -1,11 +1,9 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
     name: SWD392
-  profiles:
-    active: local
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
