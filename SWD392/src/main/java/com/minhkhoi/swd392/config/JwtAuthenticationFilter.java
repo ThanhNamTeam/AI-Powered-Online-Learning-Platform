@@ -13,6 +13,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -40,27 +42,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String username;
 
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+        String origin = request.getHeader("Origin");
+
+        log.info("[JWT-FILTER] >>> {} {} | Origin: {}", method, uri, origin);
+
+        final String authHeader = request.getHeader("Authorization");
+
+        // Không có token → tiếp tục chain (public endpoints sẽ được permitAll xử lý)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.info("[JWT-FILTER] No Bearer token → passing to next filter | {} {}", method, uri);
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            jwt = authHeader.substring(7);
+            String jwt = authHeader.substring(7);
             JwtInfo info = jwtService.parseJwtInfo(jwt);
             String jti = info.getJwtId();
 
             boolean revoked = redisTokenRepository.existsById(jti);
             if (revoked) {
+                log.warn("[JWT-FILTER] Token revoked for jti={} | {} {}", jti, method, uri);
                 handleException(response, "Token has been revoked", HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
-            username = jwtService.extractUsername(jwt);
+            String username = jwtService.extractUsername(jwt);
+            log.info("[JWT-FILTER] Token valid for user={} | {} {}", username, method, uri);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
@@ -75,21 +86,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             new WebAuthenticationDetailsSource().buildDetails(request)
                     );
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.info("[JWT-FILTER] Authentication set for user={} | {} {}", username, method, uri);
+                } else {
+                    log.warn("[JWT-FILTER] Token invalid for user={} | {} {}", username, method, uri);
                 }
             }
             filterChain.doFilter(request, response);
+
         } catch (ExpiredJwtException e) {
+            log.warn("[JWT-FILTER] Token expired | {} {} | {}", method, uri, e.getMessage());
             handleException(response, "Token has expired", HttpServletResponse.SC_UNAUTHORIZED);
         } catch (MalformedJwtException e) {
+            log.warn("[JWT-FILTER] Malformed token | {} {} | {}", method, uri, e.getMessage());
             handleException(response, "Invalid token format", HttpServletResponse.SC_UNAUTHORIZED);
         } catch (SignatureException e) {
+            log.warn("[JWT-FILTER] Invalid signature | {} {} | {}", method, uri, e.getMessage());
             handleException(response, "Invalid token signature", HttpServletResponse.SC_UNAUTHORIZED);
         } catch (Exception e) {
+            log.error("[JWT-FILTER] Unexpected error | {} {} | {}", method, uri, e.getMessage(), e);
             handleException(response, "Token authentication failed: " + e.getMessage(), HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 
     private void handleException(HttpServletResponse response, String message, int statusCode) throws IOException {
+        log.warn("[JWT-FILTER] Returning {} | message={}", statusCode, message);
         response.setStatus(statusCode);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -99,4 +119,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.getWriter().write(jsonResponse);
     }
 }
-
