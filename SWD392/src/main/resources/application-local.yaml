@@ -4,13 +4,28 @@ spring:
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10   # Thoải mái hơn khi dev local
   data:
     redis:
       host: localhost
       port: 6379
+      password:               # Để trống khi dev local
+      ssl:
+        enabled: false
   mail:
     username: test@gmail.com
     password: password
+
+# Bật Swagger khi chạy local
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+# Bật Swagger flag
+SWAGGER_ENABLED: true
 
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
@@ -43,4 +58,9 @@ vnpay:
   tmn-code: test
   hash-secret: test
   payment-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  return-url: http://localhost:8080/api/v1/payments/vnpay-callback
+  return-url: http://localhost:8080/api/identity/payment/vnpay/callback
+
+logging:
+  level:
+    com.minhkhoi.swd392: DEBUG   # Debug log khi dev local
+    org.hibernate.SQL: DEBUG     # Xem SQL queries khi dev

@@ -24,8 +24,6 @@ import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,7 +44,6 @@ public class UserService {
     private final OtpVerificationRepository otpRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender mailSender;
     private final EmailService emailService;
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
@@ -131,23 +128,7 @@ public class UserService {
 
     private void sendOtpEmail(String toEmail, String otpCode) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(toEmail);
-            message.setSubject("Your OTP Code for Account Registration");
-            message.setText(String.format("""
-                Hello,
-                
-                Your OTP code for account registration is: %s
-                
-                This code will expire in 5 minutes.
-                
-                If you did not request this code, please ignore this email.
-                
-                Best regards,
-                SWD392 Team-5
-                """, otpCode));
-
-            mailSender.send(message);
+            emailService.sendOtpEmail(toEmail, otpCode);
         } catch (Exception e) {
             log.error("Failed to send OTP email to: {}", toEmail, e);
             throw new AppException(ErrorCode.OTP_SEND_FAILED);
@@ -156,22 +137,7 @@ public class UserService {
 
     private void sendWelcomeEmail(String toEmail, String fullName) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(toEmail);
-            message.setSubject("Welcome to SWD392!");
-            message.setText(String.format("""
-                Hello %s,
-                
-                Welcome to SWD392 Online Learning Platform!
-                
-                Your account has been successfully created and verified.
-                You can now log in and start your learning journey.
-                
-                Best regards,
-                SWD392 Team-5
-                """, fullName));
-
-            mailSender.send(message);
+            emailService.sendWelcomeEmail(toEmail, fullName);
         } catch (Exception e) {
             log.error("Failed to send welcome email to: {}", toEmail, e);
         }

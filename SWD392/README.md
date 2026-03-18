@@ -1,76 +1,159 @@
-# AI-Powered Online Learning Platform - Full Instructor Workflow
+# 🚀 SWD392 - AI-Powered Online Learning Platform (Backend)
 
-Tài liệu này mô tả chi tiết quy trình nghiệp vụ từ lúc bắt đầu cho đến khi hoàn thiện nội dung đào tạo của một Giảng viên (Instructor) trên hệ thống, bao gồm các cập nhật mới nhất về tính năng AI và quản lý khóa học.
-
----
-
-## 1. Khởi tạo tài khoản và Quyền hạn
-*   **Đăng ký & Xác thực**: Người dùng đăng ký tài khoản và phải xác thực qua **OTP** (gửi qua Email) để kích hoạt tài khoản.
-*   **Vai trò (Role)**: Chọn vai trò là **INSTRUCTOR** trong quá trình đăng ký hoặc thiết lập tài khoản.
-*   **Đăng nhập**: Sử dụng JWT Token để thực hiện các thao tác tiếp theo. Hệ thống hỗ trợ Refresh Token qua Cookie để duy trì phiên làm việc.
+Hệ thống quản lý học tập trực tuyến (LMS) tích hợp trí tuệ nhân tạo (AI) để tối ưu hóa trải nghiệm giảng dạy và học tập. Dự án tập trung vào việc tự động hóa các tác vụ phức tạp của giảng viên thông qua AI.
 
 ---
 
-## 2. Quy trình Quản lý Khóa học (Course Lifecycle)
-Quy trình kiểm soát chất lượng khóa học nghiêm ngặt hơn với các trạng thái cụ thể:
+## 🛠️ Công nghệ sử dụng (Tech Stack)
 
-1.  **Tạo Khóa học (Draft)**:
-    *   Giảng viên nhập thông tin cơ bản: Tên, mô tả, giá...
-    *   **Bắt buộc**: Phải upload **Thumbnail** (Lưu trữ trên Cloudinary).
-    *   Sau khi tạo, khóa học mặc định ở trạng thái `DRAFT`.
-2.  **Xây dựng nội dung cơ bản**:
-    *   Giảng viên tạo các **Module** và **Lesson**.
-    *   **Điều kiện tiên quyết**: Khóa học phải có tối thiểu **3 Modules** mới được phép gửi yêu cầu phê duyệt.
-3.  **Gửi yêu cầu Phê duyệt (Pending Approval)**:
-    *   Giảng viên nhấn nút "Request Approval". Trạng thái chuyển từ `DRAFT` sang `PENDING_APPROVAL`.
-4.  **Kiểm duyệt (Staff Action)**:
-    *   **Staff** xem xét nội dung khóa học.
-    *   **APPROVED**: Khóa học chính thức hiển thị và cho phép học viên đăng ký.
-    *   **REJECTED**: Khóa học bị từ chối kèm theo **Lý do (Reason)**. Giảng viên cần chỉnh sửa để gửi lại yêu cầu.
+### Core Backend
+*   **Java 21**: Phiên bản LTS mới nhất hỗ trợ Virtual Threads.
+*   **Spring Boot 3.2.5**: Framework chính cho dự án.
+*   **Spring Security & JWT**: Quản lý xác thực và phân quyền (Student, Instructor, Admin, Staff).
+*   **Spring Data JPA**: Giao tiếp với Database qua Hibernate.
 
----
+### Database & Caching
+*   **PostgreSQL**: Cơ sở dữ liệu quan hệ chính.
+*   **pgvector**: Extension của PostgreSQL để lưu trữ và tìm kiếm vector (hỗ trợ các tính năng AI).
+*   **Redis**: Caching và quản lý session (hỗ trợ Upstash Redis cho Cloud).
 
-## 3. Quy trình Xử lý Bài học & AI (Lesson & AI Flow)
-Đây là phần có sự thay đổi lớn về cách thức vận hành:
+### AI Integrations
+*   **Google Gemini AI**: Tự động tạo câu hỏi Quiz từ nội dung bài học, feedback bài làm.
+*   **AssemblyAI**: Chuyển đổi video bài giảng thành văn bản (Transcription) không đồng bộ.
+*   **Apache POI/PDFBox/Tika**: Trích xuất nội dung từ các file tài liệu (PDF, DOCX).
 
-### a. Upload tài nguyên & Transcription tự động:
-*   **Upload**: Giảng viên upload Video (Bắt buộc) và Tài liệu (Tùy chọn).
-*   **Async Transcription**: Ngay sau khi upload thành công, hệ thống tự động kích hoạt một tiến trình chạy ngầm (**Async**) gọi `AssemblyAI` để chuyển đổi giọng nói trong video thành văn bản (**Transcript**).
-*   **Lưu trữ**: Bản transcript được lưu trực tiếp vào database của bài học sau khi hoàn tất.
-
-### b. Tạo Quiz bằng AI (Manual Trigger):
-Khác với trước đây, việc tạo Quiz hiện tại là một hành động **chủ động** của Giảng viên:
-
-1.  **Nút bấm "Generate Quiz"**: Giảng viên chỉ có thể nhấn nút khi:
-    *   Khóa học đã được **APPROVED**.
-    *   Trạng thái Quiz hiện tại là `NOT_STARTED` hoặc `FAILED`.
-2.  **Kiểm tra đồng bộ (Synchronous Check)**: Trước khi bắt đầu, hệ thống kiểm tra ngay lập tức:
-    *   Giảng viên phải sở hữu gói **AI PREMIUM** còn hiệu lực.
-3.  **Quản lý trạng thái (State Management)**: Khi bắt đầu tạo:
-    *   `PROCESSING`: Khóa nút bấm để tránh yêu cầu trùng lặp.
-    *   `COMPLETED`: Tạo xong bộ câu hỏi.
-    *   `FAILED`: Lưu lỗi vào `lastQuizError` và cho phép Giảng viên thử lại.
-
-### c. Logic Mix nội dung:
-AI (Gemini) sẽ không chỉ dựa vào video mà thực hiện "trộn" dữ liệu:
-*   Sử dụng **Video Transcript** (từ AssemblyAI).
-*   Sử dụng **Document Content** (nội dung trích xuất từ tài liệu đính kèm).
-*   Dữ liệu tổng hợp được gửi đến **Gemini AI** để tạo ra bộ câu hỏi trắc nghiệm sát với nội dung học tập nhất.
+### Infrastructure & Services
+*   **Cloudinary**: Lưu trữ và tối ưu hóa hình ảnh, video (Thumbnails, Lesson Videos).
+*   **Brevo (Sendinblue) API**: Gửi email giao dịch (OTP, thông báo) qua HTTP thay cho SMTP truyền thống.
+*   **Momo & VNPay**: Tích hợp cổng thanh toán trực tuyến cho các gói Premium.
+*   **SpringDoc OpenAPI (Swagger)**: Tự động tạo tài liệu API.
 
 ---
 
-## 4. Quản lý Tài nguyên và Đồng bộ
-*   **Xóa Video/Tài liệu**: Khi xóa tài nguyên trên hệ thống, các tệp vật lý trên Cloudinary sẽ bị xóa theo.
-*   **Đồng bộ Transcription**: Nếu Video bị xóa, bản Transcript liên quan trong database cũng sẽ bị xóa sạch để đảm bảo tính nhất quán.
-*   **Xóa Bài học**: Tự động dọn dẹp toàn bộ Video, Tài liệu, Transcript và bộ câu hỏi Quiz liên quan.
+## ✨ Các tính năng chính
 
+| Tính năng | Mô tả |
+| :--- | :--- |
+| **Authentication** | Đăng ký, Đăng nhập JWT, Quên mật khẩu OTP qua Email. |
+| **Course Management** | Luồng tạo khóa học (Draft -> Pending Approval -> Approved). |
+| **AI Transcription** | Tự động chuyển video bài giảng sang văn bản sau khi giảng viên upload. |
+| **AI Quiz Generation** | Giảng viên có thể yêu cầu AI quét transcript và tài liệu để tạo bộ Quiz. |
+| **Subscription (Premium)** | Hệ thống gói tài khoản giúp giảng viên sử dụng các tính năng AI nâng cao. |
+| **Payment Integration** | Thanh toán nâng cấp tài khoản qua Momo hoặc VNPay. |
+| **Interactive Discussion** | Hệ thống Q&A giữa học viên và giảng viên. |
 
 ---
 
-## 6. Tính năng Thanh toán (Payment)
-Hệ thống tích hợp cổng thanh toán **MOMO** cho việc nâng cấp gói tài khoản (AISubscription).
-👉 **Xem hướng dẫn chi tiết tại:** [HUONG_DAN_THANH_TOAN.md](HUONG_DAN_THANH_TOAN.md)
+## 🚀 Hướng dẫn cài đặt (Local Setup)
+
+### 1. Yêu cầu hệ thống
+*   **JDK 21** trở lên.
+*   **Maven 3.6+**.
+*   **PostgreSQL** (có cài extension `pgvector`).
+*   **Redis Server**.
+
+### 2. Cấu hình Biến môi trường
+Tạo file `.env` tại thư mục `/SWD392` (hoặc thư mục gốc dự án) với các thông số sau:
+
+```env
+# Database
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/swd392_db
+SPRING_DATASOURCE_USERNAME=your_username
+SPRING_DATASOURCE_PASSWORD=your_password
+
+# JWT
+JWT_SECRET=your_32_character_secret_key
+JWT_EXPIRATION=86400000
+
+# AI Keys
+GEMINI_API_KEY=your_gemini_key
+ASSEMBLY_API_KEY=your_assemblyai_key
+
+# Services
+CLOUDINARY_CLOUD_NAME=your_name
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret
+
+# Payment
+MOMO_PARTNER_CODE=...
+VNPAY_TMN_CODE=...
+```
+
+### 3. Chạy ứng dụng
+Mở terminal tại thư mục `SWD392` và chạy:
+```bash
+./mvnw spring-boot:run
+```
+Ứng dụng sẽ chạy tại: `http://localhost:8080`
+
+### 4. Tài liệu API (Swagger)
+Xem tài liệu API tương tác tại:
+*   Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+*   OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 ---
-*Tài liệu cập nhật ngày 29/01/2026 bởi Đội ngũ Phát triển.*
 
+## 🏗️ Cấu trúc thư mục Backend
+
+```text
+SWD392/
+├── src/main/java/com/minhkhoi/swd392/
+│   ├── controller/      # REST Endpoints
+│   ├── service/         # Business Logic & AI Integrations
+│   ├── entity/          # JPA Hibernate Entities
+│   ├── repository/      # Data Access Layers
+│   ├── dto/             # Data Transfer Objects & Mappers
+│   ├── config/          # Spring & Security Configs
+│   └── exception/       # Global Exception Handling
+├── src/main/resources/
+│   ├── application.yaml # Cấu hình chính (Render/Production)
+│   └── application-local.yaml # Cấu hình dev local
+└── pom.xml              # Maven dependencies
+```
+
+---
+
+## 🧑‍🏫 Quy trình Giảng viên (Instructor Workflow)
+
+1.  **Đăng ký & Xác thực**: Tạo tài khoản và xác thực OTP qua Email.
+2.  **Tạo Khóa học**: Thiết lập thông tin (Thumbnail, Tên, Mô tả). Cần tối thiểu **3 Modules** để gửi yêu cầu duyệt.
+3.  **Upload Nội dung**: Tải lên Video bài giảng. Hệ thống tự động kích hoạt **Async Transcription** qua AssemblyAI.
+4.  **Tạo Quiz bằng AI**: Sau khi khóa học được duyệt, Giảng viên có thể nhấn "Generate Quiz" để Gemini AI tự động soạn thảo câu hỏi.
+5.  **Quản lý Doanh thu**: Theo dõi học viên đăng ký và thu nhập qua Dashboard.
+
+---
+
+## 🎓 Quy trình Học viên (Student Workflow)
+
+1.  **Kiểm tra trình độ (Placement Test)**: Thực hiện bài test đầu vào để AI đánh giá năng lực JLPT và gợi ý lộ trình học phù hợp.
+2.  **Tìm kiếm & Đăng ký**: Duyệt danh sách khóa học, xem Dashboard học tập và đăng ký khóa học (thanh toán qua VNPay/Momo).
+3.  **Học tập chủ động**:
+    *   Xem video bài giảng, tải tài nguyên học tập.
+    *   Làm Quiz do AI tạo sau mỗi bài học để củng cố kiến thức.
+    *   Đặt câu hỏi trong mục thảo luận/Q&A để được Giảng viên giải đáp.
+4.  **Theo dõi tiến độ**: Xem thống kê thời gian học, streak học tập và điểm số trung bình qua Student Dashboard.
+
+---
+
+## 🛡️ Quy trình Nhân viên (Staff/Admin Workflow)
+
+1.  **Kiểm duyệt nội dung (Staff)**:
+    *   Xem danh sách khóa học `PENDING_APPROVAL`.
+    *   Phê duyệt (Approve) để khóa học hiển thị công khai hoặc Từ chối (Reject) kèm lý do để giảng viên điều chỉnh.
+2.  **Quản lý hệ thống (Admin)**: Quản trị người dùng, theo dõi doanh thu toàn hệ thống và cấu hình các thông số vận hành.
+3.  **Báo cáo & Thống kê**: Theo dõi số lượng học viên mới và hiệu suất kinh doanh theo tuần/tháng.
+
+---
+
+## 📝 Quy trình Kiểm tra trình độ (Placement Test Flow - AI Powered)
+
+Đây là tính năng độc đáo giúp học viên định vị bản thân:
+1.  **Lấy đề thi**: Hệ thống lấy ngẫu nhiên 25 câu hỏi (bao gồm Nghe - Listening và Đọc - Reading) phù hợp với nhiều cấp độ.
+2.  **Làm bài & Chấm điểm**: Hệ thống tự động tính điểm dựa trên đáp án đã thiết lập.
+3.  **AI Phân tích (Gemini)**: 
+    *   Dựa trên các câu sai, AI phân tích điểm mạnh/điểm yếu về ngữ pháp, từ vựng hay kỹ năng nghe.
+    *   Ước tính trình độ JLPT hiện tại (N5 -> N1).
+4.  **Gợi ý lộ trình**: Dựa trên kết quả AI, hệ thống tự động gợi ý danh sách các khóa học phù hợp nhất với trình độ vừa đánh giá.
+
+---
+*Dự án được phát triển bởi Group 5 - Lớp SWD392.*
