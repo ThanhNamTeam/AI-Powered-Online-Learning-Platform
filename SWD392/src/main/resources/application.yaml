@@ -27,6 +27,7 @@ spring:
 
   jpa:
     show-sql: false
+    open-in-view: false   # Tắt open-in-view để tránh lazy loading ngoài request scope
     hibernate:
       # Dùng update để tự động tạo schema lần đầu, validate sau khi stable
       ddl-auto: update
@@ -59,21 +60,14 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-        # Tránh timeout khi gửi mail
-        transport:
-          protocol: smtp
+  # Mail config đã bỏ SMTP → dùng Brevo HTTP API (xem brevo: config bên dưới)
+  # Render free tier block port SMTP 587/465 nên phải dùng REST API
+
+# Brevo Transactional Email API (HTTP - không bị Render block)
+brevo:
+  api-key: ${BREVO_API_KEY}              # Lấy từ Brevo Dashboard → SMTP & API → API Keys
+  sender-email: ${BREVO_SENDER_EMAIL}    # Email đã verify trên Brevo (Senders)
+  sender-name: ${BREVO_SENDER_NAME:SWD392 Team}  # Tên hiển thị
 
 # Swagger/OpenAPI chỉ bật khi có SWAGGER_ENABLED=true (mặc định tắt trên production)
 springdoc:
@@ -120,6 +114,11 @@ logging:
   level:
     root: WARN
     com.minhkhoi.swd392: INFO
+    # ===== DEBUG TẠM THỜI ĐỂ TÌM LỖI 403 =====
+    org.springframework.security: DEBUG          # Log toàn bộ Security chain
+    org.springframework.web.cors: DEBUG          # Log CORS decisions
+    org.springframework.security.web.access: DEBUG  # Log Access Denied (403)
+    # ==========================================
     org:
       springframework:
         data:

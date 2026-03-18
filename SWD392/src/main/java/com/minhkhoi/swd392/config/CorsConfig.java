@@ -13,39 +13,28 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    // Nhận FRONTEND_URL từ env, fallback về localhost cho dev
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
-
-    // Cho phép thêm origins khác nếu cần (VD: Render preview URLs)
-    @Value("${app.extra-allowed-origins:}")
-    private String extraAllowedOrigins;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Restrict origins thay vì dùng wildcard "*"
-        List<String> allowedOrigins = new java.util.ArrayList<>();
-        allowedOrigins.add(frontendUrl);
-
-        // Thêm localhost cho development nếu cần
-        allowedOrigins.add("http://localhost:3000");
-        allowedOrigins.add("http://localhost:5173");  // Vite dev server
-
-        // Thêm extra origins từ env nếu có
-        if (extraAllowedOrigins != null && !extraAllowedOrigins.isBlank()) {
-            Arrays.stream(extraAllowedOrigins.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .forEach(allowedOrigins::add);
-        }
-
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(allowedOrigins);
+
+        // Dùng AllowedOriginPatterns thay vì AllowedOrigins
+        // để tương thích tốt hơn với credentials + wildcard subdomain
+        config.setAllowedOriginPatterns(Arrays.asList(
+                frontendUrl,                    // VD: https://swd392.netlify.app
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://*.netlify.app",         // Cho phép tất cả Netlify preview URLs
+                "https://*.onrender.com"         // Cho phép Render preview nếu cần
+        ));
+
         config.addAllowedHeader("*");
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setMaxAge(3600L); // Cache preflight 1 giờ để giảm OPTIONS requests
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

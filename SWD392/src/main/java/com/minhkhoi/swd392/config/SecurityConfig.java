@@ -31,6 +31,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",                     // Render health check
+                                "/error",                // Spring error handler
+                                "/health",               // Custom health endpoint
                                 "/api/auth/send-otp",
                                 "/api/auth/login",
                                 "/api/auth/refresh-token",
